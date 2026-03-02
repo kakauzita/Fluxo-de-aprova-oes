@@ -1,0 +1,58 @@
+2026-02-23T13:14:00.637Z Credenciais inválidas.
+AppError: Credenciais inválidas.
+    at Object.<anonymous> (/Users/leilamatias/Downloads/Projetos Antigravity/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:17:19)
+
+2026-02-23T13:14:14.888Z Credenciais inválidas.
+AppError: Credenciais inválidas.
+    at Object.<anonymous> (/Users/leilamatias/Downloads/Projetos Antigravity/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:17:19)
+
+2026-02-23T13:36:20.471Z Credenciais inválidas.
+AppError: Credenciais inválidas.
+    at Object.<anonymous> (/Users/leilamatias/Downloads/Projetos Antigravity/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:17:19)
+
+2026-02-23T13:36:43.625Z Credenciais inválidas.
+AppError: Credenciais inválidas.
+    at Object.<anonymous> (/Users/leilamatias/Downloads/Projetos Antigravity/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:17:19)
+
+2026-02-23T13:37:00.091Z Credenciais inválidas.
+AppError: Credenciais inválidas.
+    at Object.<anonymous> (/Users/leilamatias/Downloads/Projetos Antigravity/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:17:19)
+
+2026-02-23T13:37:44.141Z Credenciais inválidas.
+AppError: Credenciais inválidas.
+    at Object.<anonymous> (/Users/leilamatias/Downloads/Projetos Antigravity/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:17:19)
+
+2026-02-23T13:38:10.051Z Credenciais inválidas.
+AppError: Credenciais inválidas.
+    at Object.<anonymous> (/Users/leilamatias/Downloads/Projetos Antigravity/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:17:19)
+
+2026-02-26T14:00:26.491Z Credenciais inválidas.
+AppError: Credenciais inválidas.
+    at Object.<anonymous> (/Users/leilamatias/Downloads/Projetos Antigravity/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:17:19)
+
+2026-02-26T14:00:46.633Z Credenciais inválidas.
+AppError: Credenciais inválidas.
+    at Object.<anonymous> (/Users/leilamatias/Downloads/Projetos Antigravity/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:17:19)
+
+2026-02-26T16:43:17.952Z [
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "corpo"
+    ],
+    "message": "Invalid input: expected string, received undefined"
+  }
+]
+ZodError: [
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "corpo"
+    ],
+    "message": "Invalid input: expected string, received undefined"
+  }
+]
+    at Object.<anonymous> (/Users/leilamatias/Downloads/Projetos Antigravity/Fluxo de Aprovações/V1_Cloud/backend/src/modules/pecas/pecas.routes.ts:219:49)
+

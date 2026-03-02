@@ -1,0 +1,1 @@
+{"version":3,"file":"unit-api.d.ts","sourceRoot":"","sources":["../../src/lib/unit-api.ts"],"names":[],"mappings":"AAGA,UAAU,WAAW;IACjB,MAAM,EAAE,MAAM,CAAA;IACd,IAAI,EAAE,MAAM,CAAA;CACf;AAgBD,wBAAsB,cAAc,CAAC,MAAM,EAAE,MAAM,GAAG,OAAO,CAAC,WAAW,GAAG,IAAI,CAAC,CAQhF"}

@@ -1,0 +1,317 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// ENUMs
+// ============================================================
+
+enum PerfilTipo {
+  ADMIN
+  SOLICITANTE
+  APROVADOR
+}
+
+enum CanalTipo {
+  SMS
+  PUSH
+  WHATSAPP
+  EMAIL
+  BANNER_APP
+}
+
+enum PecaStatus {
+  RASCUNHO
+  AGUARDANDO_APROVACAO
+  APROVADA
+  REPROVADA
+}
+
+enum VersaoStatus {
+  PENDENTE
+  APROVADA
+  REPROVADA
+}
+
+enum DecisaoTipo {
+  APROVADO
+  REPROVADO
+}
+
+enum EventoTipo {
+  PECA_CRIADA
+  PECA_EDITADA
+  PECA_SUBMETIDA
+  GRUPO_APROVADO
+  GRUPO_REPROVADO
+  PECA_APROVADA
+  PECA_REPROVADA
+}
+
+enum OrigemGrupo {
+  SEGMENTO
+  ASSUNTO
+  UNIVERSAL
+}
+
+// ============================================================
+// CONFIGURAÇÃO (Admin)
+// ============================================================
+
+model Usuario {
+  id            String     @id @default(uuid())
+  codigo        String     @unique
+  nome          String
+  email         String     @unique
+  senhaHash     String     @map("senha_hash")
+  perfil        PerfilTipo
+  ativo         Boolean    @default(true)
+  criadoEm      DateTime   @default(now()) @map("criado_em")
+  atualizadoEm  DateTime   @updatedAt @map("atualizado_em")
+
+  // Relações
+  gruposUsuario        GrupoUsuario[]
+  pecasCriadas         Peca[]
+  manifestacoesFeitas  ManifestacaoGrupo[]
+  eventosGerados       EventoHistorico[]
+
+  @@map("usuarios")
+}
+
+model Unidade {
+  id     String  @id @default(uuid())
+  codigo String  @unique
+  sigla  String  @default("")
+  nome   String
+  ativo  Boolean @default(true)
+
+  // Relações
+  grupoUnidades GrupoUnidade[]
+
+  @@map("unidades")
+}
+
+model GrupoAprovadores {
+  id           String   @id @default(uuid())
+  nome         String   @unique
+  isUniversal  Boolean  @default(false) @map("is_universal")
+  ativo        Boolean  @default(true)
+  criadoEm     DateTime @default(now()) @map("criado_em")
+  atualizadoEm DateTime @updatedAt @map("atualizado_em")
+
+  // Membros
+  grupoUnidades GrupoUnidade[]
+  grupoUsuarios GrupoUsuario[]
+
+  // Vínculos de configuração
+  segmentoGrupos  SegmentoGrupo[]
+  assuntoGrupos   AssuntoGrupo[]
+
+  // Participação em versões
+  versaoGrupos        VersaoGrupo[]
+  manifestacoesGrupo  ManifestacaoGrupo[]
+
+  @@map("grupos_aprovadores")
+}
+
+model GrupoUnidade {
+  grupoId   String @map("grupo_id")
+  unidadeId String @map("unidade_id")
+
+  grupo   GrupoAprovadores @relation(fields: [grupoId], references: [id], onDelete: Cascade)
+  unidade Unidade          @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
+
+  @@id([grupoId, unidadeId])
+  @@map("grupo_unidades")
+}
+
+model GrupoUsuario {
+  grupoId   String @map("grupo_id")
+  usuarioId String @map("usuario_id")
+
+  grupo   GrupoAprovadores @relation(fields: [grupoId], references: [id], onDelete: Cascade)
+  usuario Usuario          @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@id([grupoId, usuarioId])
+  @@map("grupo_usuarios")
+}
+
+model PublicoAlvo {
+  id        String   @id @default(uuid())
+  nome      String
+  ativo     Boolean  @default(true)
+  criadoEm DateTime @default(now()) @map("criado_em")
+
+  segmentos Segmento[]
+  pecas     Peca[]
+
+  @@map("publicos_alvo")
+}
+
+model Segmento {
+  id            String   @id @default(uuid())
+  publicoAlvoId String   @map("publico_alvo_id")
+  nome          String
+  ativo         Boolean  @default(true)
+  criadoEm      DateTime @default(now()) @map("criado_em")
+
+  publicoAlvo    PublicoAlvo     @relation(fields: [publicoAlvoId], references: [id])
+  segmentoGrupos SegmentoGrupo[]
+  pecas          Peca[]
+
+  @@map("segmentos")
+}
+
+model SegmentoGrupo {
+  segmentoId String @map("segmento_id")
+  grupoId    String @map("grupo_id")
+
+  segmento Segmento         @relation(fields: [segmentoId], references: [id], onDelete: Cascade)
+  grupo    GrupoAprovadores @relation(fields: [grupoId], references: [id], onDelete: Cascade)
+
+  @@id([segmentoId, grupoId])
+  @@map("segmento_grupos")
+}
+
+model Assunto {
+  id        String   @id @default(uuid())
+  nome      String
+  ativo     Boolean  @default(true)
+  criadoEm DateTime @default(now()) @map("criado_em")
+
+  assuntoGrupos AssuntoGrupo[]
+  pecas         Peca[]
+
+  @@map("assuntos")
+}
+
+model AssuntoGrupo {
+  assuntoId String @map("assunto_id")
+  grupoId   String @map("grupo_id")
+
+  assunto Assunto          @relation(fields: [assuntoId], references: [id], onDelete: Cascade)
+  grupo   GrupoAprovadores @relation(fields: [grupoId], references: [id], onDelete: Cascade)
+
+  @@id([assuntoId, grupoId])
+  @@map("assunto_grupos")
+}
+
+// ============================================================
+// OPERACIONAL (Peça e Aprovação)
+// ============================================================
+
+model Peca {
+  id             String     @id @default(uuid())
+  nome           String
+  descricao      String?
+  canal          CanalTipo
+  publicoAlvoId  String     @map("publico_alvo_id")
+  segmentoId     String     @map("segmento_id")
+  assuntoId      String     @map("assunto_id")
+  solicitanteId  String     @map("solicitante_id")
+  status         PecaStatus @default(RASCUNHO)
+  criadoEm      DateTime   @default(now()) @map("criado_em")
+  atualizadoEm  DateTime   @updatedAt @map("atualizado_em")
+
+  publicoAlvo PublicoAlvo @relation(fields: [publicoAlvoId], references: [id])
+  segmento    Segmento    @relation(fields: [segmentoId], references: [id])
+  assunto     Assunto     @relation(fields: [assuntoId], references: [id])
+  solicitante Usuario     @relation(fields: [solicitanteId], references: [id])
+
+  versoes  VersaoPeca[]
+  eventos  EventoHistorico[]
+
+  @@map("pecas")
+}
+
+model VersaoPeca {
+  id             String       @id @default(uuid())
+  pecaId         String       @map("peca_id")
+  numeroVersao   Int          @map("numero_versao")
+  conteudo       Json
+  status         VersaoStatus @default(PENDENTE)
+  submetidoEm   DateTime     @default(now()) @map("submetido_em")
+  consolidadoEm DateTime?    @map("consolidado_em")
+
+  peca Peca @relation(fields: [pecaId], references: [id], onDelete: Cascade)
+
+  versaoGrupos        VersaoGrupo[]
+  unidadesAdicionais  UnidadeAdicional[]
+  manifestacoes       ManifestacaoGrupo[]
+  eventos             EventoHistorico[]
+
+  @@unique([pecaId, numeroVersao])
+  @@map("versoes_peca")
+}
+
+model VersaoGrupo {
+  id           String      @id @default(uuid())
+  versaoPecaId String      @map("versao_peca_id")
+  grupoId      String      @map("grupo_id")
+  origem       OrigemGrupo
+
+  versaoPeca VersaoPeca       @relation(fields: [versaoPecaId], references: [id], onDelete: Cascade)
+  grupo      GrupoAprovadores @relation(fields: [grupoId], references: [id])
+
+  @@unique([versaoPecaId, grupoId])
+  @@map("versao_grupos")
+}
+
+model UnidadeAdicional {
+  id           String       @id @default(uuid())
+  versaoPecaId String       @map("versao_peca_id")
+  codigo       String
+  nome         String
+  status       VersaoStatus @default(PENDENTE)
+
+  versaoPeca    VersaoPeca          @relation(fields: [versaoPecaId], references: [id], onDelete: Cascade)
+  manifestacao  ManifestacaoGrupo?
+
+  @@map("unidades_adicionais")
+}
+
+model ManifestacaoGrupo {
+  id                  String      @id @default(uuid())
+  versaoPecaId        String      @map("versao_peca_id")
+  grupoId             String?     @map("grupo_id")
+  unidadeAdicionalId  String?     @unique @map("unidade_adicional_id")
+  representadoPorId   String      @map("representado_por_id")
+  decisao             DecisaoTipo
+  justificativa       String?
+  manifestadoEm      DateTime    @default(now()) @map("manifestado_em")
+
+  versaoPeca       VersaoPeca        @relation(fields: [versaoPecaId], references: [id], onDelete: Cascade)
+  grupo            GrupoAprovadores? @relation(fields: [grupoId], references: [id])
+  unidadeAdicional UnidadeAdicional? @relation(fields: [unidadeAdicionalId], references: [id])
+  representadoPor  Usuario           @relation(fields: [representadoPorId], references: [id])
+
+  @@unique([versaoPecaId, grupoId])
+  @@map("manifestacoes_grupo")
+}
+
+model EventoHistorico {
+  id            String     @id @default(uuid())
+  pecaId        String     @map("peca_id")
+  versaoPecaId  String?    @map("versao_peca_id")
+  usuarioId     String?    @map("usuario_id")
+  codigoUsuario String?    @map("codigo_usuario")
+  nomeUsuario   String?    @map("nome_usuario")
+  unidadeNome   String?    @map("unidade_nome")
+  evento        EventoTipo
+  payload       Json?
+  ocorridoEm   DateTime   @default(now()) @map("ocorrido_em")
+
+  peca       Peca        @relation(fields: [pecaId], references: [id], onDelete: Cascade)
+  versaoPeca VersaoPeca? @relation(fields: [versaoPecaId], references: [id], onDelete: Cascade)
+  usuario    Usuario?    @relation(fields: [usuarioId], references: [id])
+
+  @@map("eventos_historico")
+}
