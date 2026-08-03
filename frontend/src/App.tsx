@@ -13,6 +13,7 @@ import PecasListPage from './pages/solicitante/PecasListPage'
 import NovaPecaPage from './pages/solicitante/NovaPecaPage'
 import EditarPecaPage from './pages/solicitante/EditarPecaPage'
 import PecaDetailPage from './pages/solicitante/PecaDetailPage'
+import CampaignBuilderPage from './pages/solicitante/CampaignBuilderPage'
 
 // Aprovador
 import AprovacoesPage from './pages/aprovador/AprovacoesPage'
@@ -82,6 +83,11 @@ export default function App() {
           <Route path="/pecas/:id/editar" element={
             <RequireAuth allowedProfiles={['SOLICITANTE']}>
               <AppShell><EditarPecaPage /></AppShell>
+            </RequireAuth>
+          } />
+          <Route path="/campanhas/nova" element={
+            <RequireAuth allowedProfiles={['SOLICITANTE']}>
+              <AppShell><CampaignBuilderPage /></AppShell>
             </RequireAuth>
           } />
 

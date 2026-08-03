@@ -1,6 +1,6 @@
 import React from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LogOut, ChevronDown, ChevronRight, FileText, Settings, CheckSquare, Megaphone } from 'lucide-react'
+import { LogOut, ChevronDown, ChevronRight, FileText, Settings, CheckSquare, Sparkles } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
 interface NavItemProps {
@@ -82,21 +82,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                         {user?.perfil === 'SOLICITANTE' && (
                             <>
                                 <NavItem to="/pecas" label="Peça de comunicação" icon={FileText} />
-                                <NavItem 
-                                    label="Gestão de campanhas" 
-                                    icon={Megaphone} 
-                                    onClick={() => window.location.href = '/campanhas/index.html'} 
-                                />
+                                <NavItem to="/campanhas/nova" label="Criar campanha" icon={Sparkles} />
                             </>
                         )}
                         {user?.perfil === 'ADMIN' && (
                             <>
                                 <NavItem to="/pecas-admin" label="Peça de comunicação" icon={FileText} />
-                                <NavItem 
-                                    label="Gestão de campanhas" 
-                                    icon={Megaphone} 
-                                    onClick={() => window.location.href = '/campanhas/index.html'} 
-                                />
                                 <button
                                     className="sidebar-nav-item"
                                     onClick={() => setConfigOpen(o => !o)}
