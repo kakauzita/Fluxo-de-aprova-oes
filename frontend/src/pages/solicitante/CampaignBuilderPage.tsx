@@ -1443,7 +1443,7 @@ export default function CampaignBuilderPage() {
       <div className={`canvas-block${block.type === 'connector' && block.config?.direction === 'backward' ? ' connector-backward' : ''}`} style={{ position: 'relative' }} key={block.id}>
         <div
           className={`block-card type-${block.type} ${selectedId === block.id ? 'selected' : ''} ${isEnd ? 'auto-end' : ''}`}
-          onClick={(e) => { e.stopPropagation(); if (!isEnd && block.type !== 'connector') setSelectedId(block.id); }}
+          onClick={(e) => { e.stopPropagation(); if (block.id !== 'end_auto' && block.type !== 'connector') setSelectedId(block.id); }}
         >
           <div className="block-header">
             <span className="block-type-badge">
@@ -1461,7 +1461,7 @@ export default function CampaignBuilderPage() {
               </span>
             )}
             {block.type !== 'connector' && renderBlockWaitHeader(block)}
-            {!isEnd && (
+            {block.id !== 'end_auto' && (
               <button
                 className="block-delete"
                 onClick={(e) => { e.stopPropagation(); deleteBlock(block.id) }}
