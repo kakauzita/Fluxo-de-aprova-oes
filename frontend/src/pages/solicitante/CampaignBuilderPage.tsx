@@ -1442,7 +1442,7 @@ export default function CampaignBuilderPage() {
     const buildBlockCard = (block: any, stepNum: number | undefined, isEnd: boolean) => (
       <div className={`canvas-block${block.type === 'connector' && block.config?.direction === 'backward' ? ' connector-backward' : ''}`} style={{ position: 'relative' }} key={block.id}>
         <div
-          className={`block-card type-${block.type} ${selectedId === block.id ? 'selected' : ''} ${isEnd ? 'auto-end' : ''}`}
+          className={`block-card type-${block.type} ${selectedId === block.id ? 'selected' : ''} ${block.id === 'end_auto' ? 'auto-end' : ''}`}
           onClick={(e) => { e.stopPropagation(); if (block.id !== 'end_auto' && block.type !== 'connector') setSelectedId(block.id); }}
         >
           <div className="block-header">
