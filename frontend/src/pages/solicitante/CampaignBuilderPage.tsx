@@ -369,11 +369,40 @@ export default function CampaignBuilderPage() {
   // ─── Stepper & Form States ──────────────────────────────────────────────────
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [campaignName, setCampaignName] = useState('')
-  const [objective, setObjective] = useState('')
-  const [publicoAlvoId, setPublicoAlvoId] = useState('')
-  const [segmentoId, setSegmentoId] = useState('')
+  const [description, setDescription] = useState('')
+  const [selectedPublicos, setSelectedPublicos] = useState<Option[]>([])
+  const [selectedSegmentos, setSelectedSegmentos] = useState<any[]>([])
+  const [tempPublicoId, setTempPublicoId] = useState('')
+  const [tempSegmentoId, setTempSegmentoId] = useState('')
   const [customFilters, setCustomFilters] = useState<Filter[]>([])
   const [selectedExclusions, setSelectedExclusions] = useState<string[]>([])
+
+  const handleAddPublico = () => {
+    if (!tempPublicoId) return
+    const publico = publicos.find(p => p.id === tempPublicoId)
+    if (publico && !selectedPublicos.some(p => p.id === publico.id)) {
+      setSelectedPublicos([...selectedPublicos, publico])
+    }
+    setTempPublicoId('')
+  }
+
+  const handleRemovePublico = (id: string) => {
+    setSelectedPublicos(selectedPublicos.filter(p => p.id !== id))
+    setSelectedSegmentos(selectedSegmentos.filter(s => s.publicoAlvoId !== id))
+  }
+
+  const handleAddSegmento = () => {
+    if (!tempSegmentoId) return
+    const segmento = allSegmentos.find(s => s.id === tempSegmentoId)
+    if (segmento && !selectedSegmentos.some(s => s.id === segmento.id)) {
+      setSelectedSegmentos([...selectedSegmentos, segmento])
+    }
+    setTempSegmentoId('')
+  }
+
+  const handleRemoveSegmento = (id: string) => {
+    setSelectedSegmentos(selectedSegmentos.filter(s => s.id !== id))
+  }
 
   // Load backend configurations
   const [publicos, setPublicos] = useState<Option[]>([])
@@ -483,31 +512,36 @@ export default function CampaignBuilderPage() {
     loadData()
   }, [])
 
-  // Filtered segments based on selected target audience
+  // Filtered segments based on selected target audiences
   const filteredSegmentos = useMemo(() => {
-    return allSegmentos.filter((s: any) => s.publicoAlvoId === publicoAlvoId)
-  }, [allSegmentos, publicoAlvoId])
+    if (selectedPublicos.length === 0) return []
+    return allSegmentos.filter((s: any) => selectedPublicos.some(p => p.id === s.publicoAlvoId))
+  }, [allSegmentos, selectedPublicos])
 
   // Get name of selected publico and segmento
   const selectedPublicoName = useMemo(() => {
-    return publicos.find(p => p.id === publicoAlvoId)?.nome || ''
-  }, [publicos, publicoAlvoId])
+    return selectedPublicos.map(p => p.nome).join(', ')
+  }, [selectedPublicos])
 
   const selectedSegmentoName = useMemo(() => {
-    return allSegmentos.find(s => s.id === segmentoId)?.nome || ''
-  }, [allSegmentos, segmentoId])
+    return selectedSegmentos.map(s => s.nome).join(', ')
+  }, [selectedSegmentos])
 
   // ─── Reach Estimator ────────────────────────────────────────────────────────
   const reachEstimate = useMemo(() => {
-    if (!segmentoId) return 0
-    const name = selectedSegmentoName.toLowerCase()
-    if (name.includes('novo')) return 48200
-    if (name.includes('ativo')) return 312400
-    if (name.includes('inativo')) return 89100
-    if (name.includes('premium')) return 24600
-    if (name.includes('digital')) return 198300
-    return 60000
-  }, [segmentoId, selectedSegmentoName])
+    if (selectedSegmentos.length === 0) return 0
+    let total = 0
+    selectedSegmentos.forEach(seg => {
+      const name = seg.nome.toLowerCase()
+      if (name.includes('novo')) total += 48200
+      else if (name.includes('ativo')) total += 312400
+      else if (name.includes('inativo')) total += 89100
+      else if (name.includes('premium')) total += 24600
+      else if (name.includes('digital')) total += 198300
+      else total += 60000
+    })
+    return total
+  }, [selectedSegmentos])
 
   // ─── Combined Communication Pieces ──────────────────────────────────────────
   const allPecas = useMemo(() => {
@@ -1627,13 +1661,13 @@ export default function CampaignBuilderPage() {
           Dados da campanha
         </div>
         <div
-          onClick={() => { if (objective && publicoAlvoId && segmentoId) { setStep(2); } }}
+          onClick={() => { if (campaignName && selectedPublicos.length > 0 && selectedSegmentos.length > 0) { setStep(2); } }}
           style={{
             padding: '10px 20px', fontSize: 14, fontWeight: step === 2 ? 700 : 500,
             color: step === 2 ? 'var(--caixa-blue)' : 'var(--text-muted)',
             borderBottom: step === 2 ? '2.5px solid var(--caixa-blue)' : '2.5px solid transparent',
-            cursor: objective && publicoAlvoId && segmentoId ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', gap: 8,
-            opacity: objective && publicoAlvoId && segmentoId ? 1 : 0.6
+            cursor: campaignName && selectedPublicos.length > 0 && selectedSegmentos.length > 0 ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', gap: 8,
+            opacity: campaignName && selectedPublicos.length > 0 && selectedSegmentos.length > 0 ? 1 : 0.6
           }}
         >
           <span style={{
@@ -1645,13 +1679,13 @@ export default function CampaignBuilderPage() {
           Fluxo de comunicação
         </div>
         <div
-          onClick={() => { if (objective && publicoAlvoId && segmentoId) { goToStep3(); } }}
+          onClick={() => { if (campaignName && selectedPublicos.length > 0 && selectedSegmentos.length > 0) { goToStep3(); } }}
           style={{
             padding: '10px 20px', fontSize: 14, fontWeight: step === 3 ? 700 : 500,
             color: step === 3 ? 'var(--caixa-blue)' : 'var(--text-muted)',
             borderBottom: step === 3 ? '2.5px solid var(--caixa-blue)' : '2.5px solid transparent',
-            cursor: objective && publicoAlvoId && segmentoId ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', gap: 8,
-            opacity: objective && publicoAlvoId && segmentoId ? 1 : 0.6
+            cursor: campaignName && selectedPublicos.length > 0 && selectedSegmentos.length > 0 ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', gap: 8,
+            opacity: campaignName && selectedPublicos.length > 0 && selectedSegmentos.length > 0 ? 1 : 0.6
           }}
         >
           <span style={{
@@ -1660,7 +1694,7 @@ export default function CampaignBuilderPage() {
             borderRadius: '50%', width: 20, height: 20,
             display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700
           }}>3</span>
-          Revisar campanha
+          Revisar fluxo
         </div>
       </div>
 
@@ -1671,37 +1705,42 @@ export default function CampaignBuilderPage() {
             {/* Secção 01: Identificação */}
             <div className="setup-section">
               <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--caixa-blue)', borderLeft: '4px solid var(--caixa-blue)', paddingLeft: 14, marginBottom: 16 }}>
-                Informações Básicas
+                Detalhes da campanha
               </h3>
               <div className="setup-card">
                 <div className="form-row">
                   <div className="form-group full">
-                    <label className="form-label">Nome da Campanha</label>
+                    <label className="form-label" style={{ fontWeight: 700 }}>Nome da campanha</label>
                     <input
                       type="text"
                       className="form-input"
+                      maxLength={45}
                       value={campaignName}
                       onChange={(e) => setCampaignName(e.target.value)}
                       placeholder="Ex: CAIXA Conta Poupança Premiada 2026"
                     />
+                    <div style={{ textAlign: 'right', fontSize: '11px', color: '#94a3b8', marginTop: 4 }}>
+                      {campaignName.length}/45
+                    </div>
                   </div>
                 </div>
                 <div className="form-row" style={{ marginTop: 12 }}>
-                  <div className="form-group">
-                    <label className="form-label">Objetivo de Negócio</label>
-                    <select
-                      className="form-select"
-                      value={objective}
-                      onChange={(e) => setObjective(e.target.value)}
-                    >
-                      <option value="">Selecione o objetivo da campanha...</option>
-                      <option value="Ativação de novos clientes"> Ativação de novos clientes</option>
-                      <option value="Upsell / Cross-sell"> Upsell / Cross-sell</option>
-                      <option value="Retenção e reengajamento"> Retenção e reengajamento</option>
-                      <option value="Educação financeira"> Educação financeira</option>
-                      <option value="Cobrança e regularização"> Cobrança e regularização</option>
-                      <option value="Satisfação e NPS"> Satisfação e NPS</option>
-                    </select>
+                  <div className="form-group full">
+                    <label className="form-label" style={{ fontWeight: 700, display: 'flex', gap: 6, alignItems: 'baseline' }}>
+                      Descrição <span style={{ fontWeight: 400, color: '#94a3b8', fontSize: '12px' }}>Opcional</span>
+                    </label>
+                    <textarea
+                      className="form-input"
+                      maxLength={45}
+                      rows={3}
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="Faça uma breve descrição da sua campanha"
+                      style={{ resize: 'vertical', minHeight: '80px', fontFamily: 'inherit' }}
+                    />
+                    <div style={{ textAlign: 'right', fontSize: '11px', color: '#94a3b8', marginTop: 4 }}>
+                      {description.length}/45
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1710,36 +1749,163 @@ export default function CampaignBuilderPage() {
             {/* Secção 02: Quem vai receber */}
             <div className="setup-section">
               <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--caixa-blue)', borderLeft: '4px solid var(--caixa-blue)', paddingLeft: 14, marginBottom: 16 }}>
-                Definição do Público Alvo e Segmento
+                Quem vai receber
               </h3>
               <div className="setup-card">
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label">Público-Alvo</label>
-                    <select
-                      className="form-select"
-                      value={publicoAlvoId}
-                      onChange={(e) => { setPublicoAlvoId(e.target.value); setSegmentoId(''); }}
-                    >
-                      <option value="">Selecionar público-alvo...</option>
-                      {publicos.map(p => (
-                        <option key={p.id} value={p.id}>{p.nome}</option>
+                <div className="form-row" style={{ display: 'flex', gap: '24px' }}>
+                  {/* Público Alvo */}
+                  <div className="form-group" style={{ flex: 1 }}>
+                    <label className="form-label" style={{ fontWeight: 700 }}>Público alvo</label>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <select
+                        className="form-select"
+                        value={tempPublicoId}
+                        onChange={(e) => setTempPublicoId(e.target.value)}
+                        style={{ flex: 1 }}
+                      >
+                        <option value="">Selecione o público que receberá a campanha</option>
+                        {publicos.map(p => (
+                          <option key={p.id} value={p.id} disabled={selectedPublicos.some(sp => sp.id === p.id)}>
+                            {p.nome}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        className="btn"
+                        type="button"
+                        onClick={handleAddPublico}
+                        style={{
+                          background: 'white',
+                          border: '1.5px solid var(--caixa-blue)',
+                          color: 'var(--caixa-blue)',
+                          fontWeight: 700,
+                          padding: '0 16px',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '13px'
+                        }}
+                      >
+                        Adicionar
+                      </button>
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: 4 }}>
+                      Defina o público alvo desta campanha
+                    </div>
+                    {/* Tags below */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                      {selectedPublicos.map(p => (
+                        <span key={p.id} style={{
+                          background: '#e8f0fe',
+                          color: 'var(--caixa-blue)',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          border: '1px solid var(--caixa-blue-light)'
+                        }}>
+                          {p.nome}
+                          <button
+                            type="button"
+                            onClick={() => handleRemovePublico(p.id)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: 'var(--caixa-blue)',
+                              cursor: 'pointer',
+                              padding: 0,
+                              fontSize: '12px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              fontWeight: 700
+                            }}
+                          >
+                            ✕
+                          </button>
+                        </span>
                       ))}
-                    </select>
+                    </div>
                   </div>
-                  <div className="form-group">
-                    <label className="form-label">Segmento</label>
-                    <select
-                      className="form-select"
-                      value={segmentoId}
-                      disabled={!publicoAlvoId}
-                      onChange={(e) => setSegmentoId(e.target.value)}
-                    >
-                      <option value="">Selecionar segmento...</option>
-                      {filteredSegmentos.map(s => (
-                        <option key={s.id} value={s.id}>{s.nome}</option>
+
+                  {/* Segmento */}
+                  <div className="form-group" style={{ flex: 1 }}>
+                    <label className="form-label" style={{ fontWeight: 700 }}>Segmento</label>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <select
+                        className="form-select"
+                        value={tempSegmentoId}
+                        disabled={selectedPublicos.length === 0}
+                        onChange={(e) => setTempSegmentoId(e.target.value)}
+                        style={{ flex: 1 }}
+                      >
+                        <option value="">Selecione o segmento</option>
+                        {filteredSegmentos.map(s => (
+                          <option key={s.id} value={s.id} disabled={selectedSegmentos.some(ss => ss.id === s.id)}>
+                            {s.nome}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        className="btn"
+                        type="button"
+                        onClick={handleAddSegmento}
+                        disabled={selectedPublicos.length === 0}
+                        style={{
+                          background: 'white',
+                          border: '1.5px solid var(--caixa-blue)',
+                          color: 'var(--caixa-blue)',
+                          fontWeight: 700,
+                          padding: '0 16px',
+                          borderRadius: '4px',
+                          cursor: selectedPublicos.length === 0 ? 'not-allowed' : 'pointer',
+                          fontSize: '13px',
+                          opacity: selectedPublicos.length === 0 ? 0.6 : 1
+                        }}
+                      >
+                        Adicionar
+                      </button>
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: 4 }}>
+                      Defina o segmento desta campanha
+                    </div>
+                    {/* Tags below */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                      {selectedSegmentos.map(s => (
+                        <span key={s.id} style={{
+                          background: '#e8f0fe',
+                          color: 'var(--caixa-blue)',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          border: '1px solid var(--caixa-blue-light)'
+                        }}>
+                          {s.nome}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveSegmento(s.id)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: 'var(--caixa-blue)',
+                              cursor: 'pointer',
+                              padding: 0,
+                              fontSize: '12px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              fontWeight: 700
+                            }}
+                          >
+                            ✕
+                          </button>
+                        </span>
                       ))}
-                    </select>
+                    </div>
                   </div>
                 </div>
 
@@ -1886,124 +2052,126 @@ export default function CampaignBuilderPage() {
 
             {/* Secção 03: Compliance e Exclusões */}
             <div className="setup-section">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--caixa-blue)', borderLeft: '4px solid var(--caixa-blue)', paddingLeft: 14, margin: 0 }}>
-                  Exclusões Obrigatórias e LGPD
-                </h3>
-                <span className="required-badge" style={{ margin: 0 }}>Compliance Automático</span>
-              </div>
-              <div className="setup-card">
-                <div className="lgpd-alert">
-                  <AlertTriangle size={15} style={{ flexShrink: 0 }} />
-                  <span>A conformidade com a LGPD e regulamentações do BACEN são aplicadas automaticamente em tempo de disparo.</span>
-                </div>
+              <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--caixa-blue)', borderLeft: '4px solid var(--caixa-blue)', paddingLeft: 14, marginBottom: 16 }}>
+                Exclusões obrigatórias
+              </h3>
+              <div className="setup-card" style={{ background: 'transparent', border: 'none', padding: 0, boxShadow: 'none' }}>
+                <p style={{ fontSize: '13px', color: '#64748b', margin: '-8px 0 16px 0' }}>
+                  Listas de exclusão aplicadas automaticamente a todas as campanhas
+                </p>
                 
-                <div className="exclusions-list" style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24 }}>
-                  <div className="exclusion-item">
-                    <div className="excl-icon">🔒</div>
-                    <div className="excl-info">
-                      <div className="excl-name">Público Vulnerável</div>
-                      <div className="excl-desc">Exclusão obrigatória de campanhas para proteção de públicos em estado de vulnerabilidade.</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px', marginBottom: 24 }}>
+                  {[
+                    {
+                      title: 'Menores de 18 anos',
+                      desc: 'Excluídos automaticamente de todas as campanhas'
+                    },
+                    {
+                      title: 'CPF Diferente de Regular na RFB',
+                      desc: 'CPF que não estiver com situação regular na Receita Federal'
+                    },
+                    {
+                      title: 'Pessoas em situação de vulnerabilidade',
+                      desc: 'Lista atualizada diariamente pelo compliance'
+                    },
+                    {
+                      title: 'Óbitos registrados',
+                      desc: 'Clientes com registro de óbito são excluídos automaticamente de todas as campanhas'
+                    }
+                  ].map((item, idx) => (
+                    <div key={idx} style={{
+                      background: 'white',
+                      border: '1px solid #fed7aa',
+                      borderRadius: '6px',
+                      padding: '12px 16px',
+                      display: 'flex',
+                      gap: 12,
+                      alignItems: 'flex-start',
+                      boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
+                    }}>
+                      <span style={{ color: '#f97316', fontSize: '14px', marginTop: '1px' }}>🔒</span>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: '13px', color: '#1e293b' }}>{item.title}</div>
+                        <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px', lineHeight: '1.4' }}>{item.desc}</div>
+                      </div>
                     </div>
-                    <div className="excl-status">Ativo</div>
-                  </div>
-                  <div className="exclusion-item">
-                    <div className="excl-icon">🔒</div>
-                    <div className="excl-info">
-                      <div className="excl-name">Óbito</div>
-                      <div className="excl-desc">Exclusão automática de CPFs com registro de óbito.</div>
-                    </div>
-                    <div className="excl-status">Ativo</div>
-                  </div>
-                  <div className="exclusion-item">
-                    <div className="excl-icon">🔒</div>
-                    <div className="excl-info">
-                      <div className="excl-name">Menor de Idade</div>
-                      <div className="excl-desc">Exclusão obrigatória de campanhas com crédito ou teor comercial geral (menores de 18 anos).</div>
-                    </div>
-                    <div className="excl-status">Ativo</div>
-                  </div>
-                  <div className="exclusion-item">
-                    <div className="excl-icon">🔒</div>
-                    <div className="excl-info">
-                      <div className="excl-name">CPF Diferente de Regular na RFB</div>
-                      <div className="excl-desc">Validação automática de regularidade do CPF junto à Receita Federal do Brasil.</div>
-                    </div>
-                    <div className="excl-status">Ativo</div>
-                  </div>
+                  ))}
                 </div>
 
-                <div className="exclusions-custom-header" style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.5px', marginBottom: 16 }}>Critérios de Exclusão Opcionais</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px 24px' }}>
-                  {/* Coluna 1 */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ marginTop: 24 }}>
+                  <label className="form-label" style={{ fontWeight: 700, display: 'flex', gap: 6, alignItems: 'baseline', marginBottom: 4 }}>
+                    Lista de exclusão adicional <span style={{ fontWeight: 400, color: '#94a3b8', fontSize: '12px' }}>Opcional</span>
+                  </label>
+                  <select
+                    className="form-select"
+                    value=""
+                    onChange={(e) => {
+                      const val = e.target.value
+                      if (val && !selectedExclusions.includes(val)) {
+                        setSelectedExclusions([...selectedExclusions, val])
+                      }
+                    }}
+                  >
+                    <option value="">Adicionar a lista de exclusão</option>
                     {[
                       'Não Incomodar',
-                      'Segmento Exclusivo e Grupo Familiar'
-                    ].map(excl => {
-                      const isSelected = selectedExclusions.includes(excl);
-                      return (
-                        <label key={excl} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155', cursor: 'pointer', userSelect: 'none' }}>
-                          <input 
-                            type="checkbox" 
-                            checked={isSelected} 
-                            onChange={() => toggleExclusion(excl)} 
-                            style={{ marginTop: 3, cursor: 'pointer' }} 
-                          />
-                          <span>{excl}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-
-                  {/* Coluna 2 */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    {[
+                      'Segmento Exclusivo e Grupo Familiar',
                       'PPE - Pessoa Politicamente Exposta',
                       'Cadastro Desatualizado',
                       'Lei de Crédito Aposentado',
                       'Restrição Absoluta (Base SIRIC)',
                       'SIPES - Restrições SERASA/Boa Vista',
-                      'CONRES'
-                    ].map(excl => {
-                      const isSelected = selectedExclusions.includes(excl);
-                      return (
-                        <label key={excl} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155', cursor: 'pointer', userSelect: 'none' }}>
-                          <input 
-                            type="checkbox" 
-                            checked={isSelected} 
-                            onChange={() => toggleExclusion(excl)} 
-                            style={{ marginTop: 3, cursor: 'pointer' }} 
-                          />
-                          <span>{excl}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-
-                  {/* Coluna 3 */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    {[
+                      'CONRES',
                       'SIGA - Atraso > 30 dias',
                       'Renegociação - SIICO 190 ou 191',
                       'Fique em Dia/Quita Fácil',
                       'Benefício INSS < 180 dias',
                       'Excluir Consig - Atraso > 30 dias e extrato da convenente com erro ou não paga'
-                    ].map(excl => {
-                      const isSelected = selectedExclusions.includes(excl);
-                      return (
-                        <label key={excl} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155', cursor: 'pointer', userSelect: 'none' }}>
-                          <input 
-                            type="checkbox" 
-                            checked={isSelected} 
-                            onChange={() => toggleExclusion(excl)} 
-                            style={{ marginTop: 3, cursor: 'pointer' }} 
-                          />
-                          <span>{excl}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
+                    ].map(excl => (
+                      <option key={excl} value={excl} disabled={selectedExclusions.includes(excl)}>
+                        {excl}
+                      </option>
+                    ))}
+                  </select>
+
+                  {/* Render selected exclusions as tags/badges */}
+                  {selectedExclusions.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
+                      {selectedExclusions.map(excl => (
+                        <span key={excl} style={{
+                          background: '#fef2f2',
+                          color: '#dc2626',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          padding: '6px 12px',
+                          borderRadius: '6px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          border: '1px solid #fecaca'
+                        }}>
+                          {excl}
+                          <button
+                            type="button"
+                            onClick={() => setSelectedExclusions(selectedExclusions.filter(e => e !== excl))}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: '#ef4444',
+                              cursor: 'pointer',
+                              padding: 0,
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              display: 'flex',
+                              alignItems: 'center'
+                            }}
+                          >
+                            ✕
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -2012,14 +2180,34 @@ export default function CampaignBuilderPage() {
         
         {/* Footer buttons at the bottom of the page */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 32, borderTop: '1px solid var(--builder-border-light)', paddingTop: 20 }}>
-          <button className="btn btn-ghost" onClick={() => navigate('/campanhas')}>Sair</button>
-          <button
-            className="btn btn-primary"
-            disabled={!objective || !publicoAlvoId || !segmentoId}
-            onClick={() => { setStep(2); }}
-            style={{ background: 'var(--caixa-orange)', color: 'white', border: 'none', fontWeight: 700 }}
+          <button 
+            className="btn" 
+            style={{ background: 'white', border: '1px solid #cbd5e1', color: '#64748b', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 500, fontSize: 14, cursor: 'not-allowed' }}
+            disabled
           >
-            Desenhar Jornada <ChevronRight size={15} style={{ marginLeft: 6 }} />
+            ← Anterior
+          </button>
+          <button 
+            className="btn" 
+            style={{ background: 'white', border: '1.5px solid var(--caixa-blue)', color: 'var(--caixa-blue)', fontWeight: 700, fontSize: 14 }}
+            onClick={() => alert('Rascunho salvo com sucesso!')}
+          >
+            Salvar rascunho
+          </button>
+          <button
+            className="btn"
+            disabled={!campaignName || selectedPublicos.length === 0 || selectedSegmentos.length === 0}
+            onClick={() => { setStep(2); }}
+            style={{ 
+              background: (!campaignName || selectedPublicos.length === 0 || selectedSegmentos.length === 0) ? '#cbd5e1' : 'var(--caixa-blue)', 
+              color: 'white', 
+              border: 'none', 
+              fontWeight: 700, 
+              fontSize: 14,
+              cursor: (!campaignName || selectedPublicos.length === 0 || selectedSegmentos.length === 0) ? 'not-allowed' : 'pointer'
+            }}
+          >
+            Próximo
           </button>
         </div>
       </>)}
@@ -3622,16 +3810,16 @@ export default function CampaignBuilderPage() {
                         <div style={{ fontSize: 15, color: '#4b5563', fontWeight: 400 }}>{campaignName || 'Não informado'}</div>
                       </div>
                       <div>
-                        <div style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', marginBottom: 4 }}>Objetivo do negócio</div>
-                        <div style={{ fontSize: 15, color: '#4b5563', fontWeight: 400 }}>{objective || 'Não informado'}</div>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', marginBottom: 4 }}>Descrição</div>
+                        <div style={{ fontSize: 15, color: '#4b5563', fontWeight: 400 }}>{description || 'Não informado'}</div>
                       </div>
                       <div>
-                        <div style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', marginBottom: 4 }}>Segmento selecionado</div>
-                        <div style={{ fontSize: 15, color: '#4b5563', fontWeight: 400 }}>{allSegmentos.find(s => s.id === segmentoId)?.nome || 'Público Geral'}</div>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', marginBottom: 4 }}>Segmentos selecionados</div>
+                        <div style={{ fontSize: 15, color: '#4b5563', fontWeight: 400 }}>{selectedSegmentoName || 'Público Geral'}</div>
                       </div>
                       <div>
                         <div style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', marginBottom: 4 }}>Público alvo</div>
-                        <div style={{ fontSize: 15, color: '#4b5563', fontWeight: 400 }}>{publicos.find(p => p.id === publicoAlvoId)?.nome || 'Não informado'}</div>
+                        <div style={{ fontSize: 15, color: '#4b5563', fontWeight: 400 }}>{selectedPublicoName || 'Não informado'}</div>
                       </div>
                     </div>
 
