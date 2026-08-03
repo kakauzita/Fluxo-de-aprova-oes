@@ -1,6 +1,6 @@
 import React from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LogOut, ChevronDown, ChevronRight, FileText, Settings, CheckSquare, Sparkles } from 'lucide-react'
+import { LogOut, ChevronDown, ChevronRight, FileText, Settings, CheckSquare, Sparkles, Menu } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
 interface NavItemProps {
@@ -46,29 +46,74 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     return (
         <div className="app-shell" style={{ flexDirection: 'column' }}>
             {/* ── Header ────────────────────────────── */}
-            <header className="app-header">
-                <div className="header-brand">
-                    <div className="header-brand-logo">CX</div>
-                    <div className="header-divider" />
-                    <span>Gestão de campanhas</span>
+            <header className="app-header" style={{ height: '56px', padding: '0 16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <button className="header-menu-btn" style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'white',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '2px',
+                        cursor: 'pointer',
+                        padding: '0',
+                        fontFamily: 'inherit',
+                        opacity: 0.9
+                    }}>
+                        <Menu size={20} />
+                        <span style={{ fontSize: '9px', fontWeight: 600, textTransform: 'none' }}>Menu</span>
+                    </button>
+                    <div className="header-brand" style={{ gap: '16px', display: 'flex', alignItems: 'center' }}>
+                        {/* Caixa X Logo */}
+                        <svg viewBox="56 -1 55 33" style={{ height: '20px', width: 'auto', display: 'block' }} xmlns="http://www.w3.org/2000/svg">
+                            <g transform="matrix(2.92153 0 0 2.92153 -838.161 -441.968)">
+                                <path d="M310.18 161.61h4.41l4.83-4.84h-4.41zM318.42 153.36l1.49 2.92 4.83-4.83h-4.41z" fill="#f7941d" />
+                                <path d="M310.03 161.61h-3.69l1.61-10.16h3.69z" fill="#FFFFFF" fillRule="evenodd" />
+                                <path d="M319.91 156.28h-4.41l-2.46-4.83h4.41z" fill="#FFFFFF" fillRule="evenodd" />
+                                <path d="M321.88 161.61h-4.41l-.97-1.92 2.92-2.92z" fill="#FFFFFF" fillRule="evenodd" />
+                            </g>
+                        </svg>
+                        <div className="header-divider" style={{ background: 'rgba(255, 255, 255, 0.4)' }} />
+                        <span style={{ fontSize: '18px', fontWeight: 700, letterSpacing: '-0.3px' }}>Gestão de campanhas</span>
+                    </div>
                 </div>
-                <div className="header-user">
-                    <div className="header-user-info">
-                        <div className="header-user-name">Olá {user?.nome?.split(' ')[0]} {user?.nome?.split(' ').slice(-1)[0]} ▾</div>
-                        <div className="header-user-role">
+                <div className="header-user" style={{ gap: '20px', display: 'flex', alignItems: 'center' }}>
+                    <div className="header-user-info" style={{ textAlign: 'right' }}>
+                        <div className="header-user-name" style={{ fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
+                            <span>Olá {user?.nome}</span>
+                            <span style={{ fontSize: '9px', opacity: 0.9 }}>▼</span>
+                        </div>
+                        <div className="header-user-role" style={{ fontSize: '10px', opacity: 0.85, marginTop: '2px' }}>
                             {user?.perfil === 'ADMIN' ? 'Administrador' :
-                                user?.perfil === 'SOLICITANTE' ? 'Solicitante' : 'Aprovador'} —  {user?.codigo}
+                                user?.perfil === 'SOLICITANTE' ? 'Solicitante' : 'Aprovador'} - {user?.codigo}
                         </div>
                     </div>
-                    <button className="header-logout" onClick={handleLogout}>
-                        <LogOut size={14} /> Sair
+                    <button className="header-logout" onClick={handleLogout} style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'white',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '2px',
+                        cursor: 'pointer',
+                        padding: '0',
+                        fontSize: '9px',
+                        fontWeight: 600,
+                        opacity: 0.9
+                    }}>
+                        <LogOut size={20} />
+                        <span>Sair</span>
                     </button>
                 </div>
             </header>
 
             {/* ── Sub-header ───────────────────────── */}
-            <div className="sub-header">
-                Conteúdo <strong>#INTERNO.CAIXA</strong>
+            <div className="sub-header" style={{ padding: '6px 20px', fontSize: '12px' }}>
+                <strong>Conteúdo</strong> #INTERNO.CAIXA
             </div>
 
             {/* ── Body ─────────────────────────────── */}
