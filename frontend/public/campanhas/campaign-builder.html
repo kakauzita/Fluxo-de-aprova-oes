@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nova Campanha — Gestão de Campanhas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="builder.css" />
+</head>
+<body class="builder-body">
+
+  <!-- TOP BAR -->
+  <header class="builder-topbar">
+    <div class="topbar-left">
+      <a href="index.html" class="back-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      </a>
+      <div class="campaign-title-edit">
+        <input type="text" id="campaignName" value="Nova Campanha" class="title-input" />
+        <span class="title-edit-icon">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </span>
+      </div>
+      <div class="step-pills">
+        <div class="step-pill active" data-step="1" onclick="goToStep1()"> 
+          <span class="step-num">1</span> Configuração
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2a2b3d" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        <div class="step-pill" data-step="2" id="stepPill2" onclick="goToStep2()">
+          <span class="step-num">2</span> Construir Jornada
+        </div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="auto-save-indicator">
+        <span class="save-dot"></span> Salvo automaticamente
+      </div>
+      <button class="btn-ghost">Pré-visualizar</button>
+      <button class="btn-ghost">Salvar rascunho</button>
+      <button class="btn-primary" id="mainActionBtn" onclick="goToStep2()">
+        Continuar → Jornada
+      </button>
+    </div>
+  </header>
+
+  <!-- STEP 1: CAMPAIGN SETUP -->
+  <div id="step1" class="step-view" style="display:flex">
+    <div class="setup-layout">
+      <div class="setup-main">
+        <div class="setup-section">
+          <div class="section-label">
+            <span class="section-num">01</span>
+            Informações básicas
+          </div>
+          <div class="setup-card">
+            <div class="form-row">
+              <div class="form-group full">
+                <label class="form-label">Nome da campanha</label>
+                <input type="text" class="form-input" placeholder="Ex: Boas-vindas — Conta Nova 2025" id="campNome" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Objetivo da campanha</label>
+                <div class="select-custom" id="selectObjetivo">
+                  <div class="select-trigger" onclick="toggleSelect('selectObjetivo')">
+                    <span class="select-value muted">Selecione o objetivo...</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                  </div>
+                  <div class="select-dropdown">
+                    <div class="select-option" onclick="selectOption('selectObjetivo', 'Ativação de novos clientes')">🚀 Ativação de novos clientes</div>
+                    <div class="select-option" onclick="selectOption('selectObjetivo', 'Upsell / Cross-sell')">📈 Upsell / Cross-sell</div>
+                    <div class="select-option" onclick="selectOption('selectObjetivo', 'Retenção e reengajamento')">🔄 Retenção e reengajamento</div>
+                    <div class="select-option" onclick="selectOption('selectObjetivo', 'Educação financeira')">📚 Educação financeira</div>
+                    <div class="select-option" onclick="selectOption('selectObjetivo', 'Cobrança e regularização')">💳 Cobrança e regularização</div>
+                    <div class="select-option" onclick="selectOption('selectObjetivo', 'Satisfação e NPS')">⭐ Satisfação e NPS</div>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group" style="display: none;">
+                <!-- Removido Canal Principal conforme solicitado -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="setup-section">
+          <div class="section-label">
+            <span class="section-num">02</span>
+            Quem vai receber
+          </div>
+          <div class="setup-card">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Público-alvo</label>
+                <div class="select-custom" id="selectPublico">
+                  <div class="select-trigger" onclick="toggleSelect('selectPublico')">
+                    <span class="select-value muted">Selecione o público...</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                  </div>
+                  <div class="select-dropdown">
+                    <div class="select-option" onclick="selectOption('selectPublico', 'Pessoa Física — Conta Corrente')">👤 Pessoa Física — Conta Corrente</div>
+                    <div class="select-option" onclick="selectOption('selectPublico', 'Pessoa Física — Conta Poupança')">👤 Pessoa Física — Conta Poupança</div>
+                    <div class="select-option" onclick="selectOption('selectPublico', 'Pessoa Jurídica — MEI')">🏢 Pessoa Jurídica — MEI</div>
+                    <div class="select-option" onclick="selectOption('selectPublico', 'Pessoa Jurídica — Empresa')">🏢 Pessoa Jurídica — Empresa</div>
+                    <div class="select-option" onclick="selectOption('selectPublico', 'Servidor Público')">🏛️ Servidor Público</div>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Segmento</label>
+                <div class="select-custom" id="selectSegmento">
+                  <div class="select-trigger" onclick="toggleSelect('selectSegmento')">
+                    <span class="select-value muted">Selecione o segmento...</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                  </div>
+                  <div class="select-dropdown">
+                    <div class="select-option" onclick="selectOption('selectSegmento', 'Clientes novos (até 30 dias)')">🆕 Clientes novos (até 30 dias)</div>
+                    <div class="select-option" onclick="selectOption('selectSegmento', 'Clientes ativos')">✅ Clientes ativos</div>
+                    <div class="select-option" onclick="selectOption('selectSegmento', 'Clientes inativos (90+ dias)')">😴 Clientes inativos (90+ dias)</div>
+                    <div class="select-option" onclick="selectOption('selectSegmento', 'Clientes premium')">💎 Clientes premium</div>
+                    <div class="select-option" onclick="selectOption('selectSegmento', 'Clientes digitais')">📱 Clientes digitais</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Filtros adicionais -->
+            <div class="filtros-section">
+              <div class="filtros-header">
+                <span class="filtros-title">Filtros adicionais</span>
+                <button class="btn-add-filter" onclick="addFilter()">+ Adicionar filtro</button>
+              </div>
+              <div id="filtersList" class="filters-list"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="setup-section">
+          <div class="section-label">
+            <span class="section-num">03</span>
+            Exclusões obrigatórias
+            <span class="required-badge">Obrigatório por lei</span>
+          </div>
+          <div class="setup-card">
+            <div class="lgpd-alert">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <span>As exclusões abaixo são aplicadas automaticamente em conformidade com LGPD e políticas internas</span>
+            </div>
+            <div class="exclusions-list">
+              <div class="exclusion-item locked">
+                <div class="excl-icon">🔒</div>
+                <div class="excl-info">
+                  <div class="excl-name">Menores de 18 anos</div>
+                  <div class="excl-desc">Excluídos automaticamente de todas as campanhas</div>
+                </div>
+                <div class="excl-status on">Ativo</div>
+              </div>
+              <div class="exclusion-item locked">
+                <div class="excl-icon">🔒</div>
+                <div class="excl-info">
+                  <div class="excl-name">Pessoas em situação de vulnerabilidade</div>
+                  <div class="excl-desc">Lista atualizada semanalmente pelo compliance</div>
+                </div>
+                <div class="excl-status on">Ativo</div>
+              </div>
+              <div class="exclusion-item locked">
+                <div class="excl-icon">🔒</div>
+                <div class="excl-info">
+                  <div class="excl-name">Óbitos registrados</div>
+                  <div class="excl-desc">Integrado com base de óbitos do IBGE</div>
+                </div>
+                <div class="excl-status on">Ativo</div>
+              </div>
+              <div class="exclusion-item locked">
+                <div class="excl-icon">🔒</div>
+                <div class="excl-info">
+                  <div class="excl-name">Pessoas Politicamente Expostas (PEP)</div>
+                  <div class="excl-desc">Conforme regulamentação do BACEN</div>
+                </div>
+                <div class="excl-status on">Ativo</div>
+              </div>
+              <div class="exclusion-item locked">
+                <div class="excl-icon">🔒</div>
+                <div class="excl-info">
+                  <div class="excl-name">Opt-out LGPD</div>
+                  <div class="excl-desc">Clientes que solicitaram exclusão de comunicações</div>
+                </div>
+                <div class="excl-status on">Ativo</div>
+              </div>
+            </div>
+
+            <div class="exclusions-custom-header">Listas de exclusão adicionais (opcional)</div>
+            <div class="select-custom" id="selectExclusoes">
+              <div class="select-trigger" onclick="toggleSelect('selectExclusoes')">
+                <span class="select-value muted">Adicionar lista de exclusão...</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+              </div>
+              <div class="select-dropdown">
+                <div class="select-option" onclick="selectOption('selectExclusoes', 'Clientes com processo judicial ativo')">⚖️ Clientes com processo judicial ativo</div>
+                <div class="select-option" onclick="selectOption('selectExclusoes', 'Clientes em renegociação')">🔄 Clientes em renegociação</div>
+                <div class="select-option" onclick="selectOption('selectExclusoes', 'Concorrentes identificados')">🏦 Concorrentes identificados</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2: JOURNEY BUILDER -->
+  <div id="step2" class="step-view" style="display:none">
+    <div class="builder-layout">
+
+      <!-- LEFT SIDEBAR - BLOCK LIBRARY -->
+      <aside class="block-sidebar">
+        <div class="sidebar-header" style="margin-top:12px">
+          <span>⚡ Templates sugeridos</span>
+        </div>
+        <div class="template-list" style="margin-bottom: 24px;">
+          <div class="template-item" onclick="applyTemplate('boasvindas')">
+            <div class="tpl-icon">🚀</div>
+            <div class="tpl-info">
+              <div class="tpl-name">Boas-vindas</div>
+              <div class="tpl-desc">4 etapas · Push + SMS</div>
+            </div>
+          </div>
+          <div class="template-item" onclick="applyTemplate('cartao')">
+            <div class="tpl-icon">💳</div>
+            <div class="tpl-info">
+              <div class="tpl-name">Ativação de cartão</div>
+              <div class="tpl-desc">6 etapas · SMS + Email</div>
+            </div>
+          </div>
+          <div class="template-item" onclick="applyTemplate('reengajamento')">
+            <div class="tpl-icon">🔄</div>
+            <div class="tpl-info">
+              <div class="tpl-name">Reengajamento</div>
+              <div class="tpl-desc">5 etapas · Push + WhatsApp</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="sidebar-header">
+          <span>Blocos da jornada</span>
+        </div>
+        <div class="sidebar-hint">Arraste ou clique para adicionar ao canvas</div>
+
+        <div class="block-library">
+          <div class="block-item trigger-block" draggable="true" onclick="addBlock('trigger')" data-type="trigger">
+            <div class="block-item-icon">⚡</div>
+            <div class="block-item-info">
+              <div class="block-item-name">Quando acontecer</div>
+              <div class="block-item-desc">Define o gatilho inicial</div>
+            </div>
+          </div>
+          <div class="block-item wait-block" draggable="true" onclick="addBlock('wait')" data-type="wait">
+            <div class="block-item-icon">⏳</div>
+            <div class="block-item-info">
+              <div class="block-item-name">Esperar</div>
+              <div class="block-item-desc">Aguardar antes de continuar</div>
+            </div>
+          </div>
+          <div class="block-item send-block" draggable="true" onclick="addBlock('send')" data-type="send">
+            <div class="block-item-icon">📨</div>
+            <div class="block-item-info">
+              <div class="block-item-name">Enviar</div>
+              <div class="block-item-desc">Dispara uma mensagem</div>
+            </div>
+          </div>
+          <div class="block-item check-block" draggable="true" onclick="addBlock('check')" data-type="check">
+            <div class="block-item-icon">🔀</div>
+            <div class="block-item-info">
+              <div class="block-item-name">Verificar</div>
+              <div class="block-item-desc">Cria um caminho condicional</div>
+            </div>
+          </div>
+          <div class="block-item end-block" draggable="true" onclick="addBlock('end')" data-type="end">
+            <div class="block-item-icon">🏁</div>
+            <div class="block-item-info">
+              <div class="block-item-name">Encerrar campanha</div>
+              <div class="block-item-desc">Finaliza a jornada</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-section-title">Estatísticas</div>
+        <div class="canvas-stats">
+          <div class="cstat"><span class="cstat-val" id="statBlocks">0</span><span class="cstat-label">Blocos</span></div>
+          <div class="cstat"><span class="cstat-val" id="statPaths">1</span><span class="cstat-label">Caminhos</span></div>
+          <div class="cstat"><span class="cstat-val" id="statDays">0</span><span class="cstat-label">Dias est.</span></div>
+        </div>
+
+        <div class="sidebar-divider"></div>
+        <button class="btn-simulate" onclick="runSimulation()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Simular Jornada
+        </button>
+      </aside>
+
+      <!-- CANVAS AREA -->
+      <main class="canvas-area" id="canvasArea">
+        <div class="canvas-toolbar">
+          <div class="canvas-toolbar-left">
+            <button class="canvas-btn" onclick="zoomIn()">+</button>
+            <span class="zoom-label" id="zoomLabel">100%</span>
+            <button class="canvas-btn" onclick="zoomOut()">−</button>
+            <button class="canvas-btn" onclick="resetZoom()" title="Centralizar">⊙</button>
+          </div>
+          <div class="canvas-toolbar-center">
+            <span class="canvas-name" id="canvasNameLabel">Nova Campanha</span>
+          </div>
+          <div class="canvas-toolbar-right">
+            <button class="canvas-btn-text" onclick="clearCanvas()">Limpar canvas</button>
+            <button class="canvas-btn-text" onclick="loadExample()">Carregar exemplo</button>
+          </div>
+        </div>
+
+        <div class="canvas-viewport" id="canvasViewport">
+          <div class="canvas-grid" id="canvasGrid">
+            <!-- Blocos são inseridos aqui via JS -->
+            <div class="canvas-start-hint" id="startHint">
+              <div class="start-hint-icon">✦</div>
+              <div class="start-hint-title">Construa a jornada</div>
+              <div class="start-hint-desc">Clique em "Quando acontecer" na barra lateral para começar</div>
+              <button class="btn-primary" style="margin-top:16px" onclick="loadExample()">Carregar exemplo completo</button>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- RIGHT PANEL - BLOCK DETAIL -->
+      <aside class="detail-panel" id="detailPanel">
+        <div class="detail-empty" id="detailEmpty">
+          <div class="detail-empty-icon">👆</div>
+          <div class="detail-empty-title">Selecione um bloco</div>
+          <div class="detail-empty-desc">Clique em qualquer bloco no canvas para configurá-lo aqui</div>
+        </div>
+        <div class="detail-content" id="detailContent" style="display:none">
+          <!-- Preenchido dinamicamente pelo JS -->
+        </div>
+      </aside>
+
+    </div>
+  </div>
+
+  <!-- MODAL DE SELEÇÃO DE PEÇAS -->
+  <div class="modal-overlay" id="pecasModal" style="display: none;">
+    <div class="modal-container modal-lg">
+      <div class="modal-header">
+        <div class="modal-title">Selecionar Peça de Comunicação</div>
+        <button class="modal-close" onclick="closePecasModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-toolbar">
+          <div class="search-input">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="pecaSearch" placeholder="Buscar por nome, canal ou conteúdo..." onkeyup="filterPecas()" />
+          </div>
+          <div class="filter-tabs">
+            <button class="filter-tab active" onclick="filterPecasCat('Todos', this)">Todos</button>
+            <button class="filter-tab" onclick="filterPecasCat('Push', this)">Push</button>
+            <button class="filter-tab" onclick="filterPecasCat('SMS', this)">SMS</button>
+            <button class="filter-tab" onclick="filterPecasCat('Email', this)">Email</button>
+          </div>
+        </div>
+        
+        <div class="pecas-grid" id="pecasList">
+          <!-- Renderizado via JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOATING MENU PARA ADICIONAR BLOCOS -->
+  <div id="addBlockMenu" class="add-block-menu" style="display: none;">
+    <div class="menu-item" onclick="confirmAddBlock('wait')"><span class="menu-icon">⏳</span> Esperar</div>
+    <div class="menu-item" onclick="confirmAddBlock('send')"><span class="menu-icon">📨</span> Enviar</div>
+    <div class="menu-item" onclick="confirmAddBlock('check')"><span class="menu-icon">🔀</span> Verificar</div>
+    <div class="menu-item" onclick="confirmAddBlock('end')"><span class="menu-icon">🏁</span> Encerrar campanha</div>
+  </div>
+
+  <script src="builder.js"></script>
+  <script>
+    function goToStep2() {
+      // Esconde step1, mostra step2 — sem depender de CSS !important
+      const s1 = document.getElementById('step1');
+      const s2 = document.getElementById('step2');
+      s1.style.setProperty('display', 'none', 'important');
+      s2.style.setProperty('display', 'flex', 'important');
+      document.querySelectorAll('.step-pill').forEach(p => p.classList.remove('active'));
+      document.querySelector('[data-step="2"]').classList.add('active');
+      document.getElementById('mainActionBtn').textContent = '🚀 Publicar Campanha';
+      document.getElementById('mainActionBtn').onclick = publishCampaign;
+      const name = document.getElementById('campNome').value || document.getElementById('campaignName').value;
+      if (name) {
+        document.getElementById('canvasNameLabel').textContent = name;
+        document.getElementById('campaignName').value = name;
+      }
+      renderCanvas();
+    }
+
+    function goToStep1() {
+      const s1 = document.getElementById('step1');
+      const s2 = document.getElementById('step2');
+      s2.style.setProperty('display', 'none', 'important');
+      s1.style.setProperty('display', 'flex', 'important');
+      document.querySelectorAll('.step-pill').forEach(p => p.classList.remove('active'));
+      document.querySelector('[data-step="1"]').classList.add('active');
+      document.getElementById('mainActionBtn').textContent = 'Continuar → Jornada';
+      document.getElementById('mainActionBtn').onclick = goToStep2;
+    }
+
+    function publishCampaign() {
+      const btn = document.getElementById('mainActionBtn');
+      btn.textContent = '✓ Publicando...';
+      btn.disabled = true;
+      setTimeout(() => {
+        btn.textContent = '✅ Campanha publicada!';
+        btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+      }, 1500);
+    }
+
+    document.getElementById('campaignName').addEventListener('input', function() {
+      document.getElementById('canvasNameLabel').textContent = this.value;
+    });
+
+    // Garante que ao carregar a página step2 está oculto
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('step2').style.setProperty('display','none','important');
+      document.getElementById('step1').style.setProperty('display','flex','important');
+    });
+  </script>
+</body>
+</html>

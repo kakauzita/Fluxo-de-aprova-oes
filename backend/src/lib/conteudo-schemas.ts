@@ -2,32 +2,44 @@ import { z } from 'zod'
 
 type CanalTipo = 'SMS' | 'PUSH' | 'WHATSAPP' | 'EMAIL' | 'BANNER_APP'
 
-// Schemas de conteúdo por canal
+const BaseSchema = {
+    observacoes: z.string().optional().or(z.literal('')),
+}
+
 export const ConteudoSMS = z.object({
+    ...BaseSchema,
     mensagem: z.string().min(1).max(160),
 })
 
 export const ConteudoPush = z.object({
+    ...BaseSchema,
+    app: z.string().optional(),
     titulo: z.string().min(1).max(65),
-    corpo: z.string().min(1).max(240),
-    urlDestino: z.string().url().optional(),
+    mensagem: z.string().min(1).max(240),
+    textoLink: z.string().optional().or(z.literal('')),
+    urlDestino: z.string().optional().or(z.literal('')),
 })
 
 export const ConteudoWhatsApp = z.object({
-    templateId: z.string().min(1),
-    variaveis: z.record(z.string(), z.string()),
+    ...BaseSchema,
+    titulo: z.string().min(1).max(65),
+    mensagem: z.string().min(1).max(1024),
+    textoLink: z.string().optional().or(z.literal('')),
+    urlDestino: z.string().optional().or(z.literal('')),
 })
 
 export const ConteudoEmail = z.object({
+    ...BaseSchema,
     assunto: z.string().min(1),
     corpoHtml: z.string().min(1),
-    remetente: z.string().email().optional(),
 })
 
 export const ConteudoBannerApp = z.object({
-    imagemUrl: z.string().url(),
-    titulo: z.string().optional(),
-    urlDestino: z.string().url().optional(),
+    ...BaseSchema,
+    titulo: z.string().min(1).max(65),
+    corpo: z.string().min(1).max(240),
+    textoLink: z.string().optional().or(z.literal('')),
+    urlDestino: z.string().optional().or(z.literal('')),
 })
 
 export function getConteudoSchema(canal: CanalTipo) {

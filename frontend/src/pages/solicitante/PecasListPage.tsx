@@ -89,8 +89,8 @@ export default function PecasListPage() {
             <div
                 onClick={() => navigate('/pecas/nova')}
                 style={{
-                    background: 'var(--caixa-blue-bg)',
-                    border: '1.5px solid var(--caixa-blue-light)',
+                    background: '#EBF1F2',
+                    border: '1px solid #d1d5db',
                     borderRadius: 8,
                     padding: '20px 24px',
                     marginBottom: 16,
@@ -98,19 +98,31 @@ export default function PecasListPage() {
                     display: 'flex',
                     alignItems: 'center',
                     gap: 16,
-                    transition: 'background 0.15s',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
-                onMouseEnter={e => (e.currentTarget.style.background = '#dbeafe')}
-                onMouseLeave={e => (e.currentTarget.style.background = 'var(--caixa-blue-bg)')}
+                onMouseEnter={e => {
+                    e.currentTarget.style.background = '#e2e8ea';
+                    e.currentTarget.style.boxShadow = '0 6px 12px -2px rgba(0,0,0,0.1), 0 3px 6px -3px rgba(0,0,0,0.05)';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={e => {
+                    e.currentTarget.style.background = '#EBF1F2';
+                    e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.06)';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                }}
             >
                 <div style={{
                     width: 44, height: 44, borderRadius: 8,
-                    background: 'white', border: '1.5px solid var(--caixa-blue-light)',
+                    background: 'var(--caixa-orange)', border: 'none',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                     position: 'relative',
+                    boxShadow: '0 2px 5px rgba(234, 88, 12, 0.3)'
                 }}>
-                    <FileText size={20} color="var(--caixa-blue)" />
-                    <Plus size={12} color="var(--caixa-blue)" style={{ position: 'absolute', top: 4, right: 4 }} />
+                    <FileText size={20} color="white" />
+                    <div style={{ position: 'absolute', top: -2, right: -2, background: 'white', borderRadius: '50%', width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Plus size={10} color="var(--caixa-orange)" strokeWidth={4} />
+                    </div>
                 </div>
                 <div>
                     <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--caixa-blue)', marginBottom: 3 }}>

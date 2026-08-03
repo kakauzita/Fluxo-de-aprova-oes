@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestão de Campanhas — CX Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ===================== CAMPAIGNS LIST PAGE ===================== */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 32px 40px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .page-header-left h1 {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .page-header-left p {
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .btn-new-campaign {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: var(--accent-gradient);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+    .btn-new-campaign:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(93,95,239,0.35); }
+
+    .campaigns-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 20px 40px;
+    }
+    .search-input {
+      flex: 1;
+      max-width: 340px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: var(--text);
+    }
+    .search-input input {
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-size: 13px;
+      width: 100%;
+    }
+    .search-input input::placeholder { color: var(--muted); }
+    .filter-tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 4px;
+    }
+    .filter-tab {
+      padding: 6px 14px;
+      border-radius: 7px;
+      font-size: 13px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      border: none;
+      background: none;
+    }
+    .filter-tab.active { background: var(--accent); color: #fff; font-weight: 500; }
+    .filter-tab:hover:not(.active) { color: var(--text); background: var(--card); }
+
+    .campaigns-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 16px;
+      padding: 0 40px 40px;
+    }
+    .campaign-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .campaign-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      border-radius: 14px 14px 0 0;
+    }
+    .campaign-card.active-card::before { background: var(--accent-gradient); }
+    .campaign-card.paused-card::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    .campaign-card.draft-card::before { background: linear-gradient(90deg, #4b5563, #6b7280); }
+    .campaign-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .card-icon {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .card-status { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: 20px; }
+    .status-active { background: rgba(16,185,129,0.12); color: #10b981; }
+    .status-paused { background: rgba(245,158,11,0.12); color: #f59e0b; }
+    .status-draft { background: rgba(107,114,128,0.12); color: #9ca3af; }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .status-active .status-dot { animation: pulse-dot 2s ease infinite; }
+
+    @keyframes pulse-dot {
+      0%,100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .card-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+    .card-desc { font-size: 12px; color: var(--muted); line-height: 1.5; margin-bottom: 16px; }
+
+    .card-metrics {
+      display: flex;
+      gap: 16px;
+      padding: 14px 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 14px;
+    }
+    .metric { text-align: center; flex: 1; }
+    .metric-value { font-size: 18px; font-weight: 700; color: var(--text); }
+    .metric-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    .card-footer { display: flex; align-items: center; justify-content: space-between; }
+    .card-tags { display: flex; gap: 6px; }
+    .tag { font-size: 11px; padding: 3px 8px; border-radius: 5px; background: rgba(93,95,239,0.12); color: var(--accent-light); }
+    .card-date { font-size: 11px; color: var(--muted); }
+
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 80px 20px;
+    }
+    .empty-state .empty-icon { font-size: 48px; margin-bottom: 16px; }
+    .empty-state h3 { font-size: 18px; color: var(--text); margin-bottom: 8px; }
+    .empty-state p { font-size: 14px; color: var(--muted); }
+
+    /* ===================== STATS ROW ===================== */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      padding: 0 40px 24px;
+    }
+    .stat-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 22px;
+    }
+    .stat-box-label { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    .stat-box-value { font-size: 28px; font-weight: 700; color: var(--text); }
+    .stat-box-change { font-size: 12px; color: #10b981; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <!-- TOP NAV -->
+  <nav class="topnav">
+    <div class="nav-brand">
+      <div class="brand-icon">CX</div>
+      <span class="brand-name">Gestão de Campanhas</span>
+    </div>
+    <div class="nav-links">
+      <a href="/" class="nav-link">Visão Geral</a>
+      <a href="/campanhas/index.html" class="nav-link active">Campanhas</a>
+      <a href="/pecas" class="nav-link">Peças</a>
+      <a href="/" class="nav-link">Relatórios</a>
+      <a href="/admin/configuracao" class="nav-link">Configurações</a>
+    </div>
+    <div class="nav-user">
+      <div class="nav-notif">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <span class="notif-badge">2</span>
+      </div>
+      <div class="user-avatar">CA</div>
+      <div class="user-info">
+        <span class="user-name">Carla</span>
+        <span class="user-role">Solicitante</span>
+      </div>
+    </div>
+  </nav>
+
+  <div class="page-content">
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <div class="page-header-left">
+        <h1>Campanhas de Comunicação</h1>
+        <p>Monte jornadas automatizadas e acompanhe o desempenho em tempo real</p>
+      </div>
+      <a href="campaign-builder.html" class="btn-new-campaign">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+        Nova Campanha
+      </a>
+    </div>
+
+    <!-- STATS ROW -->
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="stat-box-label">Campanhas Ativas</div>
+        <div class="stat-box-value">3</div>
+        <div class="stat-box-change">↑ 1 este mês</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-box-label">Pessoas Alcançadas</div>
+        <div class="stat-box-value">142.8k</div>
+        <div class="stat-box-change">↑ 12% vs. mês anterior</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-box-label">Taxa de Engajamento</div>
+        <div class="stat-box-value">34.2%</div>
+        <div class="stat-box-change">↑ 3.1pp vs. mês anterior</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-box-label">Mensagens Enviadas</div>
+        <div class="stat-box-value">891k</div>
+        <div class="stat-box-change">↑ 8% vs. mês anterior</div>
+      </div>
+    </div>
+
+    <!-- TOOLBAR -->
+    <div class="campaigns-toolbar">
+      <div class="search-input">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" placeholder="Buscar campanhas..." />
+      </div>
+      <div class="filter-tabs">
+        <button class="filter-tab active">Todas</button>
+        <button class="filter-tab">Ativas</button>
+        <button class="filter-tab">Pausadas</button>
+        <button class="filter-tab">Rascunhos</button>
+      </div>
+    </div>
+
+    <!-- CAMPAIGNS GRID -->
+    <div class="campaigns-grid">
+      <!-- Card 1 -->
+      <div class="campaign-card active-card" onclick="window.location.href='campaign-builder.html'">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(93,95,239,0.15)">🚀</div>
+          <div class="card-status status-active"><span class="status-dot"></span> Ativa</div>
+        </div>
+        <div class="card-title">Boas-vindas — Conta Nova</div>
+        <div class="card-desc">Jornada de ativação para clientes que acabaram de abrir conta e realizaram a primeira movimentação</div>
+        <div class="card-metrics">
+          <div class="metric"><div class="metric-value">48.2k</div><div class="metric-label">Alcance</div></div>
+          <div class="metric"><div class="metric-value">61%</div><div class="metric-label">Abertura</div></div>
+          <div class="metric"><div class="metric-value">22%</div><div class="metric-label">Conversão</div></div>
+        </div>
+        <div class="card-footer">
+          <div class="card-tags"><span class="tag">Push</span><span class="tag">SMS</span></div>
+          <div class="card-date">Atualizada há 2h</div>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="campaign-card active-card" onclick="window.location.href='campaign-builder.html'">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(16,185,129,0.15)">💳</div>
+          <div class="card-status status-active"><span class="status-dot"></span> Ativa</div>
+        </div>
+        <div class="card-title">Desbloqueio de Cartão Pré-aprovado</div>
+        <div class="card-desc">Incentiva clientes elegíveis a desbloquear o cartão de crédito pré-aprovado com oferta personalizada</div>
+        <div class="card-metrics">
+          <div class="metric"><div class="metric-value">31.5k</div><div class="metric-label">Alcance</div></div>
+          <div class="metric"><div class="metric-value">54%</div><div class="metric-label">Abertura</div></div>
+          <div class="metric"><div class="metric-value">18%</div><div class="metric-label">Conversão</div></div>
+        </div>
+        <div class="card-footer">
+          <div class="card-tags"><span class="tag">SMS</span><span class="tag">Email</span></div>
+          <div class="card-date">Atualizada há 1d</div>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="campaign-card active-card" onclick="window.location.href='campaign-builder.html'">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(245,158,11,0.15)">⚡</div>
+          <div class="card-status status-active"><span class="status-dot"></span> Ativa</div>
+        </div>
+        <div class="card-title">Cadastro de Chave Pix</div>
+        <div class="card-desc">Estimula novos clientes a cadastrarem a chave Pix logo após a abertura da conta</div>
+        <div class="card-metrics">
+          <div class="metric"><div class="metric-value">63.1k</div><div class="metric-label">Alcance</div></div>
+          <div class="metric"><div class="metric-value">72%</div><div class="metric-label">Abertura</div></div>
+          <div class="metric"><div class="metric-value">41%</div><div class="metric-label">Conversão</div></div>
+        </div>
+        <div class="card-footer">
+          <div class="card-tags"><span class="tag">Push</span></div>
+          <div class="card-date">Atualizada há 3d</div>
+        </div>
+      </div>
+
+      <!-- Card 4 Pausada -->
+      <div class="campaign-card paused-card" onclick="window.location.href='campaign-builder.html'">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(245,158,11,0.1)">📊</div>
+          <div class="card-status status-paused"><span class="status-dot"></span> Pausada</div>
+        </div>
+        <div class="card-title">Reengajamento — Inativos 90d</div>
+        <div class="card-desc">Recupera clientes que não movimentaram a conta há mais de 90 dias com oferta especial</div>
+        <div class="card-metrics">
+          <div class="metric"><div class="metric-value">12.4k</div><div class="metric-label">Alcance</div></div>
+          <div class="metric"><div class="metric-value">29%</div><div class="metric-label">Abertura</div></div>
+          <div class="metric"><div class="metric-value">8%</div><div class="metric-label">Conversão</div></div>
+        </div>
+        <div class="card-footer">
+          <div class="card-tags"><span class="tag">SMS</span><span class="tag">WhatsApp</span></div>
+          <div class="card-date">Pausada há 5d</div>
+        </div>
+      </div>
+
+      <!-- Card 5 Rascunho -->
+      <div class="campaign-card draft-card" onclick="window.location.href='campaign-builder.html'">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(107,114,128,0.12)">📝</div>
+          <div class="card-status status-draft"><span class="status-dot"></span> Rascunho</div>
+        </div>
+        <div class="card-title">Upsell — Investimento CDB</div>
+        <div class="card-desc">Apresenta opções de investimento em CDB para clientes com saldo em conta corrente acima de R$5.000</div>
+        <div class="card-metrics">
+          <div class="metric"><div class="metric-value">—</div><div class="metric-label">Alcance</div></div>
+          <div class="metric"><div class="metric-value">—</div><div class="metric-label">Abertura</div></div>
+          <div class="metric"><div class="metric-value">—</div><div class="metric-label">Conversão</div></div>
+        </div>
+        <div class="card-footer">
+          <div class="card-tags"><span class="tag">Email</span><span class="tag">Push</span></div>
+          <div class="card-date">Criada há 2d</div>
+        </div>
+      </div>
+
+      <!-- Nova campanha placeholder -->
+      <div class="campaign-card draft-card" style="border-style: dashed; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height: 220px; cursor:pointer;" onclick="window.location.href='campaign-builder.html'">
+        <div style="width:48px;height:48px;border-radius:12px;background:rgba(93,95,239,0.1);display:flex;align-items:center;justify-content:center;margin-bottom:14px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5d5fef" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        </div>
+        <div style="font-size:14px;font-weight:600;color:#5d5fef;margin-bottom:6px;">Criar nova campanha</div>
+        <div style="font-size:12px;color:var(--muted);">Monte uma jornada do zero</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll('.filter-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

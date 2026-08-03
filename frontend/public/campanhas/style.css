@@ -1,0 +1,147 @@
+/* =====================================================
+   DESIGN SYSTEM — Gestão de Campanhas CX Platform
+   ===================================================== */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #08090e;
+  --surface: #0f1017;
+  --card: #16171f;
+  --card-hover: #1c1d28;
+  --border: #1f2030;
+  --border-light: #2a2b3d;
+
+  --accent: #5d5fef;
+  --accent-light: #818cf8;
+  --accent-dim: rgba(93,95,239,0.15);
+  --accent-gradient: linear-gradient(135deg, #5d5fef 0%, #7c3aed 100%);
+
+  --violet: #7c3aed;
+  --violet-dim: rgba(124,58,237,0.15);
+
+  --green: #10b981;
+  --green-dim: rgba(16,185,129,0.12);
+  --amber: #f59e0b;
+  --amber-dim: rgba(245,158,11,0.12);
+  --red: #ef4444;
+  --red-dim: rgba(239,68,68,0.12);
+  --blue: #3b82f6;
+  --blue-dim: rgba(59,130,246,0.12);
+  --pink: #ec4899;
+  --pink-dim: rgba(236,72,153,0.12);
+
+  --text: #f1f2f8;
+  --text-secondary: #a0a3b1;
+  --muted: #5c5f72;
+
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+  --shadow: 0 4px 16px rgba(0,0,0,0.3);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.4);
+  --shadow-accent: 0 8px 24px rgba(93,95,239,0.25);
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===================== TOP NAV ===================== */
+.topnav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  padding: 0 24px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  gap: 24px;
+}
+
+.nav-brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.brand-icon {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  background: var(--accent-gradient);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: #fff;
+  letter-spacing: -0.5px;
+}
+.brand-name { font-size: 14px; font-weight: 600; color: var(--text); }
+
+.nav-links { display: flex; gap: 2px; }
+.nav-link {
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--muted);
+  text-decoration: none;
+  transition: all 0.15s;
+  font-weight: 500;
+}
+.nav-link:hover { color: var(--text); background: var(--card); }
+.nav-link.active { color: var(--accent-light); background: var(--accent-dim); }
+
+.nav-user { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.nav-notif {
+  position: relative;
+  width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.nav-notif:hover { color: var(--text); border-color: var(--border-light); }
+.notif-badge {
+  position: absolute;
+  top: -4px; right: -4px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--red);
+  font-size: 9px;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--surface);
+}
+.user-avatar {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  background: var(--accent-gradient);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: #fff;
+}
+.user-info { display: flex; flex-direction: column; }
+.user-name { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.2; }
+.user-role { font-size: 11px; color: var(--muted); }
+
+.page-content { height: calc(100vh - 56px); overflow-y: auto; }
+
+/* ===================== SCROLLBAR ===================== */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+/* ===================== UTILITIES ===================== */
+.flex { display: flex; }
+.flex-col { display: flex; flex-direction: column; }
+.items-center { align-items: center; }
+.gap-8 { gap: 8px; }
+.gap-12 { gap: 12px; }
+.truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
