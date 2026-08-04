@@ -67,10 +67,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     </button>
                     <div className="header-brand" style={{ gap: '16px', display: 'flex', alignItems: 'center' }}>
                         {/* Caixa X Logo */}
-                        <svg viewBox="56 -1 55 33" style={{ height: '20px', width: 'auto', display: 'block' }} xmlns="http://www.w3.org/2000/svg">
+                        <svg viewBox="66 -1 46 33" style={{ height: '20px', width: 'auto', display: 'block' }} xmlns="http://www.w3.org/2000/svg">
                             <g transform="matrix(2.92153 0 0 2.92153 -838.161 -441.968)">
                                 <path d="M310.18 161.61h4.41l4.83-4.84h-4.41zM318.42 153.36l1.49 2.92 4.83-4.83h-4.41z" fill="#f7941d" />
-                                <path d="M310.03 161.61h-3.69l1.61-10.16h3.69z" fill="#FFFFFF" fillRule="evenodd" />
                                 <path d="M319.91 156.28h-4.41l-2.46-4.83h4.41z" fill="#FFFFFF" fillRule="evenodd" />
                                 <path d="M321.88 161.61h-4.41l-.97-1.92 2.92-2.92z" fill="#FFFFFF" fillRule="evenodd" />
                             </g>
