@@ -807,28 +807,9 @@
   border-bottom-color: #e8e5ff;
 }
 
-/* Backward connector - return dashed lines */
+/* Backward connector wrapper (lines are drawn dynamically via SVG) */
 .canvas-block.connector-backward {
   position: relative;
-}
-.canvas-block.connector-backward::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 100%;
-  width: 50px;
-  border-top: 2px dashed #6366f1;
-}
-.canvas-block.connector-backward::after {
-  content: '';
-  position: absolute;
-  top: -220px;
-  left: calc(100% + 48px);
-  height: 240px;
-  border-right: 2px dashed #6366f1;
-  border-top: 2px dashed #6366f1;
-  border-radius: 0 8px 0 0;
-  width: 24px;
 }
 
 /* INLINE ADD BUTTON */

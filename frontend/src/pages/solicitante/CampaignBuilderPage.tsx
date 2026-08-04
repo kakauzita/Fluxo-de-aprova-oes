@@ -33,8 +33,111 @@ import {
 import './CampaignBuilderPage.css'
 import JornadaExplicada, { mapBlocksToJornadaNodes } from '../../components/JornadaExplicada'
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// ─── SVG Overlay for Backward Connections ─────────────────────────────────────
+const BackwardConnectionsOverlay = ({ blocks, zoom }: { blocks: any[], zoom: number }) => {
+  const [paths, setPaths] = useState<{ id: string, d: string }[]>([]);
 
+  useEffect(() => {
+    let animationFrameId: number;
+    const updatePaths = () => {
+      const container = document.querySelector('.canvas-grid');
+      if (!container) return;
+      const containerRect = container.getBoundingClientRect();
+
+      const flattenBlocks = (list: any[]) => {
+        let flat: any[] = [];
+        for (const b of list) {
+          flat.push(b);
+          if (b.config?.yes) flat = flat.concat(flattenBlocks(b.config.yes));
+          if (b.config?.no) flat = flat.concat(flattenBlocks(b.config.no));
+        }
+        return flat;
+      };
+      
+      const allBlocks = flattenBlocks(blocks);
+      const backwardConnectors = allBlocks.filter((b: any) => b.type === 'connector' && b.config?.direction === 'backward');
+      
+      const newPaths = backwardConnectors.map((connector: any) => {
+        const sourceEl = document.getElementById(`canvas-block-${connector.id}`);
+        const targetEl = document.getElementById(`canvas-block-${connector.config?.targetBlockId}`);
+        
+        console.log('SVG Overlay Connector:', connector.id, 'Source:', sourceEl, 'Target:', targetEl);
+
+        if (!sourceEl || !targetEl) return null;
+
+        const srcRect = sourceEl.getBoundingClientRect();
+        const tgtRect = targetEl.getBoundingClientRect();
+
+        // Convert screen coordinates to local grid coordinates
+        const startX = (srcRect.right - containerRect.left) / zoom;
+        const startY = (srcRect.top + srcRect.height / 2 - containerRect.top) / zoom;
+        
+        const endX = (tgtRect.right - containerRect.left) / zoom;
+        const endY = (tgtRect.top + 40 - containerRect.top) / zoom; // Connect near the top of the destination block
+
+        // Draw orthogonal path: right, up/down, left
+        const offsetX = 50; // Distance to jut out to the right
+        const xOut = Math.max(startX, endX) + offsetX;
+
+        const d = `M ${startX} ${startY} H ${xOut} V ${endY} H ${endX}`;
+        
+        return { id: connector.id, d };
+      }).filter(Boolean) as { id: string, d: string }[];
+
+      setPaths(newPaths);
+    };
+
+    const scheduleUpdate = () => {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = requestAnimationFrame(updatePaths);
+    };
+
+    scheduleUpdate();
+    
+    // Add observers to recalculate on resize or mutation (e.g., blocks expanding)
+    const observer = new MutationObserver(scheduleUpdate);
+    const container = document.querySelector('.canvas-grid');
+    if (container) {
+      observer.observe(container, { childList: true, subtree: true, attributes: true });
+    }
+    window.addEventListener('resize', scheduleUpdate);
+    
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      observer.disconnect();
+      window.removeEventListener('resize', scheduleUpdate);
+    };
+  }, [blocks, zoom]);
+
+  return (
+    <svg 
+      style={{ 
+        position: 'absolute', 
+        top: 0, 
+        left: 0, 
+        width: '100%', 
+        height: '100%', 
+        pointerEvents: 'none',
+        overflow: 'visible',
+        zIndex: 10
+      }}
+    >
+      {paths.map(p => (
+        <path
+          key={p.id}
+          d={p.d}
+          fill="none"
+          stroke="#6366f1"
+          strokeWidth="2"
+          strokeDasharray="5,5"
+          strokeLinejoin="round"
+        />
+      ))}
+    </svg>
+  );
+};
+
+// ─── Constants ────────────────────────────────────────────────────────────────
 interface BlockMeta {
   icon: React.ReactNode
   label: string
@@ -636,12 +739,13 @@ export default function CampaignBuilderPage() {
       if (b.id === rootBlockId) {
         foundRoot = true;
         timeline.push(b);
+        if (b.type === 'check') break;
         continue;
       }
       
       if (foundRoot) {
-        // Include all blocks (including end_auto) in the sequential timeline.
         timeline.push(b);
+        if (b.type === 'check') break;
       }
     }
     
@@ -1440,7 +1544,7 @@ export default function CampaignBuilderPage() {
 
     // ── Helper: build the card JSX for a single block
     const buildBlockCard = (block: any, stepNum: number | undefined, isEnd: boolean) => (
-      <div className={`canvas-block${block.type === 'connector' && block.config?.direction === 'backward' ? ' connector-backward' : ''}`} style={{ position: 'relative' }} key={block.id}>
+      <div id={`canvas-block-${block.id}`} className={`canvas-block${block.type === 'connector' && block.config?.direction === 'backward' ? ' connector-backward' : ''}`} style={{ position: 'relative' }} key={block.id}>
         <div
           className={`block-card type-${block.type} ${selectedId === block.id ? 'selected' : ''} ${block.id === 'end_auto' ? 'auto-end' : ''}`}
           onClick={(e) => { e.stopPropagation(); if (block.id !== 'end_auto' && block.type !== 'connector') setSelectedId(block.id); }}
@@ -1602,6 +1706,30 @@ export default function CampaignBuilderPage() {
       }
     }
 
+    // Append an add button and an end block to this branch/segment if it doesn't have one
+    const lastSeg = segments.length > 0 ? segments[segments.length - 1] : null;
+    const hasEnd = lastSeg && lastSeg.kind === 'single' && lastSeg.block.type === 'end';
+    const endsWithCheck = lastSeg && lastSeg.kind === 'single' && lastSeg.block.type === 'check';
+    
+    if (!hasEnd && !endsWithCheck && displayList.length > 0) {
+      const endId = `end_auto_${branchCtx ? branchCtx.blockId + '_' + branchCtx.branch : 'main'}`;
+      
+      result.push(
+        <React.Fragment key={`add_final_${endId}`}>
+          {renderInlineAddBtn(() => {
+            if (branchCtx) {
+              setInsertTarget({ blockId: branchCtx.blockId, branch: branchCtx.branch, index: displayList.length });
+            } else {
+              setInsertTarget({ index: blocks.filter((b: any) => b.id !== 'end_auto').length });
+            }
+            setSelectedId(null);
+          })}
+        </React.Fragment>
+      );
+      
+      result.push(buildBlockCard({ id: endId, type: 'end', config: {} }, undefined, true));
+    }
+
     return result;
   }
 
@@ -1752,7 +1880,7 @@ export default function CampaignBuilderPage() {
                 Quem vai receber
               </h3>
               <div className="setup-card">
-                <div className="form-row" style={{ display: 'flex', gap: '24px' }}>
+                <div className="form-row" style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
                   {/* Público Alvo */}
                   <div className="form-group" style={{ flex: 1 }}>
                     <label className="form-label" style={{ fontWeight: 700 }}>Público alvo</label>
@@ -2179,7 +2307,7 @@ export default function CampaignBuilderPage() {
         </div>
         
         {/* Footer buttons at the bottom of the page */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 32, borderTop: '1px solid var(--builder-border-light)', paddingTop: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 32, borderTop: '1px solid var(--builder-border-light)', paddingTop: 20, marginBottom: 40 }}>
           <button 
             className="btn" 
             style={{ background: 'white', border: '1px solid #cbd5e1', color: '#64748b', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 500, fontSize: 14, cursor: 'not-allowed' }}
@@ -2281,6 +2409,7 @@ export default function CampaignBuilderPage() {
                   transformOrigin: 'top left'
                 }}
               >
+                <BackwardConnectionsOverlay blocks={blocks} zoom={zoom} />
                 {blocks.length === 0 ? (
                   <div className="canvas-start-hint" style={{
                     display: 'flex',
@@ -3135,11 +3264,11 @@ export default function CampaignBuilderPage() {
                           </div>
                         )}
                         <button
-                          className="btn btn-secondary"
-                          style={{ width: '100%', fontSize: 12, border: '1.5px solid var(--caixa-blue)', color: 'var(--caixa-blue)', background: 'white' }}
+                          className="btn btn-primary"
+                          style={{ width: '100%', fontSize: 14, background: 'var(--caixa-blue)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', border: 'none', padding: '10px' }}
                           onClick={() => setPecasModalOpen(true)}
                         >
-                          {selectedBlock.config.piece ? 'Trocar Peça' : '➕ Adicionar peça'}
+                          {selectedBlock.config.piece ? 'Trocar Peça' : <><Plus size={16} /> Adicionar peça</>}
                         </button>
                       </div>
 
@@ -3349,7 +3478,19 @@ export default function CampaignBuilderPage() {
 
                       <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, borderTop: '1px solid var(--builder-border-light)', paddingTop: 16 }}>
                         <button className="btn btn-ghost" onClick={handleCancelEdit}>Cancelar</button>
-                        <button className="btn btn-primary" onClick={handleConfirmEdit} style={{ background: 'var(--caixa-blue)', color: 'white' }}>Confirmar</button>
+                        <button 
+                          className="btn btn-primary" 
+                          onClick={handleConfirmEdit} 
+                          disabled={!selectedBlock.config.piece}
+                          style={{ 
+                            background: selectedBlock.config.piece ? 'var(--caixa-blue)' : '#cbd5e1', 
+                            color: 'white',
+                            cursor: selectedBlock.config.piece ? 'pointer' : 'not-allowed',
+                            border: 'none'
+                          }}
+                        >
+                          Confirmar
+                        </button>
                       </div>
                     </>
                   )}
