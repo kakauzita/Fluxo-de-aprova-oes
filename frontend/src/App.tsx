@@ -14,6 +14,8 @@ import NovaPecaPage from './pages/solicitante/NovaPecaPage'
 import EditarPecaPage from './pages/solicitante/EditarPecaPage'
 import PecaDetailPage from './pages/solicitante/PecaDetailPage'
 import CampaignBuilderPage from './pages/solicitante/CampaignBuilderPage'
+import SelecionarTipoCampanhaPage from './pages/solicitante/SelecionarTipoCampanhaPage'
+import CampaignDisparoPage from './pages/solicitante/CampaignDisparoPage'
 
 // Aprovador
 import AprovacoesPage from './pages/aprovador/AprovacoesPage'
@@ -86,6 +88,16 @@ export default function App() {
             </RequireAuth>
           } />
           <Route path="/campanhas/nova" element={
+            <RequireAuth allowedProfiles={['SOLICITANTE']}>
+              <AppShell><SelecionarTipoCampanhaPage /></AppShell>
+            </RequireAuth>
+          } />
+          <Route path="/campanhas/nova/disparo" element={
+            <RequireAuth allowedProfiles={['SOLICITANTE']}>
+              <AppShell><CampaignDisparoPage /></AppShell>
+            </RequireAuth>
+          } />
+          <Route path="/campanhas/nova/jornada" element={
             <RequireAuth allowedProfiles={['SOLICITANTE']}>
               <AppShell><CampaignBuilderPage /></AppShell>
             </RequireAuth>

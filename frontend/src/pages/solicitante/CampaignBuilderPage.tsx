@@ -1239,6 +1239,27 @@ export default function CampaignBuilderPage() {
   const [templateDropdownOpen, setTemplateDropdownOpen] = useState(false)
 
   function publishCampaign() {
+    const campaignPayload = {
+      tipoCampanha: 'jornada',
+      nome: campaignName,
+      descricao: description,
+      publicoAlvo: selectedPublicos,
+      segmento: selectedSegmentos,
+      filtros: customFilters,
+      exclusoes: [
+        'menores_18',
+        'obitos',
+        'cpf_irregular_rfb',
+        'vulnerabilidade',
+        ...selectedExclusions
+      ],
+      fluxo: {
+        nos: blocks
+      }
+    }
+    
+    console.log('Publicando Campanha (Jornada) - Payload:', JSON.stringify(campaignPayload, null, 2))
+    
     setPublishing(true)
     setTimeout(() => {
       setPublishing(false)
