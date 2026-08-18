@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import ReactDOM from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../lib/api'
 import {
@@ -15,7 +16,10 @@ import {
   MessageCircle,
   Smartphone,
   Calendar,
-  Clock
+  Clock,
+  Upload,
+  Trash2,
+  AlertCircle
 } from 'lucide-react'
 import './CampaignBuilderPage.css'
 
@@ -28,13 +32,6 @@ const MOCK_PECAS = [
   { id: 'p6', name: 'Desbloqueio de Cartão', channel: 'WHATSAPP', content: 'Olá! Vimos que seu cartão CAIXA chegou. Que tal desbloqueá-lo agora pelo WhatsApp?' },
   { id: 'p7', name: 'Pontos do Cartão', channel: 'APP CAIXA', content: 'Seu cartão CAIXA acumula pontos que nunca expiram. Conheça as vantagens.' }
 ]
-
-interface Filter {
-  id: string
-  field: string
-  operator: string
-  value: string
-}
 
 interface Option {
   id: string
@@ -52,14 +49,29 @@ export default function CampaignDisparoPage() {
   const [selectedSegmentos, setSelectedSegmentos] = useState<any[]>([])
   const [tempPublicoId, setTempPublicoId] = useState('')
   const [tempSegmentoId, setTempSegmentoId] = useState('')
-  const [customFilters, setCustomFilters] = useState<Filter[]>([])
   const [selectedExclusions, setSelectedExclusions] = useState<string[]>([])
+  
+  // ─── CSV & Target Mode States ───────────────────────────────────────────────
+  const [quemReceberMode, setQuemReceberMode] = useState<'segmentacao' | 'csv'>('segmentacao')
+  const [csvFile, setCsvFile] = useState<File | null>(null)
+  const [csvFileName, setCsvFileName] = useState('')
+  const [csvFileStatus, setCsvFileStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+  const [csvErrorMsg, setCsvErrorMsg] = useState('')
+  const [csvRecordsCount, setCsvRecordsCount] = useState(0)
+  const [showModalConfirmSwitch, setShowModalConfirmSwitch] = useState(false)
+  const [targetMode, setTargetMode] = useState<'segmentacao' | 'csv' | null>(null)
+  const [dragActive, setDragActive] = useState(false)
   
   // ─── Disparo Único Specific States ──────────────────────────────────────────
   const [selectedPeca, setSelectedPeca] = useState<any | null>(null)
   const [momentoEnvio, setMomentoEnvio] = useState<'imediato' | 'agendado'>('imediato')
   const [dataAgendada, setDataAgendada] = useState('')
   const [campaignObservation, setCampaignObservation] = useState('')
+
+  // ─── Piece Selection Modal States ───────────────────────────────────────────
+  const [pecasModalOpen, setPecasModalOpen] = useState(false)
+  const [pecaSearch, setPecaSearch] = useState('')
+  const [activeTab, setActiveTab] = useState<'Todos' | 'PUSH' | 'SMS' | 'EMAIL' | 'WHATSAPP' | 'APP CAIXA'>('Todos')
   
   // ─── API Lists ──────────────────────────────────────────────────────────────
   const [publicos, setPublicos] = useState<Option[]>([])
@@ -121,6 +133,16 @@ export default function CampaignDisparoPage() {
     return allPecas.filter(p => p.status === 'APROVADA')
   }, [allPecas])
 
+  // Filtered pieces for modal based on search query & channel tab
+  const filteredPecas = useMemo(() => {
+    return approvedPecas.filter(p => {
+      const matchTxt = p.name.toLowerCase().includes(pecaSearch.toLowerCase()) ||
+        p.content.toLowerCase().includes(pecaSearch.toLowerCase())
+      const matchCat = activeTab === 'Todos' || p.channel === activeTab
+      return matchTxt && matchCat
+    })
+  }, [approvedPecas, pecaSearch, activeTab])
+
   // ─── Audience Filter Helpers ────────────────────────────────────────────────
   const handleAddPublico = () => {
     if (!tempPublicoId) return
@@ -149,40 +171,169 @@ export default function CampaignDisparoPage() {
     setSelectedSegmentos(selectedSegmentos.filter(s => s.id !== id))
   }
 
-  // ─── Custom Filter Helpers ──────────────────────────────────────────────────
-  const addFilter = () => {
-    const filter: Filter = {
-      id: 'f' + Date.now(),
-      field: 'Idade',
-      operator: 'maior que',
-      value: ''
-    }
-    setCustomFilters([...customFilters, filter])
+  // ─── CSV Import & Toggle Helpers ───────────────────────────────────────────
+  const handleDownloadTemplate = () => {
+    const csvContent = "cpf;email;telefone\n12345678901;cliente@exemplo.com;11999999999\n98765432100;outro@exemplo.com;\n11122233344;;21988888888"
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.setAttribute("href", url)
+    link.setAttribute("download", "modelo_importacao_clientes.csv")
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 
-  const updateFilter = (id: string, key: keyof Filter, val: string) => {
-    setCustomFilters(customFilters.map(f => {
-      if (f.id === id) {
-        if (key === 'field') {
-          let op = 'igual a'
-          let v = ''
-          if (val === 'Localização') {
-            op = 'Região'
-          } else if (val === 'Gênero') {
-            op = 'igual a'
-          } else {
-            op = 'maior que'
-          }
-          return { ...f, field: val, operator: op, value: v }
+  const handleCSVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    processCSVFile(file)
+  }
+
+  const processCSVFile = (file: File) => {
+    setCsvFile(file)
+    setCsvFileName(file.name)
+    setCsvFileStatus('loading')
+    setCsvErrorMsg('')
+    setCsvRecordsCount(0)
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      // Simulate validation delay for better visual feedback
+      setTimeout(() => {
+        const text = event.target?.result as string
+        if (!text) {
+          setCsvFileStatus('error')
+          setCsvErrorMsg('O arquivo está vazio.')
+          return
         }
-        return { ...f, [key]: val }
-      }
-      return f
-    }))
+
+        const lines = text.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0)
+        if (lines.length <= 1) {
+          setCsvFileStatus('error')
+          setCsvErrorMsg('O arquivo não contém linhas de dados (apenas cabeçalho ou vazio).')
+          return
+        }
+
+        // Parse header
+        const headerLine = lines[0]
+        const separator = headerLine.includes(';') ? ';' : ','
+        const headers = headerLine.split(separator).map(h => h.trim().toLowerCase())
+
+        // Check columns
+        const cpfIndex = headers.indexOf('cpf')
+        const emailIndex = headers.indexOf('email')
+        const telefoneIndex = headers.indexOf('telefone')
+
+        if (cpfIndex === -1) {
+          setCsvFileStatus('error')
+          setCsvErrorMsg('Coluna obrigatória "cpf" não encontrada no cabeçalho do CSV. O arquivo deve conter: cpf;email;telefone')
+          return
+        }
+
+        if (emailIndex === -1 && telefoneIndex === -1) {
+          setCsvFileStatus('error')
+          setCsvErrorMsg('O arquivo precisa conter ao menos uma coluna de contato: "email" ou "telefone".')
+          return
+        }
+
+        // Validate rows
+        let validCount = 0
+        let invalidLines = 0
+
+        for (let i = 1; i < lines.length; i++) {
+          const row = lines[i].split(separator).map(cell => cell.trim())
+          const cpf = row[cpfIndex]
+          const email = emailIndex !== -1 ? row[emailIndex] : ''
+          const telefone = telefoneIndex !== -1 ? row[telefoneIndex] : ''
+
+          // Basic CPF presence validation
+          if (!cpf) {
+            invalidLines++
+            continue
+          }
+
+          // At least one contact field must be present
+          if (!email && !telefone) {
+            invalidLines++
+            continue
+          }
+
+          validCount++
+        }
+
+        if (validCount === 0) {
+          setCsvFileStatus('error')
+          setCsvErrorMsg('Nenhum registro válido encontrado. Verifique se as linhas possuem CPF e e-mail/telefone preenchidos.')
+        } else {
+          setCsvFileStatus('success')
+          setCsvRecordsCount(validCount)
+        }
+      }, 800)
+    }
+
+    reader.onerror = () => {
+      setCsvFileStatus('error')
+      setCsvErrorMsg('Falha ao ler o arquivo CSV.')
+    }
+
+    reader.readAsText(file)
   }
 
-  const removeFilter = (id: string) => {
-    setCustomFilters(customFilters.filter(f => f.id !== id))
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true)
+    } else if (e.type === "dragleave") {
+      setDragActive(false)
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragActive(false)
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      processCSVFile(e.dataTransfer.files[0])
+    }
+  }
+
+  const handleSwitchMode = (mode: 'segmentacao' | 'csv') => {
+    if (mode === quemReceberMode) return
+
+    const hasSegmentationData = selectedPublicos.length > 0 || selectedSegmentos.length > 0
+    const hasCSVData = csvFile !== null
+
+    if ((quemReceberMode === 'segmentacao' && hasSegmentationData) || (quemReceberMode === 'csv' && hasCSVData)) {
+      setTargetMode(mode)
+      setShowModalConfirmSwitch(true)
+    } else {
+      setQuemReceberMode(mode)
+    }
+  }
+
+  const handleConfirmSwitch = () => {
+    if (targetMode === 'csv') {
+      setSelectedPublicos([])
+      setSelectedSegmentos([])
+      setTempPublicoId('')
+      setTempSegmentoId('')
+    } else if (targetMode === 'segmentacao') {
+      setCsvFile(null)
+      setCsvFileName('')
+      setCsvFileStatus('idle')
+      setCsvErrorMsg('')
+      setCsvRecordsCount(0)
+    }
+    setQuemReceberMode(targetMode!)
+    setShowModalConfirmSwitch(false)
+    setTargetMode(null)
+  }
+
+  const handleCancelSwitch = () => {
+    setShowModalConfirmSwitch(false)
+    setTargetMode(null)
   }
 
   // ─── Publish Logic ──────────────────────────────────────────────────────────
@@ -191,9 +342,11 @@ export default function CampaignDisparoPage() {
       tipoCampanha: 'disparo_unico',
       nome: campaignName,
       descricao: description,
-      publicoAlvo: selectedPublicos,
-      segmento: selectedSegmentos,
-      filtros: customFilters,
+      modoPublico: quemReceberMode,
+      publicoAlvo: quemReceberMode === 'segmentacao' ? selectedPublicos : [],
+      segmento: quemReceberMode === 'segmentacao' ? selectedSegmentos : [],
+      csvFileName: quemReceberMode === 'csv' ? csvFileName : null,
+      csvRecordsCount: quemReceberMode === 'csv' ? csvRecordsCount : 0,
       exclusoes: [
         'menores_18',
         'obitos',
@@ -218,12 +371,15 @@ export default function CampaignDisparoPage() {
   }
 
   const isStep1Valid = useMemo(() => {
-    const baseValid = campaignName && selectedPublicos.length > 0 && selectedSegmentos.length > 0 && selectedPeca
+    const targetValid = quemReceberMode === 'segmentacao'
+      ? (selectedPublicos.length > 0 && selectedSegmentos.length > 0)
+      : (csvFileStatus === 'success')
+    const baseValid = campaignName && targetValid && selectedPeca
     if (momentoEnvio === 'agendado') {
       return baseValid && dataAgendada !== ''
     }
     return baseValid
-  }, [campaignName, selectedPublicos, selectedSegmentos, selectedPeca, momentoEnvio, dataAgendada])
+  }, [campaignName, quemReceberMode, selectedPublicos, selectedSegmentos, csvFileStatus, selectedPeca, momentoEnvio, dataAgendada])
 
   return (
     <div className="builder-container" style={{ padding: '24px 30px', maxWidth: '1280px', margin: '0 auto', fontFamily: 'inherit' }}>
@@ -339,303 +495,451 @@ export default function CampaignDisparoPage() {
 
               {/* Secção 02: Quem vai receber */}
               <div className="setup-section">
+                <style>{`
+                  @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                  }
+                `}</style>
                 <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--caixa-blue)', borderLeft: '4px solid var(--caixa-blue)', paddingLeft: 14, marginBottom: 16 }}>
                   Quem vai receber
                 </h3>
                 <div className="setup-card">
-                  <div className="form-row" style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
-                    {/* Público Alvo */}
-                    <div className="form-group" style={{ flex: 1 }}>
-                      <label className="form-label" style={{ fontWeight: 700 }}>Público alvo</label>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <select
-                          className="form-select"
-                          value={tempPublicoId}
-                          onChange={(e) => setTempPublicoId(e.target.value)}
-                          style={{ flex: 1 }}
-                        >
-                          <option value="">Selecione o público que receberá a campanha</option>
-                          {publicos.map(p => (
-                            <option key={p.id} value={p.id} disabled={selectedPublicos.some(sp => sp.id === p.id)}>
+                  {/* Alternância de Modo (Toggle) */}
+                  <div style={{ 
+                    display: 'flex', 
+                    background: '#f1f5f9', 
+                    padding: '4px', 
+                    borderRadius: '8px', 
+                    marginBottom: '24px',
+                    width: 'fit-content'
+                  }}>
+                    <button
+                      type="button"
+                      onClick={() => handleSwitchMode('segmentacao')}
+                      style={{
+                        padding: '8px 16px',
+                        borderRadius: '6px',
+                        border: 'none',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        transition: 'all 0.2s',
+                        background: quemReceberMode === 'segmentacao' ? '#ffffff' : 'transparent',
+                        color: quemReceberMode === 'segmentacao' ? 'var(--caixa-blue)' : '#64748b',
+                        boxShadow: quemReceberMode === 'segmentacao' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                      }}
+                    >
+                      <Sparkles size={14} />
+                      Selecionar por segmentação
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSwitchMode('csv')}
+                      style={{
+                        padding: '8px 16px',
+                        borderRadius: '6px',
+                        border: 'none',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        transition: 'all 0.2s',
+                        background: quemReceberMode === 'csv' ? '#ffffff' : 'transparent',
+                        color: quemReceberMode === 'csv' ? 'var(--caixa-blue)' : '#64748b',
+                        boxShadow: quemReceberMode === 'csv' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                      }}
+                    >
+                      <Upload size={14} />
+                      Importar lista própria (CSV)
+                    </button>
+                  </div>
+
+                  {quemReceberMode === 'segmentacao' ? (
+                    <div className="form-row" style={{ display: 'flex', gap: '24px', alignItems: 'flex-start', margin: 0 }}>
+                      {/* Público Alvo */}
+                      <div className="form-group" style={{ flex: 1 }}>
+                        <label className="form-label" style={{ fontWeight: 700 }}>Público alvo</label>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <select
+                            className="form-select"
+                            value={tempPublicoId}
+                            onChange={(e) => setTempPublicoId(e.target.value)}
+                            style={{ flex: 1 }}
+                          >
+                            <option value="">Selecione o público que receberá a campanha</option>
+                            {publicos.map(p => (
+                              <option key={p.id} value={p.id} disabled={selectedPublicos.some(sp => sp.id === p.id)}>
+                                {p.nome}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            className="btn"
+                            type="button"
+                            onClick={handleAddPublico}
+                            style={{
+                              background: 'white',
+                              border: '1.5px solid var(--caixa-blue)',
+                              color: 'var(--caixa-blue)',
+                              fontWeight: 700,
+                              padding: '0 16px',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '13px'
+                            }}
+                          >
+                            Adicionar
+                          </button>
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: 4 }}>
+                          Defina o público alvo desta campanha
+                        </div>
+                        {/* Tags */}
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                          {selectedPublicos.map(p => (
+                            <span key={p.id} style={{
+                              background: '#e8f0fe',
+                              color: 'var(--caixa-blue)',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              padding: '4px 8px',
+                              borderRadius: '4px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 6,
+                              border: '1px solid var(--caixa-blue-light)'
+                            }}>
                               {p.nome}
-                            </option>
-                          ))}
-                        </select>
-                        <button
-                          className="btn"
-                          type="button"
-                          onClick={handleAddPublico}
-                          style={{
-                            background: 'white',
-                            border: '1.5px solid var(--caixa-blue)',
-                            color: 'var(--caixa-blue)',
-                            fontWeight: 700,
-                            padding: '0 16px',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '13px'
-                          }}
-                        >
-                          Adicionar
-                        </button>
-                      </div>
-                      <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: 4 }}>
-                        Defina o público alvo desta campanha
-                      </div>
-                      {/* Tags */}
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-                        {selectedPublicos.map(p => (
-                          <span key={p.id} style={{
-                            background: '#e8f0fe',
-                            color: 'var(--caixa-blue)',
-                            fontSize: '12px',
-                            fontWeight: 600,
-                            padding: '4px 8px',
-                            borderRadius: '4px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 6,
-                            border: '1px solid var(--caixa-blue-light)'
-                          }}>
-                            {p.nome}
-                            <button
-                              type="button"
-                              onClick={() => handleRemovePublico(p.id)}
-                              style={{
-                                background: 'none',
-                                border: 'none',
-                                color: 'var(--caixa-blue)',
-                                cursor: 'pointer',
-                                padding: 0,
-                                fontSize: '12px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                fontWeight: 700
-                              }}
-                            >
-                              ✕
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Segmento */}
-                    <div className="form-group" style={{ flex: 1 }}>
-                      <label className="form-label" style={{ fontWeight: 700 }}>Segmento</label>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <select
-                          className="form-select"
-                          value={tempSegmentoId}
-                          disabled={selectedPublicos.length === 0}
-                          onChange={(e) => setTempSegmentoId(e.target.value)}
-                          style={{ flex: 1 }}
-                        >
-                          <option value="">Selecione o segmento</option>
-                          {filteredSegmentos.map(s => (
-                            <option key={s.id} value={s.id} disabled={selectedSegmentos.some(ss => ss.id === s.id)}>
-                              {s.nome}
-                            </option>
-                          ))}
-                        </select>
-                        <button
-                          className="btn"
-                          type="button"
-                          onClick={handleAddSegmento}
-                          disabled={selectedPublicos.length === 0}
-                          style={{
-                            background: 'white',
-                            border: '1.5px solid var(--caixa-blue)',
-                            color: 'var(--caixa-blue)',
-                            fontWeight: 700,
-                            padding: '0 16px',
-                            borderRadius: '4px',
-                            cursor: selectedPublicos.length === 0 ? 'not-allowed' : 'pointer',
-                            fontSize: '13px',
-                            opacity: selectedPublicos.length === 0 ? 0.6 : 1
-                          }}
-                        >
-                          Adicionar
-                        </button>
-                      </div>
-                      <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: 4 }}>
-                        Defina o segmento desta campanha
-                      </div>
-                      {/* Tags */}
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-                        {selectedSegmentos.map(s => (
-                          <span key={s.id} style={{
-                            background: '#e8f0fe',
-                            color: 'var(--caixa-blue)',
-                            fontSize: '12px',
-                            fontWeight: 600,
-                            padding: '4px 8px',
-                            borderRadius: '4px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 6,
-                            border: '1px solid var(--caixa-blue-light)'
-                          }}>
-                            {s.nome}
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveSegmento(s.id)}
-                              style={{
-                                background: 'none',
-                                border: 'none',
-                                color: 'var(--caixa-blue)',
-                                cursor: 'pointer',
-                                padding: 0,
-                                fontSize: '12px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                fontWeight: 700
-                              }}
-                            >
-                              ✕
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Filtros adicionais */}
-                  <div className="filtros-section">
-                    <div className="filtros-header">
-                      <span className="filtros-title">Filtros Adicionais da Campanha</span>
-                      <button className="btn-add-filter" onClick={addFilter}>+ Adicionar filtro</button>
-                    </div>
-                    {customFilters.length === 0 ? (
-                      <p style={{ fontSize: 12, color: 'var(--builder-muted)', fontStyle: 'italic', margin: '4px 0 0 0' }}>
-                        Nenhum filtro personalizado adicionado. A campanha utilizará a segmentação padrão.
-                      </p>
-                    ) : (
-                      <div className="filters-list">
-                        {customFilters.map(f => {
-                          const isNumeric = ['Idade', 'Renda', 'Saldo em conta', 'Tempo de relacionamento'].includes(f.field)
-                          const isGender = f.field === 'Gênero'
-                          const isLocation = f.field === 'Localização'
-
-                          return (
-                            <div className="filter-row" key={f.id}>
-                              <select
-                                className="form-select"
-                                style={{ flex: 1, padding: '6px 10px', fontSize: 12, width: 'auto' }}
-                                value={f.field}
-                                onChange={(e) => updateFilter(f.id, 'field', e.target.value)}
+                              <button
+                                type="button"
+                                onClick={() => handleRemovePublico(p.id)}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: 'var(--caixa-blue)',
+                                  cursor: 'pointer',
+                                  padding: 0,
+                                  fontSize: '12px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  fontWeight: 700
+                                }}
                               >
-                                <option value="Idade">Idade</option>
-                                <option value="Renda">Renda</option>
-                                <option value="Saldo em conta">Saldo em conta</option>
-                                <option value="Tempo de relacionamento">Tempo de relacionamento</option>
-                                <option value="Localização">Localização</option>
-                                <option value="Gênero">Gênero</option>
-                              </select>
-
-                              {isNumeric && (
-                                <select
-                                  className="form-select"
-                                  style={{ width: 110, padding: '6px 10px', fontSize: 12 }}
-                                  value={f.operator}
-                                  onChange={(e) => updateFilter(f.id, 'operator', e.target.value)}
-                                >
-                                  <option value="maior que">maior que</option>
-                                  <option value="menor que">menor que</option>
-                                  <option value="igual a">igual a</option>
-                                </select>
-                              )}
-
-                              {isGender && (
-                                <select
-                                  className="form-select"
-                                  style={{ width: 110, padding: '6px 10px', fontSize: 12 }}
-                                  value={f.operator}
-                                  onChange={(e) => updateFilter(f.id, 'operator', e.target.value)}
-                                >
-                                  <option value="igual a">igual a</option>
-                                  <option value="diferente de">diferente de</option>
-                                </select>
-                              )}
-
-                              {isLocation && (
-                                <select
-                                  className="form-select"
-                                  style={{ width: 110, padding: '6px 10px', fontSize: 12 }}
-                                  value={f.operator}
-                                  onChange={(e) => {
-                                    updateFilter(f.id, 'operator', e.target.value)
-                                    updateFilter(f.id, 'value', '')
-                                  }}
-                                >
-                                  <option value="Região">Região</option>
-                                  <option value="Estado">Estado</option>
-                                </select>
-                              )}
-
-                              {isNumeric && (
-                                <input
-                                  type="text"
-                                  className="form-input"
-                                  style={{ width: 110, padding: '6px 10px', fontSize: 12 }}
-                                  placeholder="valor"
-                                  value={f.value}
-                                  onChange={(e) => updateFilter(f.id, 'value', e.target.value)}
-                                />
-                              )}
-
-                              {isGender && (
-                                <select
-                                  className="form-select"
-                                  style={{ width: 110, padding: '6px 10px', fontSize: 12 }}
-                                  value={f.value}
-                                  onChange={(e) => updateFilter(f.id, 'value', e.target.value)}
-                                >
-                                  <option value="">Selecionar...</option>
-                                  <option value="Feminino">Feminino</option>
-                                  <option value="Masculino">Masculino</option>
-                                  <option value="Não binário">Não binário</option>
-                                  <option value="Outros">Outros</option>
-                                </select>
-                              )}
-
-                              {isLocation && f.operator === 'Região' && (
-                                <select
-                                  className="form-select"
-                                  style={{ width: 110, padding: '6px 10px', fontSize: 12 }}
-                                  value={f.value}
-                                  onChange={(e) => updateFilter(f.id, 'value', e.target.value)}
-                                >
-                                  <option value="">Selecionar...</option>
-                                  <option value="Norte">Norte</option>
-                                  <option value="Nordeste">Nordeste</option>
-                                  <option value="Centro-Oeste">Centro-Oeste</option>
-                                  <option value="Sudeste">Sudeste</option>
-                                  <option value="Sul">Sul</option>
-                                </select>
-                              )}
-
-                              {isLocation && f.operator === 'Estado' && (
-                                <select
-                                  className="form-select"
-                                  style={{ width: 110, padding: '6px 10px', fontSize: 12 }}
-                                  value={f.value}
-                                  onChange={(e) => updateFilter(f.id, 'value', e.target.value)}
-                                >
-                                  <option value="">UF...</option>
-                                  {['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'].map(uf => (
-                                    <option key={uf} value={uf}>{uf}</option>
-                                  ))}
-                                </select>
-                              )}
-
-                              <button className="filter-remove" onClick={() => removeFilter(f.id)}>✕</button>
-                            </div>
-                          )
-                        })}
+                                ✕
+                              </button>
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                    )}
-                  </div>
+
+                      {/* Segmento */}
+                      <div className="form-group" style={{ flex: 1 }}>
+                        <label className="form-label" style={{ fontWeight: 700 }}>Segmento</label>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <select
+                            className="form-select"
+                            value={tempSegmentoId}
+                            disabled={selectedPublicos.length === 0}
+                            onChange={(e) => setTempSegmentoId(e.target.value)}
+                            style={{ flex: 1 }}
+                          >
+                            <option value="">Selecione o segmento</option>
+                            {filteredSegmentos.map(s => (
+                              <option key={s.id} value={s.id} disabled={selectedSegmentos.some(ss => ss.id === s.id)}>
+                                {s.nome}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            className="btn"
+                            type="button"
+                            onClick={handleAddSegmento}
+                            disabled={selectedPublicos.length === 0}
+                            style={{
+                              background: 'white',
+                              border: '1.5px solid var(--caixa-blue)',
+                              color: 'var(--caixa-blue)',
+                              fontWeight: 700,
+                              padding: '0 16px',
+                              borderRadius: '4px',
+                              cursor: selectedPublicos.length === 0 ? 'not-allowed' : 'pointer',
+                              fontSize: '13px',
+                              opacity: selectedPublicos.length === 0 ? 0.6 : 1
+                            }}
+                          >
+                            Adicionar
+                          </button>
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: 4 }}>
+                          Defina o segmento desta campanha
+                        </div>
+                        {/* Tags */}
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                          {selectedSegmentos.map(s => (
+                            <span key={s.id} style={{
+                              background: '#e8f0fe',
+                              color: 'var(--caixa-blue)',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              padding: '4px 8px',
+                              borderRadius: '4px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 6,
+                              border: '1px solid var(--caixa-blue-light)'
+                            }}>
+                              {s.nome}
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveSegmento(s.id)}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: 'var(--caixa-blue)',
+                                  cursor: 'pointer',
+                                  padding: 0,
+                                  fontSize: '12px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  fontWeight: 700
+                                }}
+                              >
+                                ✕
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      {/* Drag & Drop Area */}
+                      <div
+                        onDragEnter={handleDrag}
+                        onDragOver={handleDrag}
+                        onDragLeave={handleDrag}
+                        onDrop={handleDrop}
+                        onClick={() => {
+                          const input = document.getElementById('csv-file-input');
+                          if (input) input.click();
+                        }}
+                        style={{
+                          border: dragActive 
+                            ? '2px dashed var(--caixa-blue)' 
+                            : csvFileStatus === 'success'
+                            ? '2px solid #22c55e'
+                            : csvFileStatus === 'error'
+                            ? '2px dashed #ef4444'
+                            : '2px dashed #cbd5e1',
+                          borderRadius: '8px',
+                          background: dragActive 
+                            ? '#f0f7ff' 
+                            : csvFileStatus === 'success'
+                            ? '#f0fdf4'
+                            : csvFileStatus === 'error'
+                            ? '#fef2f2'
+                            : '#f8fafc',
+                          padding: '32px 24px',
+                          textAlign: 'center',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          position: 'relative'
+                        }}
+                      >
+                        <input
+                          type="file"
+                          accept=".csv"
+                          id="csv-file-input"
+                          onChange={handleCSVUpload}
+                          onClick={(e) => e.stopPropagation()}
+                          style={{ display: 'none' }}
+                        />
+
+                        {/* IDLE / EMPTY STATE */}
+                        {csvFileStatus === 'idle' && (
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                            <div style={{
+                              width: '48px',
+                              height: '48px',
+                              borderRadius: '50%',
+                              background: '#e2e8f0',
+                              color: '#64748b',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              <Upload size={20} />
+                            </div>
+                            <div>
+                              <div style={{ fontSize: '14px', fontWeight: 700, color: '#1e293b' }}>
+                                Arraste seu arquivo CSV ou clique para selecionar
+                              </div>
+                              <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                                Colunas obrigatórias: <strong style={{ color: '#475569' }}>cpf</strong> + <strong style={{ color: '#475569' }}>email</strong> ou <strong style={{ color: '#475569' }}>telefone</strong> (com DDD)
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* LOADING STATE */}
+                        {csvFileStatus === 'loading' && (
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '10px 0' }} onClick={(e) => e.stopPropagation()}>
+                            <div style={{
+                              width: '32px',
+                              height: '32px',
+                              border: '3px solid #cbd5e1',
+                              borderTopColor: 'var(--caixa-blue)',
+                              borderRadius: '50%',
+                              animation: 'spin 1s linear infinite'
+                            }} />
+                            <div style={{ fontSize: '14px', fontWeight: 600, color: '#475569' }}>
+                              Processando e validando arquivo "{csvFileName}"...
+                            </div>
+                          </div>
+                        )}
+
+                        {/* SUCCESS STATE */}
+                        {csvFileStatus === 'success' && (
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }} onClick={(e) => e.stopPropagation()}>
+                            <div style={{
+                              width: '48px',
+                              height: '48px',
+                              borderRadius: '50%',
+                              background: '#dcfce7',
+                              color: '#16a34a',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '20px',
+                              fontWeight: 'bold'
+                            }}>
+                              ✓
+                            </div>
+                            <div>
+                              <div style={{ fontSize: '15px', fontWeight: 700, color: '#14532d' }}>
+                                Arquivo importado com sucesso!
+                              </div>
+                              <div style={{ fontSize: '13px', color: '#15803d', marginTop: '4px', fontWeight: 600 }}>
+                                {csvFileName} • {csvRecordsCount} registros válidos encontrados
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+                              <label htmlFor="csv-file-input" style={{
+                                background: '#ffffff',
+                                border: '1px solid #bbf7d0',
+                                color: '#16a34a',
+                                padding: '6px 16px',
+                                borderRadius: '4px',
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                cursor: 'pointer'
+                              }}>
+                                Substituir arquivo
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setCsvFile(null)
+                                  setCsvFileName('')
+                                  setCsvFileStatus('idle')
+                                  setCsvErrorMsg('')
+                                  setCsvRecordsCount(0)
+                                }}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: '#dc2626',
+                                  fontSize: '12px',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
+                                }}
+                              >
+                                <Trash2 size={13} />
+                                Remover
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* ERROR STATE */}
+                        {csvFileStatus === 'error' && (
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }} onClick={(e) => e.stopPropagation()}>
+                            <div style={{
+                              width: '48px',
+                              height: '48px',
+                              borderRadius: '50%',
+                              background: '#fee2e2',
+                              color: '#dc2626',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              <AlertCircle size={22} />
+                            </div>
+                            <div>
+                              <div style={{ fontSize: '15px', fontWeight: 700, color: '#991b1b' }}>
+                                Falha na validação do arquivo
+                              </div>
+                              <div style={{ fontSize: '12px', color: '#ef4444', marginTop: '6px', maxWidth: '400px', margin: '6px auto 0 auto', lineHeight: '1.4' }}>
+                                {csvErrorMsg}
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+                              <label htmlFor="csv-file-input" style={{
+                                background: '#ffffff',
+                                border: '1px solid #fca5a5',
+                                color: '#dc2626',
+                                padding: '6px 16px',
+                                borderRadius: '4px',
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                cursor: 'pointer'
+                              }}>
+                                Tentar outro arquivo
+                              </label>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Download Template & Instructions Row */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '12px 16px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                        <div style={{ fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '14px' }}>💡</span> 
+                          Precisa de ajuda para estruturar? Baixe nosso modelo padrão pronto para preenchimento.
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleDownloadTemplate}
+                          style={{
+                            background: '#ffffff',
+                            border: '1px solid #cbd5e1',
+                            color: '#475569',
+                            padding: '6px 12px',
+                            borderRadius: '4px',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}
+                        >
+                          <FileText size={14} />
+                          Baixar modelo CSV
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -654,53 +958,98 @@ export default function CampaignDisparoPage() {
                     {/* Peça Aprovada */}
                     <div className="form-group" style={{ flex: 1 }}>
                       <label className="form-label" style={{ fontWeight: 700 }}>Peça aprovada</label>
-                      <select
-                        className="form-select"
-                        value={selectedPeca?.id || ''}
-                        onChange={(e) => {
-                          const val = e.target.value
-                          const peca = approvedPecas.find(p => p.id === val)
-                          setSelectedPeca(peca || null)
-                        }}
-                        style={{ width: '100%' }}
-                      >
-                        <option value="">Selecione o conteúdo de comunicação...</option>
-                        {approvedPecas.map(p => (
-                          <option key={p.id} value={p.id}>
-                            {p.name} ({p.channel})
-                          </option>
-                        ))}
-                      </select>
-                      <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: 4 }}>
-                        Apenas peças homologadas e aprovadas estão disponíveis para disparo rápido
-                      </div>
 
-                      {selectedPeca && (
+                      {/* Selected piece preview card — mirrors Canvas "Adicionar peça" pattern */}
+                      {selectedPeca ? (
                         <div style={{ 
-                          marginTop: '16px', 
                           padding: '16px', 
                           background: '#ffffff', 
-                          border: '1px solid var(--builder-border)', 
+                          border: '1.5px solid var(--caixa-blue)', 
                           borderRadius: '8px', 
-                          boxShadow: 'var(--shadow-sm)' 
+                          boxShadow: 'var(--shadow-sm)',
+                          position: 'relative'
                         }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                             <span style={{ fontWeight: 700, fontSize: '14px', color: 'var(--caixa-blue)' }}>{selectedPeca.name}</span>
-                            <span className={`peca-channel ${selectedPeca.channel.toLowerCase()}`} style={{ 
-                              fontSize: '10px', 
-                              padding: '2px 8px', 
-                              borderRadius: '12px', 
-                              fontWeight: 700,
-                              textTransform: 'uppercase'
-                            }}>
-                              {selectedPeca.channel}
-                            </span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span className={`peca-channel ${selectedPeca.channel.toLowerCase().replace(' ', '-')}`} style={{ 
+                                fontSize: '10px', 
+                                padding: '2px 8px', 
+                                borderRadius: '12px', 
+                                fontWeight: 700,
+                                textTransform: 'uppercase'
+                              }}>
+                                {selectedPeca.channel}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setPecaSearch('')
+                                  setActiveTab('Todos')
+                                  setPecasModalOpen(true)
+                                }}
+                                style={{
+                                  background: 'none',
+                                  border: '1px solid #cbd5e1',
+                                  color: '#475569',
+                                  borderRadius: '4px',
+                                  padding: '2px 8px',
+                                  fontSize: '11px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                Trocar
+                              </button>
+                            </div>
                           </div>
-                          <p style={{ fontSize: '13px', color: 'var(--builder-text-secondary)', margin: 0, whiteSpace: 'pre-wrap', lineHeight: '1.4' }}>
+                          <p style={{ fontSize: '13px', color: 'var(--builder-text-secondary)', margin: 0, lineHeight: '1.5' }}>
                             {selectedPeca.content}
                           </p>
                         </div>
+                      ) : (
+                        <div style={
+                          {
+                            border: '1.5px dashed #cbd5e1',
+                            borderRadius: '8px',
+                            padding: '20px',
+                            textAlign: 'center',
+                            background: '#f8fafc',
+                            marginBottom: '4px'
+                          }
+                        }>
+                          <p style={{ fontSize: '13px', color: '#94a3b8', margin: '0 0 12px 0' }}>
+                            Nenhuma peça selecionada para este passo de envio.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPecaSearch('')
+                              setActiveTab('Todos')
+                              setPecasModalOpen(true)
+                            }}
+                            style={{
+                              background: 'var(--caixa-blue)',
+                              color: '#ffffff',
+                              border: 'none',
+                              borderRadius: '6px',
+                              padding: '10px 20px',
+                              fontSize: '14px',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px'
+                            }}
+                          >
+                            + Adicionar peça
+                          </button>
+                        </div>
                       )}
+
+                      <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: 6 }}>
+                        Apenas peças homologadas e aprovadas estão disponíveis para disparo rápido
+                      </div>
                     </div>
 
                     {/* Quando Enviar */}
@@ -1017,26 +1366,28 @@ export default function CampaignDisparoPage() {
                       Público e Filtros de Exclusão
                     </h4>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                        <div>
-                          <div style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>Público Alvo</div>
-                          <div style={{ fontSize: '14px', color: '#1e293b', fontWeight: 700, marginTop: '4px' }}>{selectedPublicoName}</div>
+                      {quemReceberMode === 'segmentacao' ? (
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                          <div>
+                            <div style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>Público Alvo</div>
+                            <div style={{ fontSize: '14px', color: '#1e293b', fontWeight: 700, marginTop: '4px' }}>{selectedPublicoName || 'Nenhum público alvo selecionado'}</div>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>Segmentos</div>
+                            <div style={{ fontSize: '14px', color: '#1e293b', fontWeight: 700, marginTop: '4px' }}>{selectedSegmentoName || 'Nenhum segmento selecionado'}</div>
+                          </div>
                         </div>
-                        <div>
-                          <div style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>Segmentos</div>
-                          <div style={{ fontSize: '14px', color: '#1e293b', fontWeight: 700, marginTop: '4px' }}>{selectedSegmentoName}</div>
-                        </div>
-                      </div>
-
-                      {customFilters.length > 0 && (
-                        <div>
-                          <div style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', marginBottom: '8px' }}>Filtros Customizados</div>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                            {customFilters.map(f => (
-                              <span key={f.id} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '4px', padding: '4px 10px', fontSize: '12px', color: '#475569' }}>
-                                <strong>{f.field}</strong> {f.operator} <strong>{f.value}</strong>
-                              </span>
-                            ))}
+                      ) : (
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                          <div>
+                            <div style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>Público Alvo</div>
+                            <div style={{ fontSize: '14px', color: '#1e293b', fontWeight: 700, marginTop: '4px' }}>Lista importada via CSV</div>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>Arquivo de Origem</div>
+                            <div style={{ fontSize: '14px', color: '#1e293b', fontWeight: 700, marginTop: '4px' }}>
+                              {csvFileName} ({csvRecordsCount} registros válidos)
+                            </div>
                           </div>
                         </div>
                       )}
@@ -1164,6 +1515,216 @@ export default function CampaignDisparoPage() {
             </>
           )}
         </div>
+      )}
+
+      {/* Modal de Confirmação de Troca de Modo */}
+      {showModalConfirmSwitch && (
+        <div className="modal-overlay" style={{ zIndex: 1100 }}>
+          <div className="modal-container" style={{ maxWidth: 450, animation: 'fadeIn 0.2s ease' }}>
+            <div className="modal-header">
+              <div className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#d97706' }}>
+                <AlertTriangle size={18} />
+                Confirmar alteração de modo
+              </div>
+              <button className="modal-close" onClick={handleCancelSwitch}>✕</button>
+            </div>
+            <div className="modal-body" style={{ fontSize: '14px', color: '#475569', lineHeight: 1.5, padding: '20px 24px' }}>
+              Alterar a forma de seleção irá descartar os dados preenchidos até agora:
+              {quemReceberMode === 'segmentacao' ? (
+                <p style={{ marginTop: 8, fontWeight: 500 }}>
+                  Os públicos e segmentos selecionados serão removidos da campanha.
+                </p>
+              ) : (
+                <p style={{ marginTop: 8, fontWeight: 500 }}>
+                  O arquivo CSV importado será removido da campanha.
+                </p>
+              )}
+              Deseja continuar com a alteração?
+            </div>
+            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, padding: '16px 24px', borderTop: '1px solid var(--builder-border-light)' }}>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={handleCancelSwitch}
+                style={{
+                  background: 'white',
+                  border: '1px solid #cbd5e1',
+                  color: '#475569',
+                  padding: '8px 16px',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: '13px'
+                }}
+              >
+                Não, manter atual
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmSwitch}
+                style={{
+                  background: '#d97706',
+                  color: 'white',
+                  border: 'none',
+                  padding: '8px 16px',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  fontSize: '13px'
+                }}
+              >
+                Sim, trocar modo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {pecasModalOpen && ReactDOM.createPortal(
+        <div
+          className="builder-layout-container"
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.45)',
+            zIndex: 9999,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            backdropFilter: 'blur(2px)',
+            maxWidth: 'none', margin: 0, padding: 0, width: '100%',
+            boxSizing: 'border-box'
+          }}
+        >
+          <div style={{
+            background: '#ffffff',
+            border: '1px solid #d1d9e0',
+            borderRadius: '8px',
+            width: '100%',
+            maxWidth: '720px',
+            maxHeight: '85vh',
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+            margin: '0 16px'
+          }}>
+            {/* Header */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '16px 20px',
+              borderBottom: '1px solid #d1d9e0',
+              flexShrink: 0
+            }}>
+              <span style={{ fontSize: '16px', fontWeight: 700, color: '#1a1a2e' }}>
+                Selecionar Peça de Comunicação
+              </span>
+              <button
+                onClick={() => setPecasModalOpen(false)}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontSize: '18px', color: '#718096', lineHeight: 1,
+                  padding: '4px', borderRadius: '4px'
+                }}
+              >✕</button>
+            </div>
+
+            {/* Toolbar: search + tabs */}
+            <div style={{
+              padding: '12px 20px',
+              borderBottom: '1px solid #e8ecf0',
+              display: 'flex', alignItems: 'center', gap: '12px',
+              flexWrap: 'wrap',
+              flexShrink: 0,
+              background: '#f5f6fa'
+            }}>
+              {/* Search */}
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '8px',
+                background: '#ffffff', border: '1px solid #d1d9e0',
+                borderRadius: '6px', padding: '6px 10px',
+                maxWidth: '280px', flex: '1 1 200px'
+              }}>
+                <Search size={14} color="#718096" />
+                <input
+                  type="text"
+                  placeholder="Buscar peça por nome ou conteúdo..."
+                  value={pecaSearch}
+                  onChange={(e) => setPecaSearch(e.target.value)}
+                  style={{
+                    border: 'none', outline: 'none', fontSize: '13px',
+                    color: '#1a1a2e', background: 'transparent', flex: 1,
+                    fontFamily: 'inherit'
+                  }}
+                />
+              </div>
+
+              {/* Channel tabs */}
+              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                {(['Todos', 'PUSH', 'SMS', 'EMAIL', 'WHATSAPP', 'APP CAIXA'] as const).map(tab => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    style={{
+                      padding: '5px 12px',
+                      borderRadius: '5px',
+                      border: activeTab === tab ? '1.5px solid #1351b4' : '1.5px solid #d1d9e0',
+                      background: activeTab === tab ? '#1351b4' : '#ffffff',
+                      color: activeTab === tab ? '#ffffff' : '#4a5568',
+                      fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+                      transition: 'all 0.15s', fontFamily: 'inherit'
+                    }}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Grid body */}
+            <div style={{ overflowY: 'auto', padding: '16px 20px', flex: 1 }}>
+              {filteredPecas.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px 20px', color: '#718096' }}>
+                  Nenhuma peça de comunicação encontrada para este filtro.
+                </div>
+              ) : (
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
+                  gap: '12px'
+                }}>
+                  {filteredPecas.map(p => (
+                    <div
+                      key={p.id}
+                      onClick={() => { setSelectedPeca(p); setPecasModalOpen(false) }}
+                      style={{
+                        background: '#ffffff',
+                        border: '1px solid #d1d9e0',
+                        borderRadius: '8px',
+                        padding: '14px 16px',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s',
+                      }}
+                      onMouseEnter={e => {
+                        (e.currentTarget as HTMLElement).style.border = '1.5px solid #1351b4'
+                        ;(e.currentTarget as HTMLElement).style.boxShadow = '0 2px 8px rgba(19,81,180,0.12)'
+                      }}
+                      onMouseLeave={e => {
+                        (e.currentTarget as HTMLElement).style.border = '1px solid #d1d9e0'
+                        ;(e.currentTarget as HTMLElement).style.boxShadow = 'none'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '6px', gap: '8px' }}>
+                        <span style={{ fontWeight: 700, fontSize: '14px', color: '#1a1a2e', lineHeight: 1.3 }}>{p.name}</span>
+                        <span className={`peca-channel ${p.channel.toLowerCase().replace(' ', '-')}`} style={{ flexShrink: 0 }}>
+                          {p.channel}
+                        </span>
+                      </div>
+                      <p style={{ fontSize: '12px', color: '#4a5568', margin: 0, lineHeight: '1.5' }}>{p.content}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   )

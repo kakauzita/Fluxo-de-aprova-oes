@@ -33,109 +33,7 @@ import {
 import './CampaignBuilderPage.css'
 import JornadaExplicada, { mapBlocksToJornadaNodes } from '../../components/JornadaExplicada'
 
-// ─── SVG Overlay for Backward Connections ─────────────────────────────────────
-const BackwardConnectionsOverlay = ({ blocks, zoom }: { blocks: any[], zoom: number }) => {
-  const [paths, setPaths] = useState<{ id: string, d: string }[]>([]);
-
-  useEffect(() => {
-    let animationFrameId: number;
-    const updatePaths = () => {
-      const container = document.querySelector('.canvas-grid');
-      if (!container) return;
-      const containerRect = container.getBoundingClientRect();
-
-      const flattenBlocks = (list: any[]) => {
-        let flat: any[] = [];
-        for (const b of list) {
-          flat.push(b);
-          if (b.config?.yes) flat = flat.concat(flattenBlocks(b.config.yes));
-          if (b.config?.no) flat = flat.concat(flattenBlocks(b.config.no));
-        }
-        return flat;
-      };
-      
-      const allBlocks = flattenBlocks(blocks);
-      const backwardConnectors = allBlocks.filter((b: any) => b.type === 'connector' && b.config?.direction === 'backward');
-      
-      const newPaths = backwardConnectors.map((connector: any) => {
-        const sourceEl = document.getElementById(`canvas-block-${connector.id}`);
-        const targetEl = document.getElementById(`canvas-block-${connector.config?.targetBlockId}`);
-        
-        console.log('SVG Overlay Connector:', connector.id, 'Source:', sourceEl, 'Target:', targetEl);
-
-        if (!sourceEl || !targetEl) return null;
-
-        const srcRect = sourceEl.getBoundingClientRect();
-        const tgtRect = targetEl.getBoundingClientRect();
-
-        // Convert screen coordinates to local grid coordinates
-        const startX = (srcRect.right - containerRect.left) / zoom;
-        const startY = (srcRect.top + srcRect.height / 2 - containerRect.top) / zoom;
-        
-        const endX = (tgtRect.right - containerRect.left) / zoom;
-        const endY = (tgtRect.top + 40 - containerRect.top) / zoom; // Connect near the top of the destination block
-
-        // Draw orthogonal path: right, up/down, left
-        const offsetX = 50; // Distance to jut out to the right
-        const xOut = Math.max(startX, endX) + offsetX;
-
-        const d = `M ${startX} ${startY} H ${xOut} V ${endY} H ${endX}`;
-        
-        return { id: connector.id, d };
-      }).filter(Boolean) as { id: string, d: string }[];
-
-      setPaths(newPaths);
-    };
-
-    const scheduleUpdate = () => {
-      cancelAnimationFrame(animationFrameId);
-      animationFrameId = requestAnimationFrame(updatePaths);
-    };
-
-    scheduleUpdate();
-    
-    // Add observers to recalculate on resize or mutation (e.g., blocks expanding)
-    const observer = new MutationObserver(scheduleUpdate);
-    const container = document.querySelector('.canvas-grid');
-    if (container) {
-      observer.observe(container, { childList: true, subtree: true, attributes: true });
-    }
-    window.addEventListener('resize', scheduleUpdate);
-    
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-      observer.disconnect();
-      window.removeEventListener('resize', scheduleUpdate);
-    };
-  }, [blocks, zoom]);
-
-  return (
-    <svg 
-      style={{ 
-        position: 'absolute', 
-        top: 0, 
-        left: 0, 
-        width: '100%', 
-        height: '100%', 
-        pointerEvents: 'none',
-        overflow: 'visible',
-        zIndex: 10
-      }}
-    >
-      {paths.map(p => (
-        <path
-          key={p.id}
-          d={p.d}
-          fill="none"
-          stroke="#6366f1"
-          strokeWidth="2"
-          strokeDasharray="5,5"
-          strokeLinejoin="round"
-        />
-      ))}
-    </svg>
-  );
-};
+// ─── (SVG backward line overlay removed — replaced by inline card badges) ─────
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 interface BlockMeta {
@@ -454,12 +352,6 @@ const TRIGGER_CATEGORIES = [
 
 const PREDEFINED_EVENTS = TRIGGER_CATEGORIES.flatMap(cat => cat.items);
 
-interface Filter {
-  id: string
-  field: string
-  operator: string
-  value: string
-}
 
 interface Option {
   id: string
@@ -477,7 +369,6 @@ export default function CampaignBuilderPage() {
   const [selectedSegmentos, setSelectedSegmentos] = useState<any[]>([])
   const [tempPublicoId, setTempPublicoId] = useState('')
   const [tempSegmentoId, setTempSegmentoId] = useState('')
-  const [customFilters, setCustomFilters] = useState<Filter[]>([])
   const [selectedExclusions, setSelectedExclusions] = useState<string[]>([])
 
   const handleAddPublico = () => {
@@ -779,6 +670,36 @@ export default function CampaignBuilderPage() {
     }
     return map;
   }, [blocks]);
+
+  // ─── Map: targetBlockId → list of backward connectors pointing to it ─────────
+  const returnsToMap = useMemo(() => {
+    const map: Record<string, { connectorId: string; fromStepNum: number | null; maxRepetitions: number | null }[]> = {};
+    const flattenBlocks = (list: any[]): any[] => {
+      let flat: any[] = [];
+      for (const b of list) {
+        flat.push(b);
+        if (b.config?.yes) flat = flat.concat(flattenBlocks(b.config.yes));
+        if (b.config?.no) flat = flat.concat(flattenBlocks(b.config.no));
+      }
+      return flat;
+    };
+    const allBlocks = flattenBlocks(blocks);
+    allBlocks.forEach(b => {
+      if (b.type === 'connector' && b.config?.direction === 'backward' && b.config?.targetBlockId) {
+        const tid = b.config.targetBlockId;
+        if (!map[tid]) map[tid] = [];
+        // fromStepNum is the step number of the connector block itself
+        // we approximate it using blockNumbersMap of the prev block or just use connector's own position
+        const fromStep = blockNumbersMap[b.id] ?? null;
+        map[tid].push({
+          connectorId: b.id,
+          fromStepNum: fromStep,
+          maxRepetitions: b.config.maxRepetitions ?? null
+        });
+      }
+    });
+    return map;
+  }, [blocks, blockNumbersMap]);
 
   function createBlockObj(id: string, type: string) {
     const defaults = {
@@ -1180,42 +1101,7 @@ export default function CampaignBuilderPage() {
     alert(msg)
   }
 
-  // ─── Filters & Exclusions ───────────────────────────────────────────────────
-
-  function addFilter() {
-    const filter: Filter = {
-      id: 'f' + Date.now(),
-      field: 'Idade',
-      operator: 'maior que',
-      value: ''
-    }
-    setCustomFilters([...customFilters, filter])
-  }
-
-  function updateFilter(id: string, key: keyof Filter, val: string) {
-    setCustomFilters(customFilters.map(f => {
-      if (f.id === id) {
-        if (key === 'field') {
-          let op = 'igual a'
-          let v = ''
-          if (val === 'Localização') {
-            op = 'Região'
-          } else if (val === 'Gênero') {
-            op = 'igual a'
-          } else {
-            op = 'maior que'
-          }
-          return { ...f, field: val, operator: op, value: v }
-        }
-        return { ...f, [key]: val }
-      }
-      return f
-    }))
-  }
-
-  function removeFilter(id: string) {
-    setCustomFilters(customFilters.filter(f => f.id !== id))
-  }
+  // ─── Exclusions ─────────────────────────────────────────────────────────────
 
   function toggleExclusion(item: string) {
     setSelectedExclusions(prev =>
@@ -1245,7 +1131,6 @@ export default function CampaignBuilderPage() {
       descricao: description,
       publicoAlvo: selectedPublicos,
       segmento: selectedSegmentos,
-      filtros: customFilters,
       exclusoes: [
         'menores_18',
         'obitos',
@@ -1564,7 +1449,10 @@ export default function CampaignBuilderPage() {
     }
 
     // ── Helper: build the card JSX for a single block
-    const buildBlockCard = (block: any, stepNum: number | undefined, isEnd: boolean) => (
+    const buildBlockCard = (block: any, stepNum: number | undefined, isEnd: boolean) => {
+      // Backward connectors that point to this block
+      const incomingReturns = returnsToMap[block.id] ?? [];
+      return (
       <div id={`canvas-block-${block.id}`} className={`canvas-block${block.type === 'connector' && block.config?.direction === 'backward' ? ' connector-backward' : ''}`} style={{ position: 'relative' }} key={block.id}>
         <div
           className={`block-card type-${block.type} ${selectedId === block.id ? 'selected' : ''} ${block.id === 'end_auto' ? 'auto-end' : ''}`}
@@ -1616,6 +1504,60 @@ export default function CampaignBuilderPage() {
           </div>
         </div>
 
+        {/* Return-from badge — shown on the TARGET block of backward connectors */}
+        {incomingReturns.length > 0 && (
+          <div style={{ position: 'absolute', top: -12, right: 8, display: 'flex', gap: 4, zIndex: 20 }}>
+            {incomingReturns.map((ret, ri) => {
+              const flatAll = (() => {
+                const flatten = (list: any[]): any[] => {
+                  let f: any[] = [];
+                  for (const b of list) {
+                    f.push(b);
+                    if (b.config?.yes) f = f.concat(flatten(b.config.yes));
+                    if (b.config?.no) f = f.concat(flatten(b.config.no));
+                  }
+                  return f;
+                };
+                return flatten(blocks);
+              })();
+              const maxRep = ret.maxRepetitions;
+              const tooltipText = `Retorno para esta etapa${maxRep ? ` · Máx. ${maxRep}×` : ''}`;
+              // Find the step number of the block just before the connector
+              const connectorIdx = flatAll.findIndex((b: any) => b.id === ret.connectorId);
+              let prevStepNum: number | string = '?';
+              for (let ci = connectorIdx - 1; ci >= 0; ci--) {
+                const pb = flatAll[ci];
+                if (blockNumbersMap[pb.id] !== undefined) { prevStepNum = blockNumbersMap[pb.id] + 1; break; }
+              }
+              return (
+                <div
+                  key={ret.connectorId + ri}
+                  title={tooltipText}
+                  style={{
+                    background: '#6366f1',
+                    color: '#fff',
+                    borderRadius: '20px',
+                    padding: '3px 8px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    cursor: 'default',
+                    boxShadow: '0 1px 4px rgba(99,102,241,0.35)',
+                    border: '1.5px solid #4f46e5',
+                    userSelect: 'none',
+                  }}
+                >
+                  <RotateCcw size={11} />
+                  Retorno da etapa {prevStepNum}
+                  {maxRep ? <span style={{ opacity: 0.8, fontWeight: 500 }}>· Máx. {maxRep}×</span> : null}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {/* Check block branching (Sim/Não) */}
         {block.type === 'check' && (
           <div className="branch-container">
@@ -1631,6 +1573,7 @@ export default function CampaignBuilderPage() {
         )}
       </div>
     );
+    }
 
     // ── Render segments
     const result: React.ReactNode[] = [];
@@ -2057,145 +2000,6 @@ export default function CampaignBuilderPage() {
                     </div>
                   </div>
                 </div>
-
-                {/* Filtros adicionais */}
-                <div className="filtros-section">
-                  <div className="filtros-header">
-                    <span className="filtros-title">Filtros Adicionais da Campanha</span>
-                    <button className="btn-add-filter" onClick={addFilter}>+ Adicionar filtro</button>
-                  </div>
-                  {customFilters.length === 0 ? (
-                    <p style={{ fontSize: 12, color: 'var(--builder-muted)', fontStyle: 'italic', margin: '4px 0 0 0' }}>
-                      Nenhum filtro personalizado adicionado. A campanha utilizará a segmentação padrão.
-                    </p>
-                  ) : (
-                    <div className="filters-list">
-                      {customFilters.map(f => {
-                        const isNumeric = ['Idade', 'Renda', 'Saldo em conta', 'Tempo de relacionamento'].includes(f.field)
-                        const isGender = f.field === 'Gênero'
-                        const isLocation = f.field === 'Localização'
-
-                        return (
-                          <div className="filter-row" key={f.id}>
-                            <select
-                              className="form-select"
-                              style={{ flex: 1, padding: '6px 10px', fontSize: 12, width: 'auto' }}
-                              value={f.field}
-                              onChange={(e) => updateFilter(f.id, 'field', e.target.value)}
-                            >
-                              <option value="Idade">Idade</option>
-                              <option value="Renda">Renda</option>
-                              <option value="Saldo em conta">Saldo em conta</option>
-                              <option value="Tempo de relacionamento">Tempo de relacionamento</option>
-                              <option value="Localização">Localização</option>
-                              <option value="Gênero">Gênero</option>
-                            </select>
-
-                            {/* Operator column */}
-                            {isNumeric && (
-                              <select
-                                className="form-select"
-                                style={{ width: 110, padding: '6px 10px', fontSize: 12 }}
-                                value={f.operator}
-                                onChange={(e) => updateFilter(f.id, 'operator', e.target.value)}
-                              >
-                                <option value="maior que">maior que</option>
-                                <option value="menor que">menor que</option>
-                                <option value="igual a">igual a</option>
-                              </select>
-                            )}
-
-                            {isGender && (
-                              <select
-                                className="form-select"
-                                style={{ width: 110, padding: '6px 10px', fontSize: 12 }}
-                                value={f.operator}
-                                onChange={(e) => updateFilter(f.id, 'operator', e.target.value)}
-                              >
-                                <option value="igual a">igual a</option>
-                                <option value="diferente de">diferente de</option>
-                              </select>
-                            )}
-
-                            {isLocation && (
-                              <select
-                                className="form-select"
-                                style={{ width: 110, padding: '6px 10px', fontSize: 12 }}
-                                value={f.operator}
-                                onChange={(e) => {
-                                  updateFilter(f.id, 'operator', e.target.value)
-                                  updateFilter(f.id, 'value', '') // Reset value when operator changes
-                                }}
-                              >
-                                <option value="Região">Região</option>
-                                <option value="Estado">Estado</option>
-                              </select>
-                            )}
-
-                            {/* Value column */}
-                            {isNumeric && (
-                              <input
-                                type="text"
-                                className="form-input"
-                                style={{ width: 110, padding: '6px 10px', fontSize: 12 }}
-                                placeholder="valor"
-                                value={f.value}
-                                onChange={(e) => updateFilter(f.id, 'value', e.target.value)}
-                              />
-                            )}
-
-                            {isGender && (
-                              <select
-                                className="form-select"
-                                style={{ width: 110, padding: '6px 10px', fontSize: 12 }}
-                                value={f.value}
-                                onChange={(e) => updateFilter(f.id, 'value', e.target.value)}
-                              >
-                                <option value="">Selecionar...</option>
-                                <option value="Feminino">Feminino</option>
-                                <option value="Masculino">Masculino</option>
-                                <option value="Não binário">Não binário</option>
-                                <option value="Outros">Outros</option>
-                              </select>
-                            )}
-
-                            {isLocation && f.operator === 'Região' && (
-                              <select
-                                className="form-select"
-                                style={{ width: 110, padding: '6px 10px', fontSize: 12 }}
-                                value={f.value}
-                                onChange={(e) => updateFilter(f.id, 'value', e.target.value)}
-                              >
-                                <option value="">Selecionar...</option>
-                                <option value="Norte">Norte</option>
-                                <option value="Nordeste">Nordeste</option>
-                                <option value="Centro-Oeste">Centro-Oeste</option>
-                                <option value="Sudeste">Sudeste</option>
-                                <option value="Sul">Sul</option>
-                              </select>
-                            )}
-
-                            {isLocation && f.operator === 'Estado' && (
-                              <select
-                                className="form-select"
-                                style={{ width: 110, padding: '6px 10px', fontSize: 12 }}
-                                value={f.value}
-                                onChange={(e) => updateFilter(f.id, 'value', e.target.value)}
-                              >
-                                <option value="">UF...</option>
-                                {['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'].map(uf => (
-                                  <option key={uf} value={uf}>{uf}</option>
-                                ))}
-                              </select>
-                            )}
-
-                            <button className="filter-remove" onClick={() => removeFilter(f.id)}>✕</button>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
               </div>
             </div>
 
@@ -2430,7 +2234,7 @@ export default function CampaignBuilderPage() {
                   transformOrigin: 'top left'
                 }}
               >
-                <BackwardConnectionsOverlay blocks={blocks} zoom={zoom} />
+                {/* BackwardConnectionsOverlay removed — returns are shown as badges on target cards */}
                 {blocks.length === 0 ? (
                   <div className="canvas-start-hint" style={{
                     display: 'flex',
