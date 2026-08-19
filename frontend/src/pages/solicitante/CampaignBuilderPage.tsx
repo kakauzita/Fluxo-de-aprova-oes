@@ -1730,7 +1730,7 @@ export default function CampaignBuilderPage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 className="page-title" style={{ borderLeft: '4px solid var(--caixa-orange)', paddingLeft: 14, fontSize: 28, fontWeight: 800, color: 'var(--caixa-blue)', lineHeight: 1.1, margin: '8px 0 6px 0' }}>
-            {campaignName || 'Criar Campanha'}
+            {campaignName || 'Campanha com fluxo'}
           </h1>
           <p className="page-subtitle" style={{ marginBottom: 0 }}>Configure quando e como as mensagens serão enviadas ao cliente.</p>
         </div>

@@ -56,3 +56,833 @@ ZodError: [
 ]
     at Object.<anonymous> (/Users/leilamatias/Downloads/Projetos Antigravity/Fluxo de Aprovações/V1_Cloud/backend/src/modules/pecas/pecas.routes.ts:219:49)
 
+2026-03-03T12:26:48.117Z [
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "corpo"
+    ],
+    "message": "Invalid input: expected string, received undefined"
+  }
+]
+ZodError: [
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "corpo"
+    ],
+    "message": "Invalid input: expected string, received undefined"
+  }
+]
+    at Object.<anonymous> (/Users/leilamatias/Downloads/Projetos Antigravity/Fluxo de Aprovações/V1_Cloud/backend/src/modules/pecas/pecas.routes.ts:219:49)
+
+2026-03-03T12:27:33.785Z [
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "corpo"
+    ],
+    "message": "Invalid input: expected string, received undefined"
+  }
+]
+ZodError: [
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "corpo"
+    ],
+    "message": "Invalid input: expected string, received undefined"
+  }
+]
+    at Object.<anonymous> (/Users/leilamatias/Downloads/Projetos Antigravity/Fluxo de Aprovações/V1_Cloud/backend/src/modules/pecas/pecas.routes.ts:219:49)
+
+2026-06-03T15:19:05.219Z 
+Invalid `prisma.usuario.findUnique()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:15:46
+
+  12     senha: z.string().min(1),
+  13 }).parse(req.body)
+  14 
+→ 15 const usuario = await prisma.usuario.findUnique(
+Can't reach database server at `db.ohnnezwkwqwtcwnjfwgr.supabase.co:5432`
+
+Please make sure your database server is running at `db.ohnnezwkwqwtcwnjfwgr.supabase.co:5432`.
+PrismaClientInitializationError: 
+Invalid `prisma.usuario.findUnique()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:15:46
+
+  12     senha: z.string().min(1),
+  13 }).parse(req.body)
+  14 
+→ 15 const usuario = await prisma.usuario.findUnique(
+Can't reach database server at `db.ohnnezwkwqwtcwnjfwgr.supabase.co:5432`
+
+Please make sure your database server is running at `db.ohnnezwkwqwtcwnjfwgr.supabase.co:5432`.
+    at In.handleRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:7177)
+    at In.handleAndLogRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6211)
+    at In.request (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:5919)
+    at async l (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:127:11167)
+    at Object.<anonymous> (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:15:25)
+
+2026-06-03T15:34:53.547Z 
+Invalid `prisma.usuario.findUnique()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:15:46
+
+  12     senha: z.string().min(1),
+  13 }).parse(req.body)
+  14 
+→ 15 const usuario = await prisma.usuario.findUnique(
+Can't reach database server at `db.ohnnezwkwqwtcwnjfwgr.supabase.co:5432`
+
+Please make sure your database server is running at `db.ohnnezwkwqwtcwnjfwgr.supabase.co:5432`.
+PrismaClientInitializationError: 
+Invalid `prisma.usuario.findUnique()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:15:46
+
+  12     senha: z.string().min(1),
+  13 }).parse(req.body)
+  14 
+→ 15 const usuario = await prisma.usuario.findUnique(
+Can't reach database server at `db.ohnnezwkwqwtcwnjfwgr.supabase.co:5432`
+
+Please make sure your database server is running at `db.ohnnezwkwqwtcwnjfwgr.supabase.co:5432`.
+    at In.handleRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:7177)
+    at In.handleAndLogRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6211)
+    at In.request (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:5919)
+    at async l (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:127:11167)
+    at Object.<anonymous> (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:15:25)
+
+2026-06-03T15:39:16.095Z 
+Invalid `prisma.usuario.findUnique()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:15:46
+
+  12     senha: z.string().min(1),
+  13 }).parse(req.body)
+  14 
+→ 15 const usuario = await prisma.usuario.findUnique(
+Can't reach database server at `db.ohnnezwkwqwtcwnjfwgr.supabase.co:5432`
+
+Please make sure your database server is running at `db.ohnnezwkwqwtcwnjfwgr.supabase.co:5432`.
+PrismaClientInitializationError: 
+Invalid `prisma.usuario.findUnique()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:15:46
+
+  12     senha: z.string().min(1),
+  13 }).parse(req.body)
+  14 
+→ 15 const usuario = await prisma.usuario.findUnique(
+Can't reach database server at `db.ohnnezwkwqwtcwnjfwgr.supabase.co:5432`
+
+Please make sure your database server is running at `db.ohnnezwkwqwtcwnjfwgr.supabase.co:5432`.
+    at In.handleRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:7177)
+    at In.handleAndLogRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6211)
+    at In.request (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:5919)
+    at async l (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:127:11167)
+    at Object.<anonymous> (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:15:25)
+
+2026-06-03T15:49:57.681Z 
+Invalid `prisma.usuario.findUnique()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:15:46
+
+  12     senha: z.string().min(1),
+  13 }).parse(req.body)
+  14 
+→ 15 const usuario = await prisma.usuario.findUnique(
+Can't reach database server at `db.ohnnezwkwqwtcwnjfwgr.supabase.co:5432`
+
+Please make sure your database server is running at `db.ohnnezwkwqwtcwnjfwgr.supabase.co:5432`.
+PrismaClientInitializationError: 
+Invalid `prisma.usuario.findUnique()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:15:46
+
+  12     senha: z.string().min(1),
+  13 }).parse(req.body)
+  14 
+→ 15 const usuario = await prisma.usuario.findUnique(
+Can't reach database server at `db.ohnnezwkwqwtcwnjfwgr.supabase.co:5432`
+
+Please make sure your database server is running at `db.ohnnezwkwqwtcwnjfwgr.supabase.co:5432`.
+    at In.handleRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:7177)
+    at In.handleAndLogRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6211)
+    at In.request (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:5919)
+    at async l (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:127:11167)
+    at Object.<anonymous> (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:15:25)
+
+2026-06-03T15:49:58.803Z 
+Invalid `prisma.usuario.findUnique()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:15:46
+
+  12     senha: z.string().min(1),
+  13 }).parse(req.body)
+  14 
+→ 15 const usuario = await prisma.usuario.findUnique(
+Can't reach database server at `db.ohnnezwkwqwtcwnjfwgr.supabase.co:5432`
+
+Please make sure your database server is running at `db.ohnnezwkwqwtcwnjfwgr.supabase.co:5432`.
+PrismaClientInitializationError: 
+Invalid `prisma.usuario.findUnique()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:15:46
+
+  12     senha: z.string().min(1),
+  13 }).parse(req.body)
+  14 
+→ 15 const usuario = await prisma.usuario.findUnique(
+Can't reach database server at `db.ohnnezwkwqwtcwnjfwgr.supabase.co:5432`
+
+Please make sure your database server is running at `db.ohnnezwkwqwtcwnjfwgr.supabase.co:5432`.
+    at In.handleRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:7177)
+    at In.handleAndLogRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6211)
+    at In.request (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:5919)
+    at async l (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:127:11167)
+    at Object.<anonymous> (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:15:25)
+
+2026-06-03T15:50:17.954Z 
+Invalid `prisma.usuario.findUnique()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:15:46
+
+  12     senha: z.string().min(1),
+  13 }).parse(req.body)
+  14 
+→ 15 const usuario = await prisma.usuario.findUnique(
+Can't reach database server at `db.ohnnezwkwqwtcwnjfwgr.supabase.co:5432`
+
+Please make sure your database server is running at `db.ohnnezwkwqwtcwnjfwgr.supabase.co:5432`.
+PrismaClientInitializationError: 
+Invalid `prisma.usuario.findUnique()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:15:46
+
+  12     senha: z.string().min(1),
+  13 }).parse(req.body)
+  14 
+→ 15 const usuario = await prisma.usuario.findUnique(
+Can't reach database server at `db.ohnnezwkwqwtcwnjfwgr.supabase.co:5432`
+
+Please make sure your database server is running at `db.ohnnezwkwqwtcwnjfwgr.supabase.co:5432`.
+    at In.handleRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:7177)
+    at In.handleAndLogRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6211)
+    at In.request (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:5919)
+    at async l (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:127:11167)
+    at Object.<anonymous> (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:15:25)
+
+2026-06-03T15:58:29.745Z 
+Invalid `prisma.usuario.findUnique()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:15:46
+
+  12     senha: z.string().min(1),
+  13 }).parse(req.body)
+  14 
+→ 15 const usuario = await prisma.usuario.findUnique(
+Server has closed the connection.
+PrismaClientInitializationError: 
+Invalid `prisma.usuario.findUnique()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:15:46
+
+  12     senha: z.string().min(1),
+  13 }).parse(req.body)
+  14 
+→ 15 const usuario = await prisma.usuario.findUnique(
+Server has closed the connection.
+    at In.handleRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:7177)
+    at In.handleAndLogRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6211)
+    at In.request (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:5919)
+    at async l (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:127:11167)
+    at Object.<anonymous> (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:15:25)
+
+2026-06-03T16:02:25.766Z 
+Invalid `prisma.usuario.findUnique()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:15:46
+
+  12     senha: z.string().min(1),
+  13 }).parse(req.body)
+  14 
+→ 15 const usuario = await prisma.usuario.findUnique(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+PrismaClientInitializationError: 
+Invalid `prisma.usuario.findUnique()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:15:46
+
+  12     senha: z.string().min(1),
+  13 }).parse(req.body)
+  14 
+→ 15 const usuario = await prisma.usuario.findUnique(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+    at In.handleRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:7177)
+    at In.handleAndLogRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6211)
+    at In.request (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:5919)
+    at async l (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:127:11167)
+    at Object.<anonymous> (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:15:25)
+
+2026-06-16T18:39:22.151Z 
+Invalid `prisma.usuario.findUnique()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:15:46
+
+  12     senha: z.string().min(1),
+  13 }).parse(req.body)
+  14 
+→ 15 const usuario = await prisma.usuario.findUnique(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+PrismaClientKnownRequestError: 
+Invalid `prisma.usuario.findUnique()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:15:46
+
+  12     senha: z.string().min(1),
+  13 }).parse(req.body)
+  14 
+→ 15 const usuario = await prisma.usuario.findUnique(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+    at In.handleRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6877)
+    at In.handleAndLogRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6211)
+    at In.request (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:5919)
+    at async l (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:127:11167)
+    at Object.<anonymous> (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:15:25)
+
+2026-06-18T13:48:45.994Z 
+Invalid `prisma.publicoAlvo.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/admin/config.routes.ts:13:35
+
+  10 
+  11 // GET /admin/publicos-alvo
+  12 app.get('/admin/publicos-alvo', anyAuth, async () => {
+→ 13     return prisma.publicoAlvo.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+PrismaClientKnownRequestError: 
+Invalid `prisma.publicoAlvo.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/admin/config.routes.ts:13:35
+
+  10 
+  11 // GET /admin/publicos-alvo
+  12 app.get('/admin/publicos-alvo', anyAuth, async () => {
+→ 13     return prisma.publicoAlvo.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+    at In.handleRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6877)
+    at In.handleAndLogRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6211)
+    at In.request (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:5919)
+    at async l (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:127:11167)
+
+2026-06-18T13:56:27.242Z 
+Invalid `prisma.publicoAlvo.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/admin/config.routes.ts:13:35
+
+  10 
+  11 // GET /admin/publicos-alvo
+  12 app.get('/admin/publicos-alvo', anyAuth, async () => {
+→ 13     return prisma.publicoAlvo.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+PrismaClientKnownRequestError: 
+Invalid `prisma.publicoAlvo.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/admin/config.routes.ts:13:35
+
+  10 
+  11 // GET /admin/publicos-alvo
+  12 app.get('/admin/publicos-alvo', anyAuth, async () => {
+→ 13     return prisma.publicoAlvo.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+    at In.handleRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6877)
+    at In.handleAndLogRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6211)
+    at In.request (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:5919)
+    at async l (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:127:11167)
+
+2026-06-18T13:56:27.247Z 
+Invalid `prisma.peca.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/pecas/pecas.routes.ts:27:28
+
+  24 // GET /pecas — Lista peças do solicitante logado
+  25 app.get('/pecas', solicitanteOnly, async (req) => {
+  26     const user = (req as any).user as { id: string }
+→ 27     return prisma.peca.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+PrismaClientKnownRequestError: 
+Invalid `prisma.peca.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/pecas/pecas.routes.ts:27:28
+
+  24 // GET /pecas — Lista peças do solicitante logado
+  25 app.get('/pecas', solicitanteOnly, async (req) => {
+  26     const user = (req as any).user as { id: string }
+→ 27     return prisma.peca.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+    at In.handleRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6877)
+    at In.handleAndLogRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6211)
+    at In.request (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:5919)
+    at async l (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:127:11167)
+
+2026-06-18T13:56:29.258Z 
+Invalid `prisma.publicoAlvo.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/admin/config.routes.ts:13:35
+
+  10 
+  11 // GET /admin/publicos-alvo
+  12 app.get('/admin/publicos-alvo', anyAuth, async () => {
+→ 13     return prisma.publicoAlvo.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+PrismaClientKnownRequestError: 
+Invalid `prisma.publicoAlvo.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/admin/config.routes.ts:13:35
+
+  10 
+  11 // GET /admin/publicos-alvo
+  12 app.get('/admin/publicos-alvo', anyAuth, async () => {
+→ 13     return prisma.publicoAlvo.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+    at In.handleRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6877)
+    at In.handleAndLogRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6211)
+    at In.request (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:5919)
+    at async l (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:127:11167)
+
+2026-06-18T13:56:29.261Z 
+Invalid `prisma.segmento.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/admin/config.routes.ts:59:32
+
+  56 
+  57 // GET /admin/segmentos
+  58 app.get('/admin/segmentos', anyAuth, async () => {
+→ 59     return prisma.segmento.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+PrismaClientKnownRequestError: 
+Invalid `prisma.segmento.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/admin/config.routes.ts:59:32
+
+  56 
+  57 // GET /admin/segmentos
+  58 app.get('/admin/segmentos', anyAuth, async () => {
+→ 59     return prisma.segmento.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+    at In.handleRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6877)
+    at In.handleAndLogRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6211)
+    at In.request (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:5919)
+    at async l (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:127:11167)
+
+2026-06-18T13:56:29.263Z 
+Invalid `prisma.peca.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/pecas/pecas.routes.ts:27:28
+
+  24 // GET /pecas — Lista peças do solicitante logado
+  25 app.get('/pecas', solicitanteOnly, async (req) => {
+  26     const user = (req as any).user as { id: string }
+→ 27     return prisma.peca.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+PrismaClientKnownRequestError: 
+Invalid `prisma.peca.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/pecas/pecas.routes.ts:27:28
+
+  24 // GET /pecas — Lista peças do solicitante logado
+  25 app.get('/pecas', solicitanteOnly, async (req) => {
+  26     const user = (req as any).user as { id: string }
+→ 27     return prisma.peca.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+    at In.handleRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6877)
+    at In.handleAndLogRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6211)
+    at In.request (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:5919)
+    at async l (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:127:11167)
+
+2026-06-18T13:56:34.272Z 
+Invalid `prisma.peca.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/pecas/pecas.routes.ts:27:28
+
+  24 // GET /pecas — Lista peças do solicitante logado
+  25 app.get('/pecas', solicitanteOnly, async (req) => {
+  26     const user = (req as any).user as { id: string }
+→ 27     return prisma.peca.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+PrismaClientKnownRequestError: 
+Invalid `prisma.peca.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/pecas/pecas.routes.ts:27:28
+
+  24 // GET /pecas — Lista peças do solicitante logado
+  25 app.get('/pecas', solicitanteOnly, async (req) => {
+  26     const user = (req as any).user as { id: string }
+→ 27     return prisma.peca.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+    at In.handleRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6877)
+    at In.handleAndLogRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6211)
+    at In.request (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:5919)
+    at async l (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:127:11167)
+
+2026-06-18T13:56:34.274Z 
+Invalid `prisma.segmento.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/admin/config.routes.ts:59:32
+
+  56 
+  57 // GET /admin/segmentos
+  58 app.get('/admin/segmentos', anyAuth, async () => {
+→ 59     return prisma.segmento.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+PrismaClientKnownRequestError: 
+Invalid `prisma.segmento.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/admin/config.routes.ts:59:32
+
+  56 
+  57 // GET /admin/segmentos
+  58 app.get('/admin/segmentos', anyAuth, async () => {
+→ 59     return prisma.segmento.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+    at In.handleRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6877)
+    at In.handleAndLogRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6211)
+    at In.request (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:5919)
+    at async l (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:127:11167)
+
+2026-06-18T14:07:03.170Z 
+Invalid `prisma.segmento.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/admin/config.routes.ts:59:32
+
+  56 
+  57 // GET /admin/segmentos
+  58 app.get('/admin/segmentos', anyAuth, async () => {
+→ 59     return prisma.segmento.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+PrismaClientKnownRequestError: 
+Invalid `prisma.segmento.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/admin/config.routes.ts:59:32
+
+  56 
+  57 // GET /admin/segmentos
+  58 app.get('/admin/segmentos', anyAuth, async () => {
+→ 59     return prisma.segmento.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+    at In.handleRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6877)
+    at In.handleAndLogRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6211)
+    at In.request (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:5919)
+    at async l (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:127:11167)
+
+2026-06-18T14:07:03.173Z 
+Invalid `prisma.assunto.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/admin/config.routes.ts:164:31
+
+  161 
+  162 // GET /admin/assuntos
+  163 app.get('/admin/assuntos', anyAuth, async () => {
+→ 164     return prisma.assunto.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+PrismaClientKnownRequestError: 
+Invalid `prisma.assunto.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/admin/config.routes.ts:164:31
+
+  161 
+  162 // GET /admin/assuntos
+  163 app.get('/admin/assuntos', anyAuth, async () => {
+→ 164     return prisma.assunto.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+    at In.handleRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6877)
+    at In.handleAndLogRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6211)
+    at In.request (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:5919)
+    at async l (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:127:11167)
+
+2026-06-18T14:07:08.188Z 
+Invalid `prisma.assunto.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/admin/config.routes.ts:164:31
+
+  161 
+  162 // GET /admin/assuntos
+  163 app.get('/admin/assuntos', anyAuth, async () => {
+→ 164     return prisma.assunto.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+PrismaClientKnownRequestError: 
+Invalid `prisma.assunto.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/admin/config.routes.ts:164:31
+
+  161 
+  162 // GET /admin/assuntos
+  163 app.get('/admin/assuntos', anyAuth, async () => {
+→ 164     return prisma.assunto.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+    at In.handleRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6877)
+    at In.handleAndLogRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6211)
+    at In.request (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:5919)
+    at async l (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:127:11167)
+
+2026-06-18T14:07:42.446Z 
+Invalid `prisma.segmento.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/admin/config.routes.ts:59:32
+
+  56 
+  57 // GET /admin/segmentos
+  58 app.get('/admin/segmentos', anyAuth, async () => {
+→ 59     return prisma.segmento.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+PrismaClientKnownRequestError: 
+Invalid `prisma.segmento.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/admin/config.routes.ts:59:32
+
+  56 
+  57 // GET /admin/segmentos
+  58 app.get('/admin/segmentos', anyAuth, async () => {
+→ 59     return prisma.segmento.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+    at In.handleRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6877)
+    at In.handleAndLogRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6211)
+    at In.request (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:5919)
+    at async l (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:127:11167)
+
+2026-06-18T14:07:42.454Z 
+Invalid `prisma.publicoAlvo.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/admin/config.routes.ts:13:35
+
+  10 
+  11 // GET /admin/publicos-alvo
+  12 app.get('/admin/publicos-alvo', anyAuth, async () => {
+→ 13     return prisma.publicoAlvo.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+PrismaClientKnownRequestError: 
+Invalid `prisma.publicoAlvo.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/admin/config.routes.ts:13:35
+
+  10 
+  11 // GET /admin/publicos-alvo
+  12 app.get('/admin/publicos-alvo', anyAuth, async () => {
+→ 13     return prisma.publicoAlvo.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+    at In.handleRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6877)
+    at In.handleAndLogRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6211)
+    at In.request (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:5919)
+    at async l (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:127:11167)
+
+2026-06-30T17:32:27.976Z 
+Invalid `prisma.usuario.findUnique()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:15:46
+
+  12     senha: z.string().min(1),
+  13 }).parse(req.body)
+  14 
+→ 15 const usuario = await prisma.usuario.findUnique(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+PrismaClientKnownRequestError: 
+Invalid `prisma.usuario.findUnique()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:15:46
+
+  12     senha: z.string().min(1),
+  13 }).parse(req.body)
+  14 
+→ 15 const usuario = await prisma.usuario.findUnique(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+    at In.handleRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6877)
+    at In.handleAndLogRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6211)
+    at In.request (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:5919)
+    at async l (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:127:11167)
+    at Object.<anonymous> (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:15:25)
+
+2026-07-29T23:29:30.706Z 
+Invalid `prisma.usuario.findUnique()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:15:46
+
+  12     senha: z.string().min(1),
+  13 }).parse(req.body)
+  14 
+→ 15 const usuario = await prisma.usuario.findUnique(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+PrismaClientInitializationError: 
+Invalid `prisma.usuario.findUnique()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:15:46
+
+  12     senha: z.string().min(1),
+  13 }).parse(req.body)
+  14 
+→ 15 const usuario = await prisma.usuario.findUnique(
+Can't reach database server at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv-pooler.c-8.us-east-1.aws.neon.tech:5432`.
+    at In.handleRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:7177)
+    at In.handleAndLogRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6211)
+    at In.request (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:5919)
+    at async l (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:127:11167)
+    at Object.<anonymous> (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/auth/auth.routes.ts:15:25)
+
+2026-08-03T22:20:53.531Z 
+Invalid `prisma.segmento.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/admin/config.routes.ts:59:32
+
+  56 
+  57 // GET /admin/segmentos
+  58 app.get('/admin/segmentos', anyAuth, async () => {
+→ 59     return prisma.segmento.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv.c-8.us-east-1.aws.neon.tech:5432`.
+PrismaClientKnownRequestError: 
+Invalid `prisma.segmento.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/admin/config.routes.ts:59:32
+
+  56 
+  57 // GET /admin/segmentos
+  58 app.get('/admin/segmentos', anyAuth, async () => {
+→ 59     return prisma.segmento.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv.c-8.us-east-1.aws.neon.tech:5432`.
+    at In.handleRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6877)
+    at In.handleAndLogRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6211)
+    at In.request (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:5919)
+    at async l (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:127:11167)
+
+2026-08-03T22:20:54.575Z 
+Invalid `prisma.peca.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/pecas/pecas.routes.ts:27:28
+
+  24 // GET /pecas — Lista peças do solicitante logado
+  25 app.get('/pecas', solicitanteOnly, async (req) => {
+  26     const user = (req as any).user as { id: string }
+→ 27     return prisma.peca.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv.c-8.us-east-1.aws.neon.tech:5432`.
+PrismaClientKnownRequestError: 
+Invalid `prisma.peca.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/pecas/pecas.routes.ts:27:28
+
+  24 // GET /pecas — Lista peças do solicitante logado
+  25 app.get('/pecas', solicitanteOnly, async (req) => {
+  26     const user = (req as any).user as { id: string }
+→ 27     return prisma.peca.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv.c-8.us-east-1.aws.neon.tech:5432`.
+    at In.handleRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6877)
+    at In.handleAndLogRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6211)
+    at In.request (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:5919)
+    at async l (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:127:11167)
+
+2026-08-03T22:20:54.776Z 
+Invalid `prisma.segmento.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/admin/config.routes.ts:59:32
+
+  56 
+  57 // GET /admin/segmentos
+  58 app.get('/admin/segmentos', anyAuth, async () => {
+→ 59     return prisma.segmento.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv.c-8.us-east-1.aws.neon.tech:5432`.
+PrismaClientKnownRequestError: 
+Invalid `prisma.segmento.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/admin/config.routes.ts:59:32
+
+  56 
+  57 // GET /admin/segmentos
+  58 app.get('/admin/segmentos', anyAuth, async () => {
+→ 59     return prisma.segmento.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv.c-8.us-east-1.aws.neon.tech:5432`.
+    at In.handleRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6877)
+    at In.handleAndLogRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6211)
+    at In.request (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:5919)
+    at async l (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:127:11167)
+
+2026-08-03T22:20:55.240Z 
+Invalid `prisma.segmento.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/admin/config.routes.ts:59:32
+
+  56 
+  57 // GET /admin/segmentos
+  58 app.get('/admin/segmentos', anyAuth, async () => {
+→ 59     return prisma.segmento.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv.c-8.us-east-1.aws.neon.tech:5432`.
+PrismaClientKnownRequestError: 
+Invalid `prisma.segmento.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/admin/config.routes.ts:59:32
+
+  56 
+  57 // GET /admin/segmentos
+  58 app.get('/admin/segmentos', anyAuth, async () => {
+→ 59     return prisma.segmento.findMany(
+Can't reach database server at `ep-royal-mountain-aqhambuv.c-8.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-royal-mountain-aqhambuv.c-8.us-east-1.aws.neon.tech:5432`.
+    at In.handleRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6877)
+    at In.handleAndLogRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6211)
+    at In.request (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:5919)
+    at async l (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:127:11167)
+
+2026-08-18T16:44:38.217Z 
+Invalid `prisma.publicoAlvo.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/admin/config.routes.ts:13:35
+
+  10 
+  11 // GET /admin/publicos-alvo
+  12 app.get('/admin/publicos-alvo', anyAuth, async () => {
+→ 13     return prisma.publicoAlvo.findMany(
+Timed out fetching a new connection from the connection pool. More info: http://pris.ly/d/connection-pool (Current connection pool timeout: 10, connection limit: 21)
+PrismaClientKnownRequestError: 
+Invalid `prisma.publicoAlvo.findMany()` invocation in
+/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/src/modules/admin/config.routes.ts:13:35
+
+  10 
+  11 // GET /admin/publicos-alvo
+  12 app.get('/admin/publicos-alvo', anyAuth, async () => {
+→ 13     return prisma.publicoAlvo.findMany(
+Timed out fetching a new connection from the connection pool. More info: http://pris.ly/d/connection-pool (Current connection pool timeout: 10, connection limit: 21)
+    at In.handleRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6877)
+    at In.handleAndLogRequestError (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:6211)
+    at In.request (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:122:5919)
+    at async l (/Users/leilamatias/Antigravity Projetos/Fluxo de Aprovações/V1_Cloud/backend/node_modules/@prisma/client/runtime/library.js:127:11167)
+

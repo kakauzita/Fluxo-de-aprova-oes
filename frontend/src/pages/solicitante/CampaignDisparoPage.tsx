@@ -405,7 +405,7 @@ export default function CampaignDisparoPage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 className="page-title" style={{ borderLeft: '4px solid var(--caixa-orange)', paddingLeft: 14, fontSize: 28, fontWeight: 800, color: 'var(--caixa-blue)', lineHeight: 1.1, margin: '8px 0 6px 0' }}>
-            {campaignName || 'Criar Campanha (Disparo Único)'}
+            {campaignName || 'Campanha simples'}
           </h1>
           <p className="page-subtitle" style={{ marginBottom: 0 }}>Envio de peça única direto para seu público alvo sem complexidade de fluxos.</p>
         </div>
