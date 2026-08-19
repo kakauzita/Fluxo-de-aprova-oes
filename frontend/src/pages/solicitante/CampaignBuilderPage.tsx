@@ -4006,7 +4006,7 @@ export default function CampaignBuilderPage() {
                 }}>
                   ✓
                 </div>
-                <h2 style={{ fontSize: 22, fontWeight: 700, color: '#0f172a', margin: 0 }}>Campanha Enviada para Aprovação!</h2>
+                <h2 style={{ fontSize: 22, fontWeight: 700, color: '#0f172a', margin: 0 }}>Campanha Enviada para Análise!</h2>
                 <p style={{ fontSize: 14, color: '#64748b', lineHeight: 1.6, maxWidth: 450, margin: 0 }}>
                   A jornada <strong>"{campaignName}"</strong> foi estruturada com sucesso e enviada para a fila de validação dos gestores e aprovadores da CAIXA.
                 </p>
@@ -4196,7 +4196,7 @@ export default function CampaignBuilderPage() {
                     disabled={publishing || published}
                     style={{ background: 'var(--caixa-orange)', color: 'white', border: 'none', fontWeight: 700 }}
                   >
-                    {publishing ? 'Enviando...' : published ? '✅ Enviada para Aprovação!' : '🚀 Enviar para Aprovação'}
+                    {publishing ? 'Enviando...' : published ? '✅ Enviada para Análise!' : '🚀 Enviar para Análise'}
                   </button>
                 </div>
               </>

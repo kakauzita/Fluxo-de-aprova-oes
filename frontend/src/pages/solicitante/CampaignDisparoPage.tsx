@@ -1582,7 +1582,7 @@ export default function CampaignDisparoPage() {
                   disabled={publishing || published}
                   style={{ background: 'var(--caixa-orange)', color: 'white', border: 'none', fontWeight: 700 }}
                 >
-                  {publishing ? 'Enviando...' : published ? '✅ Enviada para Aprovação!' : '🚀 Enviar para Aprovação'}
+                  {publishing ? 'Enviando...' : published ? '✅ Enviada para Análise!' : '🚀 Enviar para Análise'}
                 </button>
               </div>
             </>
