@@ -365,6 +365,8 @@ export default function CampaignBuilderPage() {
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [campaignName, setCampaignName] = useState('')
   const [description, setDescription] = useState('')
+  const [recorrenciaTipo, setRecorrenciaTipo] = useState<'pontual' | 'recorrente'>('pontual')
+  const [recorrenciaFrequencia, setRecorrenciaFrequencia] = useState<string>('diaria')
   const [selectedPublicos, setSelectedPublicos] = useState<Option[]>([])
   const [selectedSegmentos, setSelectedSegmentos] = useState<any[]>([])
   const [tempPublicoId, setTempPublicoId] = useState('')
@@ -427,6 +429,7 @@ export default function CampaignBuilderPage() {
   const [connectorTiming, setConnectorTiming] = useState<'immediate' | 'delay'>('immediate')
   const [connectorDelay, setConnectorDelay] = useState({ amount: '1', unit: 'dia' })
   const [connectorMaxRepetitions, setConnectorMaxRepetitions] = useState<string>('')
+  const [connectorUnlimited, setConnectorUnlimited] = useState<boolean>(false)
 
   // ─── Pan / Drag navigation (Figma-style) ─────────────────────────────
   // The canvas-grid is a 4000×4000px absolute surface.
@@ -988,7 +991,7 @@ export default function CampaignBuilderPage() {
             message: 'Uma conexão aponta para uma etapa que não existe mais. Remova ou reconfigure a conexão.',
           };
         }
-        if (b.config.direction === 'backward' && (!b.config.maxRepetitions || b.config.maxRepetitions < 1)) {
+        if (b.config.direction === 'backward' && (!b.config.maxRepetitions || (b.config.maxRepetitions !== -1 && b.config.maxRepetitions < 1))) {
           return {
             valid: false,
             message: 'Defina quantas vezes o retorno poderá acontecer na conexão de retorno.',
@@ -1129,6 +1132,10 @@ export default function CampaignBuilderPage() {
       tipoCampanha: 'jornada',
       nome: campaignName,
       descricao: description,
+      recorrencia: {
+        tipo: recorrenciaTipo,
+        frequencia: recorrenciaTipo === 'recorrente' ? recorrenciaFrequencia : null
+      },
       publicoAlvo: selectedPublicos,
       segmento: selectedSegmentos,
       exclusoes: [
@@ -1245,10 +1252,19 @@ export default function CampaignBuilderPage() {
       )
     }
     if (b.type === 'check') {
-      return b.config.question ? (
-        <strong>{b.config.question}</strong>
-      ) : (
-        <span className="block-empty">Defina a pergunta de verificação...</span>
+      return (
+        <div>
+          {b.config.question ? (
+            <strong>{b.config.question}</strong>
+          ) : (
+            <span className="block-empty">Defina a pergunta de verificação...</span>
+          )}
+          {b.config.extra && (
+            <div style={{ marginTop: 4, fontStyle: 'italic', fontSize: 12, color: 'var(--builder-muted)' }}>
+              ({b.config.extra})
+            </div>
+          )}
+        </div>
       )
     }
     if (b.type === 'end') {
@@ -1295,7 +1311,7 @@ export default function CampaignBuilderPage() {
           </div>
           {isBackward && b.config.maxRepetitions && (
             <div style={{ fontSize: '11px', color: '#6366f1', fontWeight: 600 }}>
-              Máximo: {b.config.maxRepetitions}x
+              {b.config.maxRepetitions === -1 ? 'Ilimitado' : `Máximo: ${b.config.maxRepetitions}x`}
             </div>
           )}
         </div>
@@ -1521,7 +1537,7 @@ export default function CampaignBuilderPage() {
                 return flatten(blocks);
               })();
               const maxRep = ret.maxRepetitions;
-              const tooltipText = `Retorno para esta etapa${maxRep ? ` · Máx. ${maxRep}×` : ''}`;
+              const tooltipText = `Retorno para esta etapa${maxRep ? (maxRep === -1 ? ' · Ilimitado' : ` · Máx. ${maxRep}×`) : ''}`;
               // Find the step number of the block just before the connector
               const connectorIdx = flatAll.findIndex((b: any) => b.id === ret.connectorId);
               let prevStepNum: number | string = '?';
@@ -1835,6 +1851,67 @@ export default function CampaignBuilderPage() {
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* Secção: Tipo de recorrência */}
+            <div className="setup-section">
+              <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--caixa-blue)', borderLeft: '4px solid var(--caixa-blue)', paddingLeft: 14, marginBottom: 16 }}>
+                Tipo de recorrência
+              </h3>
+              <div className="setup-card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div style={{ fontSize: 14, color: '#64748b', marginBottom: 4 }}>
+                  Defina quando sua campanha será enviada.
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer', padding: 12, border: '1px solid #e2e8f0', borderRadius: 8, background: recorrenciaTipo === 'pontual' ? '#f8fafc' : '#fff' }}>
+                    <input 
+                      type="radio" 
+                      name="recorrenciaTipo" 
+                      checked={recorrenciaTipo === 'pontual'} 
+                      onChange={() => setRecorrenciaTipo('pontual')}
+                      style={{ marginTop: 3 }}
+                    />
+                    <div>
+                      <strong style={{ display: 'block', fontSize: 14, color: '#1e293b' }}>Pontual</strong>
+                      <span style={{ fontSize: 12, color: '#64748b' }}>A campanha será enviada uma única vez.</span>
+                    </div>
+                  </label>
+
+                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer', padding: 12, border: '1px solid #e2e8f0', borderRadius: 8, background: recorrenciaTipo === 'recorrente' ? '#f8fafc' : '#fff' }}>
+                    <input 
+                      type="radio" 
+                      name="recorrenciaTipo" 
+                      checked={recorrenciaTipo === 'recorrente'} 
+                      onChange={() => setRecorrenciaTipo('recorrente')}
+                      style={{ marginTop: 3 }}
+                    />
+                    <div>
+                      <strong style={{ display: 'block', fontSize: 14, color: '#1e293b' }}>Recorrente</strong>
+                      <span style={{ fontSize: 12, color: '#64748b' }}>A campanha será enviada repetidamente, de acordo com a frequência definida.</span>
+                    </div>
+                  </label>
+                </div>
+
+                {recorrenciaTipo === 'recorrente' && (
+                  <div style={{ marginTop: 8, padding: '16px 16px 4px 16px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                    <label className="form-label" style={{ fontWeight: 700, marginBottom: 8, display: 'block' }}>Frequência de envio</label>
+                    <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+                      <select 
+                        className="form-select"
+                        value={recorrenciaFrequencia}
+                        onChange={(e) => setRecorrenciaFrequencia(e.target.value)}
+                        style={{ width: '100%', maxWidth: '250px' }}
+                      >
+                        <option value="diaria">Diária</option>
+                        <option value="semanal">Semanal</option>
+                        <option value="quinzenal">Quinzenal</option>
+                        <option value="mensal">Mensal</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -2358,6 +2435,7 @@ export default function CampaignBuilderPage() {
                                 setConnectorTiming('immediate')
                                 setConnectorDelay({ amount: '1', unit: 'dia' })
                                 setConnectorMaxRepetitions('')
+                                setConnectorUnlimited(false)
                               } else {
                                 insertBlockAt(item.type)
                               }
@@ -2414,8 +2492,8 @@ export default function CampaignBuilderPage() {
 
                   const handleConfirmConnector = () => {
                     if (!connectorTargetId || !cDirection) return
-                    if (cDirection === 'backward' && (!connectorMaxRepetitions || parseInt(connectorMaxRepetitions) < 1)) {
-                      alert('Por favor, defina quantas vezes o retorno poderá acontecer (mínimo 1).')
+                    if (cDirection === 'backward' && !connectorUnlimited && (!connectorMaxRepetitions || parseInt(connectorMaxRepetitions) < 1)) {
+                      alert('Por favor, defina quantas vezes o retorno poderá acontecer ou marque Ilimitado.')
                       return
                     }
                     const cid = 'b' + Date.now() + Math.floor(Math.random() * 1000)
@@ -2427,7 +2505,7 @@ export default function CampaignBuilderPage() {
                       newBlock.config.delay = { ...connectorDelay }
                     }
                     if (cDirection === 'backward') {
-                      newBlock.config.maxRepetitions = parseInt(connectorMaxRepetitions) || 1
+                      newBlock.config.maxRepetitions = connectorUnlimited ? -1 : (parseInt(connectorMaxRepetitions) || 1)
                     }
 
                     if ('index' in insertTarget && !('blockId' in insertTarget)) {
@@ -2565,6 +2643,7 @@ export default function CampaignBuilderPage() {
                                       type="number" min="1" max="10"
                                       placeholder="Ex: 3"
                                       value={connectorMaxRepetitions}
+                                      disabled={connectorUnlimited}
                                       onChange={(e) => {
                                         const val = parseInt(e.target.value)
                                         if (e.target.value === '') {
@@ -2575,12 +2654,35 @@ export default function CampaignBuilderPage() {
                                       }}
                                       style={{
                                         width: '100%', padding: '10px 12px', borderRadius: 8,
-                                        border: '1.5px solid #d1d5db', fontSize: 14
+                                        border: '1.5px solid #d1d5db', fontSize: 14,
+                                        opacity: connectorUnlimited ? 0.5 : 1,
+                                        background: connectorUnlimited ? '#f1f5f9' : '#fff'
                                       }}
                                     />
-                                    <div style={{ fontSize: 11, color: 'var(--builder-muted)', marginTop: 4 }}>
-                                      Máximo permitido: 10 vezes
-                                    </div>
+                                    
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, cursor: 'pointer' }}>
+                                      <div style={{
+                                        position: 'relative', width: 36, height: 20, borderRadius: 20,
+                                        background: connectorUnlimited ? '#6366f1' : '#cbd5e1',
+                                        transition: 'background 0.2s', display: 'flex', alignItems: 'center', padding: 2
+                                      }}>
+                                        <input
+                                          type="checkbox"
+                                          checked={connectorUnlimited}
+                                          onChange={(e) => {
+                                            setConnectorUnlimited(e.target.checked);
+                                            if (e.target.checked) setConnectorMaxRepetitions('');
+                                          }}
+                                          style={{ opacity: 0, position: 'absolute', width: '100%', height: '100%', cursor: 'pointer', margin: 0 }}
+                                        />
+                                        <div style={{
+                                          width: 16, height: 16, borderRadius: '50%', background: '#fff',
+                                          transform: connectorUnlimited ? 'translateX(16px)' : 'translateX(0)',
+                                          transition: 'transform 0.2s'
+                                        }} />
+                                      </div>
+                                      <span style={{ fontSize: 14, fontWeight: 500, color: '#334155' }}>Ilimitado</span>
+                                    </label>
                                   </div>
                                 )}
                               </React.Fragment>
@@ -2603,7 +2705,7 @@ export default function CampaignBuilderPage() {
                             </button>
                             <button
                               className="btn"
-                              disabled={!connectorTargetId || !cDirection || (cDirection === 'backward' && (!connectorMaxRepetitions || parseInt(connectorMaxRepetitions) < 1))}
+                              disabled={!connectorTargetId || !cDirection || (cDirection === 'backward' && !connectorUnlimited && (!connectorMaxRepetitions || parseInt(connectorMaxRepetitions) < 1))}
                               style={{
                                 padding: '8px 20px', borderRadius: 6, fontWeight: 600,
                                 border: 'none', cursor: connectorTargetId && cDirection ? 'pointer' : 'not-allowed',
@@ -3323,6 +3425,39 @@ export default function CampaignBuilderPage() {
                   {/* CHECK BLOCK CONFIG */}
                   {selectedBlock.type === 'check' && (() => {
                     const currentVal = selectedBlock.config.question || '';
+                    const conditions = selectedBlock.config.conditions || (selectedBlock.config.extra ? [selectedBlock.config.extra] : [])
+
+                    const handleOperatorChange = (newOp: 'E' | 'OU') => {
+                      updateBlockConfig(selectedBlock.id, {
+                        operator: newOp,
+                        extra: conditions.filter(Boolean).join(` ${newOp} `)
+                      })
+                    }
+
+                    const handleUpdateCondition = (idx: number, newVal: string) => {
+                      const updated = [...conditions]
+                      updated[idx] = newVal
+                      updateBlockConfig(selectedBlock.id, {
+                        conditions: updated,
+                        extra: updated.filter(Boolean).join(` ${selectedBlock.config.operator || 'E'} `)
+                      })
+                    }
+
+                    const handleDeleteCondition = (idx: number) => {
+                      const updated = conditions.filter((_, i) => i !== idx)
+                      updateBlockConfig(selectedBlock.id, {
+                        conditions: updated,
+                        extra: updated.filter(Boolean).join(` ${selectedBlock.config.operator || 'E'} `)
+                      })
+                    }
+
+                    const handleAddCondition = () => {
+                      const updated = [...conditions, '']
+                      updateBlockConfig(selectedBlock.id, {
+                        conditions: updated,
+                        extra: updated.filter(Boolean).join(` ${selectedBlock.config.operator || 'E'} `)
+                      })
+                    }
                     const filteredCats = CHECK_CATEGORIES.map(cat => {
                       const matchedItems = cat.items.filter(item =>
                         item.toLowerCase().includes(checkSearchQuery.toLowerCase())
@@ -3573,6 +3708,125 @@ export default function CampaignBuilderPage() {
                           </div>
                         </div>
 
+                        {/* Elegibilidade Extra */}
+                        <div className="detail-field" style={{ marginTop: 8 }}>
+                          <label className="detail-label" style={{ marginBottom: 8, display: 'block', fontWeight: 700 }}>CONDIÇÕES DE ELEGIBILIDADE EXTRA</label>
+                          {conditions.length > 0 && (
+                            <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+                              <button
+                                type="button"
+                                onClick={() => handleOperatorChange('E')}
+                                style={{
+                                  padding: '4px 12px',
+                                  fontSize: 13,
+                                  fontWeight: 700,
+                                  borderRadius: 4,
+                                  border: `1.5px solid ${selectedBlock.config.operator === 'E' ? 'var(--caixa-blue)' : '#d1d9e0'}`,
+                                  background: selectedBlock.config.operator === 'E' ? 'var(--caixa-blue-bg)' : '#ffffff',
+                                  color: selectedBlock.config.operator === 'E' ? 'var(--caixa-blue)' : '#4a5568',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.15s'
+                                }}
+                              >
+                                E
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleOperatorChange('OU')}
+                                style={{
+                                  padding: '4px 12px',
+                                  fontSize: 13,
+                                  fontWeight: 700,
+                                  borderRadius: 4,
+                                  border: `1.5px solid ${selectedBlock.config.operator === 'OU' ? 'var(--caixa-blue)' : '#d1d9e0'}`,
+                                  background: selectedBlock.config.operator === 'OU' ? 'var(--caixa-blue-bg)' : '#ffffff',
+                                  color: selectedBlock.config.operator === 'OU' ? 'var(--caixa-blue)' : '#4a5568',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.15s'
+                                }}
+                              >
+                                OU
+                              </button>
+                            </div>
+                          )}
+
+                          {conditions.map((cond, idx) => (
+                            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                              <select
+                                className="detail-select"
+                                style={{ flex: 1, margin: 0, padding: '8px 10px', borderRadius: 6, border: '1px solid var(--builder-border)' }}
+                                value={cond}
+                                onChange={(e) => handleUpdateCondition(idx, e.target.value)}
+                              >
+                                <option value="">Selecionar opção</option>
+                                {CONDICAO_OPCOES.map((opt) => (
+                                  <option key={opt} value={opt}>
+                                    {opt}
+                                  </option>
+                                ))}
+                              </select>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteCondition(idx)}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  color: '#718096',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  padding: '6px',
+                                  borderRadius: '4px',
+                                  transition: 'all 0.15s'
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.color = '#dc2626';
+                                  e.currentTarget.style.background = '#fee2e2';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.color = '#718096';
+                                  e.currentTarget.style.background = 'none';
+                                }}
+                                title="Excluir regra"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          ))}
+
+                          <button
+                            type="button"
+                            onClick={handleAddCondition}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 6,
+                              padding: '6px 12px',
+                              borderRadius: 6,
+                              border: '1.5px solid #d1d9e0',
+                              background: '#ffffff',
+                              color: '#1a1a2e',
+                              fontSize: 12,
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              marginTop: 6,
+                              boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                              transition: 'all 0.15s'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.borderColor = 'var(--caixa-blue)';
+                              e.currentTarget.style.background = '#f8fafc';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.borderColor = '#d1d9e0';
+                              e.currentTarget.style.background = '#ffffff';
+                            }}
+                          >
+                            <Plus size={14} /> Adicionar regra
+                          </button>
+                        </div>
+
                         <div style={{ marginTop: 12, padding: 12, background: 'var(--builder-bg)', border: '1px solid var(--builder-border-light)', borderRadius: 8, fontSize: 11, color: 'var(--builder-muted)', lineHeight: 1.4 }}>
                           <div style={{ fontWeight: 600, color: 'var(--text-color)', marginBottom: 4 }}>💡 Direcione a jornada conforme o resultado</div>
                           A ramificação gerará caminhos automáticos para <strong>✓ Sim</strong> e <strong>✗ Não</strong>, permitindo que você tome ações distintas dependendo da resposta do cliente.
@@ -3778,6 +4032,14 @@ export default function CampaignBuilderPage() {
                       <div>
                         <div style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', marginBottom: 4 }}>Descrição</div>
                         <div style={{ fontSize: 15, color: '#4b5563', fontWeight: 400 }}>{description || 'Não informado'}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', marginBottom: 4 }}>Recorrência</div>
+                        <div style={{ fontSize: 15, color: '#4b5563', fontWeight: 400, textTransform: 'capitalize' }}>
+                          {recorrenciaTipo === 'recorrente' ? `Recorrente (${recorrenciaFrequencia})` : 'Pontual'}
+                        </div>
+                      </div>
+                      <div>
                       </div>
                       <div>
                         <div style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', marginBottom: 4 }}>Segmentos selecionados</div>

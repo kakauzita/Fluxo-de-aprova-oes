@@ -35,7 +35,7 @@ export default function SelecionarTipoCampanhaPage() {
         </button>
 
         <h2 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--caixa-blue)', marginBottom: '8px', marginTop: 0 }}>Nova campanha</h2>
-        <p style={{ fontSize: '15px', color: '#64748b', marginBottom: '32px', marginTop: 0 }}>Como você quer montar essa comunicação?</p>
+        <p style={{ fontSize: '15px', color: '#64748b', marginBottom: '32px', marginTop: 0 }}>Como você quer montar sua campanha?</p>
 
         <div style={{ display: 'flex', gap: '24px', flexDirection: 'row' }}>
           {/* Card Disparo Unico */}
@@ -69,8 +69,8 @@ export default function SelecionarTipoCampanhaPage() {
             <div style={{ background: '#e8f0fe', color: 'var(--caixa-blue)', padding: '20px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Send size={32} />
             </div>
-            <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#1e293b', margin: 0 }}>Disparo único</h3>
-            <p style={{ fontSize: '13px', color: '#64748b', margin: 0, lineHeight: '1.4' }}>Uma peça, um público, um envio.</p>
+            <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#1e293b', margin: 0 }}>Campanha simples</h3>
+            <p style={{ fontSize: '13px', color: '#64748b', margin: 0, lineHeight: '1.4' }}>Uma comunicação, de forma direta utilizando apenas um único tipo de peça.</p>
           </div>
 
           {/* Card Jornada */}
@@ -104,8 +104,8 @@ export default function SelecionarTipoCampanhaPage() {
             <div style={{ background: '#e8f0fe', color: 'var(--caixa-blue)', padding: '20px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <GitBranch size={32} />
             </div>
-            <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#1e293b', margin: 0 }}>Jornada</h3>
-            <p style={{ fontSize: '13px', color: '#64748b', margin: 0, lineHeight: '1.4' }}>Múltiplas peças com condições e tempo, montadas no canvas.</p>
+            <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#1e293b', margin: 0 }}>Campanha com fluxo</h3>
+            <p style={{ fontSize: '13px', color: '#64748b', margin: 0, lineHeight: '1.4' }}>Combine várias peças, condições, regras e loops para definir diferentes caminhos de comunicação com múltiplas etapas.</p>
           </div>
         </div>
       </div>
