@@ -101,12 +101,12 @@ export default function CampaignDisparoPage() {
 
   // ─── CSV Import & Toggle Helpers ───────────────────────────────────────────
   const handleDownloadTemplate = () => {
-    const csvContent = "cpf;email;telefone\n12345678901;cliente@exemplo.com;11999999999\n98765432100;outro@exemplo.com;\n11122233344;;21988888888"
+    const csvContent = "cpf\n12345678901\n98765432100\n11122233344\n55566677788"
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement("a")
     link.setAttribute("href", url)
-    link.setAttribute("download", "modelo_importacao_clientes.csv")
+    link.setAttribute("download", "modelo_importacao_cpf.csv")
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -150,18 +150,10 @@ export default function CampaignDisparoPage() {
 
         // Check columns
         const cpfIndex = headers.indexOf('cpf')
-        const emailIndex = headers.indexOf('email')
-        const telefoneIndex = headers.indexOf('telefone')
 
         if (cpfIndex === -1) {
           setCsvFileStatus('error')
-          setCsvErrorMsg('Coluna obrigatória "cpf" não encontrada no cabeçalho do CSV. O arquivo deve conter: cpf;email;telefone')
-          return
-        }
-
-        if (emailIndex === -1 && telefoneIndex === -1) {
-          setCsvFileStatus('error')
-          setCsvErrorMsg('O arquivo precisa conter ao menos uma coluna de contato: "email" ou "telefone".')
+          setCsvErrorMsg('Coluna obrigatória "cpf" não encontrada no cabeçalho do CSV. Sua planilha precisa ter apenas uma coluna com os CPFs.')
           return
         }
 
@@ -172,17 +164,9 @@ export default function CampaignDisparoPage() {
         for (let i = 1; i < lines.length; i++) {
           const row = lines[i].split(separator).map(cell => cell.trim())
           const cpf = row[cpfIndex]
-          const email = emailIndex !== -1 ? row[emailIndex] : ''
-          const telefone = telefoneIndex !== -1 ? row[telefoneIndex] : ''
 
           // Basic CPF presence validation
           if (!cpf) {
-            invalidLines++
-            continue
-          }
-
-          // At least one contact field must be present
-          if (!email && !telefone) {
             invalidLines++
             continue
           }
@@ -192,7 +176,7 @@ export default function CampaignDisparoPage() {
 
         if (validCount === 0) {
           setCsvFileStatus('error')
-          setCsvErrorMsg('Nenhum registro válido encontrado. Verifique se as linhas possuem CPF e e-mail/telefone preenchidos.')
+          setCsvErrorMsg('Nenhum registro de CPF válido encontrado no arquivo.')
         } else {
           setCsvFileStatus('success')
           setCsvRecordsCount(validCount)
@@ -494,8 +478,8 @@ export default function CampaignDisparoPage() {
                         Importar lista própria (CSV)
                       </span>
                     </div>
-                    <div style={{ fontSize: '12px', color: '#64748b' }}>
-                      Neste fluxo simples, o envio é direcionado exclusivamente para a sua lista própria de destinatários.
+                    <div style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.4' }}>
+                      Sua planilha precisa ter apenas uma coluna, com o CPF de cada cliente. Os dados de contato são buscados automaticamente na base.
                     </div>
                   </div>
 
@@ -562,7 +546,7 @@ export default function CampaignDisparoPage() {
                                 Arraste seu arquivo CSV ou clique para selecionar
                               </div>
                               <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
-                                Colunas obrigatórias: <strong style={{ color: '#475569' }}>cpf</strong> + <strong style={{ color: '#475569' }}>email</strong> ou <strong style={{ color: '#475569' }}>telefone</strong> (com DDD)
+                                Coluna necessária: <strong style={{ color: '#475569' }}>cpf</strong> (os dados de contato são buscados automaticamente na base)
                               </div>
                             </div>
                           </div>
@@ -693,10 +677,31 @@ export default function CampaignDisparoPage() {
                       </div>
 
                       {/* Download Template & Instructions Row */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '12px 16px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
-                        <div style={{ fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ fontSize: '14px' }}>💡</span> 
-                          Precisa de ajuda para estruturar? Baixe nosso modelo padrão pronto para preenchimento.
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '14px 18px', borderRadius: '6px', border: '1px solid #e2e8f0', flexWrap: 'wrap', gap: '14px' }}>
+                        <div style={{ fontSize: '13px', color: '#475569', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                          <span style={{ fontSize: '16px', marginTop: '1px' }}>💡</span> 
+                          <div style={{ lineHeight: '1.5' }}>
+                            <div>Sua planilha precisa ter apenas uma coluna, com o CPF de cada cliente. Os dados de contato são buscados automaticamente na base.</div>
+                            <div style={{ marginTop: '4px', color: '#64748b' }}>
+                              Precisa de ajuda para estruturar?{' '}
+                              <button
+                                type="button"
+                                onClick={handleDownloadTemplate}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  padding: 0,
+                                  color: 'var(--caixa-blue, #005ca9)',
+                                  textDecoration: 'underline',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  fontSize: 'inherit'
+                                }}
+                              >
+                                Baixe nosso modelo pronto para preenchimento
+                              </button>
+                            </div>
+                          </div>
                         </div>
                         <button
                           type="button"
@@ -704,19 +709,20 @@ export default function CampaignDisparoPage() {
                           style={{
                             background: '#ffffff',
                             border: '1px solid #cbd5e1',
-                            color: '#475569',
-                            padding: '6px 12px',
+                            color: 'var(--caixa-blue, #005ca9)',
+                            padding: '8px 14px',
                             borderRadius: '4px',
                             fontSize: '12px',
                             fontWeight: 700,
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '6px'
+                            gap: '6px',
+                            whiteSpace: 'nowrap'
                           }}
                         >
                           <FileText size={14} />
-                          Baixar modelo CSV
+                          Baixar modelo pronto
                         </button>
                       </div>
                     </div>
