@@ -28,7 +28,8 @@ import {
   MessageSquare,
   MessageCircle,
   Smartphone,
-  Link2
+  Link2,
+  Info
 } from 'lucide-react'
 import './CampaignBuilderPage.css'
 import JornadaExplicada, { mapBlocksToJornadaNodes } from '../../components/JornadaExplicada'
@@ -372,6 +373,7 @@ export default function CampaignBuilderPage() {
   const [tempPublicoId, setTempPublicoId] = useState('')
   const [tempSegmentoId, setTempSegmentoId] = useState('')
   const [selectedExclusions, setSelectedExclusions] = useState<string[]>([])
+  const [tempExclusion, setTempExclusion] = useState('')
 
   const handleAddPublico = () => {
     if (!tempPublicoId) return
@@ -2090,7 +2092,7 @@ export default function CampaignBuilderPage() {
                   Listas de exclusão aplicadas automaticamente a todas as campanhas
                 </p>
                 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px', marginBottom: 24 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px', marginBottom: 16 }}>
                   {[
                     {
                       title: 'Menores de 18 anos',
@@ -2128,41 +2130,80 @@ export default function CampaignBuilderPage() {
                   ))}
                 </div>
 
+                {/* Banner de Aviso dentro de Exclusões */}
+                <div style={{
+                  background: '#f0f9ff',
+                  border: '1px solid #bae6fd',
+                  borderRadius: '6px',
+                  padding: '12px 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  marginBottom: 24
+                }}>
+                  <Info size={20} style={{ color: '#0284c7', flexShrink: 0 }} />
+                  <div style={{ fontSize: '13px', color: '#0369a1', lineHeight: '1.4' }}>
+                    <strong style={{ fontWeight: 700 }}>Precisa atingir algum desses grupos?</strong> Se sua campanha tiver justificativa para isso, registre a solicitação no campo observações da etapa revisar fluxo. A solicitação será avaliada antes da aprovação.
+                  </div>
+                </div>
+
                 <div style={{ marginTop: 24 }}>
                   <label className="form-label" style={{ fontWeight: 700, display: 'flex', gap: 6, alignItems: 'baseline', marginBottom: 4 }}>
                     Lista de exclusão adicional <span style={{ fontWeight: 400, color: '#94a3b8', fontSize: '12px' }}>Opcional</span>
                   </label>
-                  <select
-                    className="form-select"
-                    value=""
-                    onChange={(e) => {
-                      const val = e.target.value
-                      if (val && !selectedExclusions.includes(val)) {
-                        setSelectedExclusions([...selectedExclusions, val])
-                      }
-                    }}
-                  >
-                    <option value="">Adicionar a lista de exclusão</option>
-                    {[
-                      'Não Incomodar',
-                      'Segmento Exclusivo e Grupo Familiar',
-                      'PPE - Pessoa Politicamente Exposta',
-                      'Cadastro Desatualizado',
-                      'Lei de Crédito Aposentado',
-                      'Restrição Absoluta (Base SIRIC)',
-                      'SIPES - Restrições SERASA/Boa Vista',
-                      'CONRES',
-                      'SIGA - Atraso > 30 dias',
-                      'Renegociação - SIICO 190 ou 191',
-                      'Fique em Dia/Quita Fácil',
-                      'Benefício INSS < 180 dias',
-                      'Excluir Consig - Atraso > 30 dias e extrato da convenente com erro ou não paga'
-                    ].map(excl => (
-                      <option key={excl} value={excl} disabled={selectedExclusions.includes(excl)}>
-                        {excl}
-                      </option>
-                    ))}
-                  </select>
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <select
+                      className="form-select"
+                      style={{ flex: 1 }}
+                      value={tempExclusion}
+                      onChange={(e) => setTempExclusion(e.target.value)}
+                    >
+                      <option value="">Adicionar a lista de exclusão</option>
+                      {[
+                        'Não Incomodar',
+                        'Segmento Exclusivo e Grupo Familiar',
+                        'PPE - Pessoa Politicamente Exposta',
+                        'Cadastro Desatualizado',
+                        'Lei de Crédito Aposentado',
+                        'Restrição Absoluta (Base SIRIC)',
+                        'SIPES - Restrições SERASA/Boa Vista',
+                        'CONRES',
+                        'SIGA - Atraso > 30 dias',
+                        'Renegociação - SIICO 190 ou 191',
+                        'Fique em Dia/Quita Fácil',
+                        'Benefício INSS < 180 dias',
+                        'Excluir Consig - Atraso > 30 dias e extrato da convenente com erro ou não paga'
+                      ].map(excl => (
+                        <option key={excl} value={excl} disabled={selectedExclusions.includes(excl)}>
+                          {excl}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (tempExclusion && !selectedExclusions.includes(tempExclusion)) {
+                          setSelectedExclusions([...selectedExclusions, tempExclusion])
+                          setTempExclusion('')
+                        }
+                      }}
+                      disabled={!tempExclusion}
+                      style={{
+                        background: 'white',
+                        border: '1px solid var(--caixa-blue, #005ca9)',
+                        color: 'var(--caixa-blue, #005ca9)',
+                        padding: '0 20px',
+                        borderRadius: '4px',
+                        fontWeight: 600,
+                        fontSize: '13px',
+                        cursor: tempExclusion ? 'pointer' : 'not-allowed',
+                        opacity: tempExclusion ? 1 : 0.6,
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      Adicionar
+                    </button>
+                  </div>
 
                   {/* Render selected exclusions as tags/badges */}
                   {selectedExclusions.length > 0 && (
