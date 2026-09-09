@@ -37,6 +37,14 @@ import JornadaExplicada, { mapBlocksToJornadaNodes } from '../../components/Jorn
 // ─── (SVG backward line overlay removed — replaced by inline card badges) ─────
 
 // ─── Constants ────────────────────────────────────────────────────────────────
+const getUnitLabel = (freq: string, intervalo: number) => {
+  if (freq === 'diaria') return intervalo === 1 ? 'dia' : 'dias'
+  if (freq === 'semanal') return intervalo === 1 ? 'semana' : 'semanas'
+  if (freq === 'mensal') return intervalo === 1 ? 'mês' : 'meses'
+  if (freq === 'anual') return intervalo === 1 ? 'ano' : 'anos'
+  return freq
+}
+
 interface BlockMeta {
   icon: React.ReactNode
   label: string
@@ -367,7 +375,8 @@ export default function CampaignBuilderPage() {
   const [campaignName, setCampaignName] = useState('')
   const [description, setDescription] = useState('')
   const [recorrenciaTipo, setRecorrenciaTipo] = useState<'pontual' | 'recorrente'>('pontual')
-  const [recorrenciaFrequencia, setRecorrenciaFrequencia] = useState<string>('diaria')
+  const [recorrenciaFrequencia, setRecorrenciaFrequencia] = useState<string>('mensal')
+  const [recorrenciaIntervalo, setRecorrenciaIntervalo] = useState<number>(2)
   const [selectedPublicos, setSelectedPublicos] = useState<Option[]>([])
   const [selectedSegmentos, setSelectedSegmentos] = useState<any[]>([])
   const [tempPublicoId, setTempPublicoId] = useState('')
@@ -1136,7 +1145,8 @@ export default function CampaignBuilderPage() {
       descricao: description,
       recorrencia: {
         tipo: recorrenciaTipo,
-        frequencia: recorrenciaTipo === 'recorrente' ? recorrenciaFrequencia : null
+        frequencia: recorrenciaTipo === 'recorrente' ? recorrenciaFrequencia : null,
+        intervalo: recorrenciaTipo === 'recorrente' ? recorrenciaIntervalo : null
       },
       publicoAlvo: selectedPublicos,
       segmento: selectedSegmentos,
@@ -1856,63 +1866,90 @@ export default function CampaignBuilderPage() {
               </div>
             </div>
 
-            {/* Secção: Tipo de recorrência */}
+            {/* Secção: Tipo de disparo */}
             <div className="setup-section">
               <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--caixa-blue)', borderLeft: '4px solid var(--caixa-blue)', paddingLeft: 14, marginBottom: 16 }}>
-                Tipo de recorrência
+                Tipo de disparo
               </h3>
-              <div className="setup-card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div style={{ fontSize: 14, color: '#64748b', marginBottom: 4 }}>
-                  Defina quando sua campanha será enviada.
-                </div>
-                
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer', padding: 12, border: '1px solid #e2e8f0', borderRadius: 8, background: recorrenciaTipo === 'pontual' ? '#f8fafc' : '#fff' }}>
+              <div className="setup-card" style={{ padding: '24px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
+                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 500, color: '#1e293b' }}>
                     <input 
                       type="radio" 
                       name="recorrenciaTipo" 
+                      value="pontual"
                       checked={recorrenciaTipo === 'pontual'} 
                       onChange={() => setRecorrenciaTipo('pontual')}
-                      style={{ marginTop: 3 }}
+                      style={{ width: '16px', height: '16px', accentColor: 'var(--caixa-blue, #005ca9)', cursor: 'pointer' }}
                     />
-                    <div>
-                      <strong style={{ display: 'block', fontSize: 14, color: '#1e293b' }}>Pontual</strong>
-                      <span style={{ fontSize: 12, color: '#64748b' }}>A campanha será enviada uma única vez.</span>
-                    </div>
+                    <span>Disparo único</span>
                   </label>
 
-                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer', padding: 12, border: '1px solid #e2e8f0', borderRadius: 8, background: recorrenciaTipo === 'recorrente' ? '#f8fafc' : '#fff' }}>
+                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 500, color: '#1e293b' }}>
                     <input 
                       type="radio" 
                       name="recorrenciaTipo" 
+                      value="recorrente"
                       checked={recorrenciaTipo === 'recorrente'} 
                       onChange={() => setRecorrenciaTipo('recorrente')}
-                      style={{ marginTop: 3 }}
+                      style={{ width: '16px', height: '16px', accentColor: 'var(--caixa-blue, #005ca9)', cursor: 'pointer' }}
                     />
-                    <div>
-                      <strong style={{ display: 'block', fontSize: 14, color: '#1e293b' }}>Recorrente</strong>
-                      <span style={{ fontSize: 12, color: '#64748b' }}>A campanha será enviada repetidamente, de acordo com a frequência definida.</span>
-                    </div>
+                    <span>Recorrente</span>
                   </label>
                 </div>
 
                 {recorrenciaTipo === 'recorrente' && (
-                  <div style={{ marginTop: 8, padding: '16px 16px 4px 16px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0' }}>
-                    <label className="form-label" style={{ fontWeight: 700, marginBottom: 8, display: 'block' }}>Frequência de envio</label>
-                    <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
-                      <select 
-                        className="form-select"
-                        value={recorrenciaFrequencia}
-                        onChange={(e) => setRecorrenciaFrequencia(e.target.value)}
-                        style={{ width: '100%', maxWidth: '250px' }}
-                      >
-                        <option value="diaria">Diária</option>
-                        <option value="semanal">Semanal</option>
-                        <option value="quinzenal">Quinzenal</option>
-                        <option value="mensal">Mensal</option>
-                      </select>
+                  <>
+                    <hr style={{ border: 'none', borderTop: '1px solid #f1f5f9', margin: '20px 0' }} />
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ fontSize: '14px', fontWeight: 700, color: '#1e293b', marginBottom: '4px' }}>
+                        Configuração da recorrência
+                      </div>
+                      <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '16px' }}>
+                        Configure a frequência e o período em que a campanha será enviada automaticamente.
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <label style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b' }}>
+                            Frequência
+                          </label>
+                          <select 
+                            className="form-select"
+                            value={recorrenciaFrequencia}
+                            onChange={(e) => setRecorrenciaFrequencia(e.target.value)}
+                            style={{ width: '180px', padding: '8px 12px', fontSize: '13px', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+                          >
+                            <option value="diaria">Diária</option>
+                            <option value="semanal">Semanal</option>
+                            <option value="mensal">Mensal</option>
+                            <option value="anual">Anual</option>
+                          </select>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <label style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b' }}>
+                            Repetir a cada
+                          </label>
+                          <select 
+                            className="form-select"
+                            value={recorrenciaIntervalo}
+                            onChange={(e) => setRecorrenciaIntervalo(Number(e.target.value))}
+                            style={{ width: '100px', padding: '8px 12px', fontSize: '13px', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+                          >
+                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(num => (
+                              <option key={num} value={num}>{num}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div style={{ fontSize: '12px', color: '#0284c7', marginTop: '14px' }}>
+                        A campanha será enviada a cada <strong>{recorrenciaIntervalo} {getUnitLabel(recorrenciaFrequencia, recorrenciaIntervalo)}</strong>.
+                      </div>
                     </div>
-                  </div>
+                  </>
                 )}
               </div>
             </div>
@@ -4075,9 +4112,9 @@ export default function CampaignBuilderPage() {
                         <div style={{ fontSize: 15, color: '#4b5563', fontWeight: 400 }}>{description || 'Não informado'}</div>
                       </div>
                       <div>
-                        <div style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', marginBottom: 4 }}>Recorrência</div>
-                        <div style={{ fontSize: 15, color: '#4b5563', fontWeight: 400, textTransform: 'capitalize' }}>
-                          {recorrenciaTipo === 'recorrente' ? `Recorrente (${recorrenciaFrequencia})` : 'Pontual'}
+                        <div style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', marginBottom: 4 }}>Tipo de disparo</div>
+                        <div style={{ fontSize: 15, color: '#4b5563', fontWeight: 400 }}>
+                          {recorrenciaTipo === 'recorrente' ? `Recorrente (a cada ${recorrenciaIntervalo} ${getUnitLabel(recorrenciaFrequencia, recorrenciaIntervalo)})` : 'Disparo único'}
                         </div>
                       </div>
                       <div>
