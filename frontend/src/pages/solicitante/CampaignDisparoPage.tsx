@@ -47,21 +47,14 @@ export default function CampaignDisparoPage() {
   const [description, setDescription] = useState('')
   const [recorrenciaTipo, setRecorrenciaTipo] = useState<'pontual' | 'recorrente'>('pontual')
   const [recorrenciaFrequencia, setRecorrenciaFrequencia] = useState<string>('diaria')
-  const [selectedPublicos, setSelectedPublicos] = useState<Option[]>([])
-  const [selectedSegmentos, setSelectedSegmentos] = useState<any[]>([])
-  const [tempPublicoId, setTempPublicoId] = useState('')
-  const [tempSegmentoId, setTempSegmentoId] = useState('')
   const [selectedExclusions, setSelectedExclusions] = useState<string[]>([])
   
   // ─── CSV & Target Mode States ───────────────────────────────────────────────
-  const [quemReceberMode, setQuemReceberMode] = useState<'segmentacao' | 'csv'>('segmentacao')
   const [csvFile, setCsvFile] = useState<File | null>(null)
   const [csvFileName, setCsvFileName] = useState('')
   const [csvFileStatus, setCsvFileStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [csvErrorMsg, setCsvErrorMsg] = useState('')
   const [csvRecordsCount, setCsvRecordsCount] = useState(0)
-  const [showModalConfirmSwitch, setShowModalConfirmSwitch] = useState(false)
-  const [targetMode, setTargetMode] = useState<'segmentacao' | 'csv' | null>(null)
   const [dragActive, setDragActive] = useState(false)
   
   // ─── Disparo Único Specific States ──────────────────────────────────────────
@@ -76,8 +69,6 @@ export default function CampaignDisparoPage() {
   const [activeTab, setActiveTab] = useState<'Todos' | 'PUSH' | 'SMS' | 'EMAIL' | 'WHATSAPP' | 'APP CAIXA'>('Todos')
   
   // ─── API Lists ──────────────────────────────────────────────────────────────
-  const [publicos, setPublicos] = useState<Option[]>([])
-  const [allSegmentos, setAllSegmentos] = useState<any[]>([])
   const [apiPecas, setApiPecas] = useState<any[]>([])
   
   // ─── Publish States ─────────────────────────────────────────────────────────
@@ -88,13 +79,7 @@ export default function CampaignDisparoPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [p, s, pecasRes] = await Promise.all([
-          api.get('/admin/publicos-alvo'),
-          api.get('/admin/segmentos'),
-          api.get('/pecas')
-        ])
-        setPublicos(p.data)
-        setAllSegmentos(s.data)
+        const pecasRes = await api.get('/pecas')
         setApiPecas(pecasRes.data)
       } catch (err) {
         console.error('Falha ao carregar dados do banco:', err)
@@ -102,76 +87,6 @@ export default function CampaignDisparoPage() {
     }
     loadData()
   }, [])
-
-  // ─── Filtered lists and details ─────────────────────────────────────────────
-  const filteredSegmentos = useMemo(() => {
-    if (selectedPublicos.length === 0) return []
-    return allSegmentos.filter((s: any) => selectedPublicos.some(p => p.id === s.publicoAlvoId))
-  }, [allSegmentos, selectedPublicos])
-
-  const selectedPublicoName = useMemo(() => {
-    return selectedPublicos.map(p => p.nome).join(', ')
-  }, [selectedPublicos])
-
-  const selectedSegmentoName = useMemo(() => {
-    return selectedSegmentos.map(s => s.nome).join(', ')
-  }, [selectedSegmentos])
-
-  const allPecas = useMemo(() => {
-    const formattedApi = apiPecas.map(p => ({
-      id: p.id,
-      name: p.nome,
-      channel: p.canal,
-      status: p.status,
-      content: p.conteudo?.mensagem || p.conteudo?.corpo || p.conteudo?.corpoHtml || 'Peça cadastrada no sistema'
-    }))
-    // Mock pieces are treated as approved for simulation
-    const formattedMock = MOCK_PECAS.map(p => ({ ...p, status: 'APROVADA' }))
-    return [...formattedApi, ...formattedMock]
-  }, [apiPecas])
-
-  // Only approved communication pieces
-  const approvedPecas = useMemo(() => {
-    return allPecas.filter(p => p.status === 'APROVADA')
-  }, [allPecas])
-
-  // Filtered pieces for modal based on search query & channel tab
-  const filteredPecas = useMemo(() => {
-    return approvedPecas.filter(p => {
-      const matchTxt = p.name.toLowerCase().includes(pecaSearch.toLowerCase()) ||
-        p.content.toLowerCase().includes(pecaSearch.toLowerCase())
-      const matchCat = activeTab === 'Todos' || p.channel === activeTab
-      return matchTxt && matchCat
-    })
-  }, [approvedPecas, pecaSearch, activeTab])
-
-  // ─── Audience Filter Helpers ────────────────────────────────────────────────
-  const handleAddPublico = () => {
-    if (!tempPublicoId) return
-    const publico = publicos.find(p => p.id === tempPublicoId)
-    if (publico && !selectedPublicos.some(p => p.id === publico.id)) {
-      setSelectedPublicos([...selectedPublicos, publico])
-    }
-    setTempPublicoId('')
-  }
-
-  const handleRemovePublico = (id: string) => {
-    setSelectedPublicos(selectedPublicos.filter(p => p.id !== id))
-    setSelectedSegmentos(selectedSegmentos.filter(s => s.publicoAlvoId !== id))
-  }
-
-  const handleAddSegmento = () => {
-    if (!tempSegmentoId) return
-    const segmento = allSegmentos.find(s => s.id === tempSegmentoId)
-    if (segmento && !selectedSegmentos.some(s => s.id === segmento.id)) {
-      setSelectedSegmentos([...selectedSegmentos, segmento])
-    }
-    setTempSegmentoId('')
-  }
-
-  const handleRemoveSegmento = (id: string) => {
-    setSelectedSegmentos(selectedSegmentos.filter(s => s.id !== id))
-  }
 
   // ─── CSV Import & Toggle Helpers ───────────────────────────────────────────
   const handleDownloadTemplate = () => {
@@ -301,43 +216,6 @@ export default function CampaignDisparoPage() {
     }
   }
 
-  const handleSwitchMode = (mode: 'segmentacao' | 'csv') => {
-    if (mode === quemReceberMode) return
-
-    const hasSegmentationData = selectedPublicos.length > 0 || selectedSegmentos.length > 0
-    const hasCSVData = csvFile !== null
-
-    if ((quemReceberMode === 'segmentacao' && hasSegmentationData) || (quemReceberMode === 'csv' && hasCSVData)) {
-      setTargetMode(mode)
-      setShowModalConfirmSwitch(true)
-    } else {
-      setQuemReceberMode(mode)
-    }
-  }
-
-  const handleConfirmSwitch = () => {
-    if (targetMode === 'csv') {
-      setSelectedPublicos([])
-      setSelectedSegmentos([])
-      setTempPublicoId('')
-      setTempSegmentoId('')
-    } else if (targetMode === 'segmentacao') {
-      setCsvFile(null)
-      setCsvFileName('')
-      setCsvFileStatus('idle')
-      setCsvErrorMsg('')
-      setCsvRecordsCount(0)
-    }
-    setQuemReceberMode(targetMode!)
-    setShowModalConfirmSwitch(false)
-    setTargetMode(null)
-  }
-
-  const handleCancelSwitch = () => {
-    setShowModalConfirmSwitch(false)
-    setTargetMode(null)
-  }
-
   // ─── Publish Logic ──────────────────────────────────────────────────────────
   const publishCampaign = () => {
     const campaignPayload = {
@@ -348,11 +226,11 @@ export default function CampaignDisparoPage() {
         tipo: recorrenciaTipo,
         frequencia: recorrenciaTipo === 'recorrente' ? recorrenciaFrequencia : null
       },
-      modoPublico: quemReceberMode,
-      publicoAlvo: quemReceberMode === 'segmentacao' ? selectedPublicos : [],
-      segmento: quemReceberMode === 'segmentacao' ? selectedSegmentos : [],
-      csvFileName: quemReceberMode === 'csv' ? csvFileName : null,
-      csvRecordsCount: quemReceberMode === 'csv' ? csvRecordsCount : 0,
+      modoPublico: 'csv',
+      publicoAlvo: [],
+      segmento: [],
+      csvFileName: csvFileName,
+      csvRecordsCount: csvRecordsCount,
       exclusoes: [
         'menores_18',
         'obitos',
@@ -377,15 +255,13 @@ export default function CampaignDisparoPage() {
   }
 
   const isStep1Valid = useMemo(() => {
-    const targetValid = quemReceberMode === 'segmentacao'
-      ? (selectedPublicos.length > 0 && selectedSegmentos.length > 0)
-      : (csvFileStatus === 'success')
+    const targetValid = csvFileStatus === 'success'
     const baseValid = campaignName && targetValid && selectedPeca
     if (momentoEnvio === 'agendado') {
       return baseValid && dataAgendada !== ''
     }
     return baseValid
-  }, [campaignName, quemReceberMode, selectedPublicos, selectedSegmentos, csvFileStatus, selectedPeca, momentoEnvio, dataAgendada])
+  }, [campaignName, csvFileStatus, selectedPeca, momentoEnvio, dataAgendada])
 
   return (
     <div className="builder-container" style={{ padding: '24px 30px', maxWidth: '1280px', margin: '0 auto', fontFamily: 'inherit' }}>
@@ -572,220 +448,19 @@ export default function CampaignDisparoPage() {
                   Quem vai receber
                 </h3>
                 <div className="setup-card">
-                  {/* Alternância de Modo (Toggle) */}
-                  <div style={{ 
-                    display: 'flex', 
-                    background: '#f1f5f9', 
-                    padding: '4px', 
-                    borderRadius: '8px', 
-                    marginBottom: '24px',
-                    width: 'fit-content'
-                  }}>
-                    <button
-                      type="button"
-                      onClick={() => handleSwitchMode('segmentacao')}
-                      style={{
-                        padding: '8px 16px',
-                        borderRadius: '6px',
-                        border: 'none',
-                        fontSize: '13px',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        transition: 'all 0.2s',
-                        background: quemReceberMode === 'segmentacao' ? '#ffffff' : 'transparent',
-                        color: quemReceberMode === 'segmentacao' ? 'var(--caixa-blue)' : '#64748b',
-                        boxShadow: quemReceberMode === 'segmentacao' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-                      }}
-                    >
-                      <Sparkles size={14} />
-                      Selecionar por segmentação
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSwitchMode('csv')}
-                      style={{
-                        padding: '8px 16px',
-                        borderRadius: '6px',
-                        border: 'none',
-                        fontSize: '13px',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        transition: 'all 0.2s',
-                        background: quemReceberMode === 'csv' ? '#ffffff' : 'transparent',
-                        color: quemReceberMode === 'csv' ? 'var(--caixa-blue)' : '#64748b',
-                        boxShadow: quemReceberMode === 'csv' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-                      }}
-                    >
-                      <Upload size={14} />
-                      Importar lista própria (CSV)
-                    </button>
+                  <div style={{ marginBottom: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                      <Upload size={16} color="var(--caixa-blue)" />
+                      <span style={{ fontWeight: 700, fontSize: '14px', color: '#1e293b' }}>
+                        Importar lista própria (CSV)
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#64748b' }}>
+                      Neste fluxo simples, o envio é direcionado exclusivamente para a sua lista própria de destinatários.
+                    </div>
                   </div>
 
-                  {quemReceberMode === 'segmentacao' ? (
-                    <div className="form-row" style={{ display: 'flex', gap: '24px', alignItems: 'flex-start', margin: 0 }}>
-                      {/* Público Alvo */}
-                      <div className="form-group" style={{ flex: 1 }}>
-                        <label className="form-label" style={{ fontWeight: 700 }}>Público alvo</label>
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          <select
-                            className="form-select"
-                            value={tempPublicoId}
-                            onChange={(e) => setTempPublicoId(e.target.value)}
-                            style={{ flex: 1 }}
-                          >
-                            <option value="">Selecione o público que receberá a campanha</option>
-                            {publicos.map(p => (
-                              <option key={p.id} value={p.id} disabled={selectedPublicos.some(sp => sp.id === p.id)}>
-                                {p.nome}
-                              </option>
-                            ))}
-                          </select>
-                          <button
-                            className="btn"
-                            type="button"
-                            onClick={handleAddPublico}
-                            style={{
-                              background: 'white',
-                              border: '1.5px solid var(--caixa-blue)',
-                              color: 'var(--caixa-blue)',
-                              fontWeight: 700,
-                              padding: '0 16px',
-                              borderRadius: '4px',
-                              cursor: 'pointer',
-                              fontSize: '13px'
-                            }}
-                          >
-                            Adicionar
-                          </button>
-                        </div>
-                        <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: 4 }}>
-                          Defina o público alvo desta campanha
-                        </div>
-                        {/* Tags */}
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-                          {selectedPublicos.map(p => (
-                            <span key={p.id} style={{
-                              background: '#e8f0fe',
-                              color: 'var(--caixa-blue)',
-                              fontSize: '12px',
-                              fontWeight: 600,
-                              padding: '4px 8px',
-                              borderRadius: '4px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 6,
-                              border: '1px solid var(--caixa-blue-light)'
-                            }}>
-                              {p.nome}
-                              <button
-                                type="button"
-                                onClick={() => handleRemovePublico(p.id)}
-                                style={{
-                                  background: 'none',
-                                  border: 'none',
-                                  color: 'var(--caixa-blue)',
-                                  cursor: 'pointer',
-                                  padding: 0,
-                                  fontSize: '12px',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  fontWeight: 700
-                                }}
-                              >
-                                ✕
-                              </button>
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Segmento */}
-                      <div className="form-group" style={{ flex: 1 }}>
-                        <label className="form-label" style={{ fontWeight: 700 }}>Segmento</label>
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          <select
-                            className="form-select"
-                            value={tempSegmentoId}
-                            disabled={selectedPublicos.length === 0}
-                            onChange={(e) => setTempSegmentoId(e.target.value)}
-                            style={{ flex: 1 }}
-                          >
-                            <option value="">Selecione o segmento</option>
-                            {filteredSegmentos.map(s => (
-                              <option key={s.id} value={s.id} disabled={selectedSegmentos.some(ss => ss.id === s.id)}>
-                                {s.nome}
-                              </option>
-                            ))}
-                          </select>
-                          <button
-                            className="btn"
-                            type="button"
-                            onClick={handleAddSegmento}
-                            disabled={selectedPublicos.length === 0}
-                            style={{
-                              background: 'white',
-                              border: '1.5px solid var(--caixa-blue)',
-                              color: 'var(--caixa-blue)',
-                              fontWeight: 700,
-                              padding: '0 16px',
-                              borderRadius: '4px',
-                              cursor: selectedPublicos.length === 0 ? 'not-allowed' : 'pointer',
-                              fontSize: '13px',
-                              opacity: selectedPublicos.length === 0 ? 0.6 : 1
-                            }}
-                          >
-                            Adicionar
-                          </button>
-                        </div>
-                        <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: 4 }}>
-                          Defina o segmento desta campanha
-                        </div>
-                        {/* Tags */}
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-                          {selectedSegmentos.map(s => (
-                            <span key={s.id} style={{
-                              background: '#e8f0fe',
-                              color: 'var(--caixa-blue)',
-                              fontSize: '12px',
-                              fontWeight: 600,
-                              padding: '4px 8px',
-                              borderRadius: '4px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 6,
-                              border: '1px solid var(--caixa-blue-light)'
-                            }}>
-                              {s.nome}
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveSegmento(s.id)}
-                                style={{
-                                  background: 'none',
-                                  border: 'none',
-                                  color: 'var(--caixa-blue)',
-                                  cursor: 'pointer',
-                                  padding: 0,
-                                  fontSize: '12px',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  fontWeight: 700
-                                }}
-                              >
-                                ✕
-                              </button>
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                       {/* Drag & Drop Area */}
                       <div
                         onDragEnter={handleDrag}
@@ -1006,7 +681,6 @@ export default function CampaignDisparoPage() {
                         </button>
                       </div>
                     </div>
-                  )}
                 </div>
               </div>
 
@@ -1439,31 +1113,18 @@ export default function CampaignDisparoPage() {
                       Público e Filtros de Exclusão
                     </h4>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                      {quemReceberMode === 'segmentacao' ? (
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                          <div>
-                            <div style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>Público Alvo</div>
-                            <div style={{ fontSize: '14px', color: '#1e293b', fontWeight: 700, marginTop: '4px' }}>{selectedPublicoName || 'Nenhum público alvo selecionado'}</div>
-                          </div>
-                          <div>
-                            <div style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>Segmentos</div>
-                            <div style={{ fontSize: '14px', color: '#1e293b', fontWeight: 700, marginTop: '4px' }}>{selectedSegmentoName || 'Nenhum segmento selecionado'}</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                        <div>
+                          <div style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>Público Alvo</div>
+                          <div style={{ fontSize: '14px', color: '#1e293b', fontWeight: 700, marginTop: '4px' }}>Lista própria importada (CSV)</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>Arquivo de Origem</div>
+                          <div style={{ fontSize: '14px', color: '#1e293b', fontWeight: 700, marginTop: '4px' }}>
+                            {csvFileName || 'Nenhum arquivo'} ({csvRecordsCount} registros válidos)
                           </div>
                         </div>
-                      ) : (
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                          <div>
-                            <div style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>Público Alvo</div>
-                            <div style={{ fontSize: '14px', color: '#1e293b', fontWeight: 700, marginTop: '4px' }}>Lista importada via CSV</div>
-                          </div>
-                          <div>
-                            <div style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>Arquivo de Origem</div>
-                            <div style={{ fontSize: '14px', color: '#1e293b', fontWeight: 700, marginTop: '4px' }}>
-                              {csvFileName} ({csvRecordsCount} registros válidos)
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                      </div>
 
                       <div>
                         <div style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', marginBottom: '8px' }}>Exclusões Aplicadas</div>
@@ -1587,69 +1248,6 @@ export default function CampaignDisparoPage() {
               </div>
             </>
           )}
-        </div>
-      )}
-
-      {/* Modal de Confirmação de Troca de Modo */}
-      {showModalConfirmSwitch && (
-        <div className="modal-overlay" style={{ zIndex: 1100 }}>
-          <div className="modal-container" style={{ maxWidth: 450, animation: 'fadeIn 0.2s ease' }}>
-            <div className="modal-header">
-              <div className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#d97706' }}>
-                <AlertTriangle size={18} />
-                Confirmar alteração de modo
-              </div>
-              <button className="modal-close" onClick={handleCancelSwitch}>✕</button>
-            </div>
-            <div className="modal-body" style={{ fontSize: '14px', color: '#475569', lineHeight: 1.5, padding: '20px 24px' }}>
-              Alterar a forma de seleção irá descartar os dados preenchidos até agora:
-              {quemReceberMode === 'segmentacao' ? (
-                <p style={{ marginTop: 8, fontWeight: 500 }}>
-                  Os públicos e segmentos selecionados serão removidos da campanha.
-                </p>
-              ) : (
-                <p style={{ marginTop: 8, fontWeight: 500 }}>
-                  O arquivo CSV importado será removido da campanha.
-                </p>
-              )}
-              Deseja continuar com a alteração?
-            </div>
-            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, padding: '16px 24px', borderTop: '1px solid var(--builder-border-light)' }}>
-              <button
-                type="button"
-                className="btn btn-ghost"
-                onClick={handleCancelSwitch}
-                style={{
-                  background: 'white',
-                  border: '1px solid #cbd5e1',
-                  color: '#475569',
-                  padding: '8px 16px',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                  fontSize: '13px'
-                }}
-              >
-                Não, manter atual
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmSwitch}
-                style={{
-                  background: '#d97706',
-                  color: 'white',
-                  border: 'none',
-                  padding: '8px 16px',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontWeight: 700,
-                  fontSize: '13px'
-                }}
-              >
-                Sim, trocar modo
-              </button>
-            </div>
-          </div>
         </div>
       )}
 

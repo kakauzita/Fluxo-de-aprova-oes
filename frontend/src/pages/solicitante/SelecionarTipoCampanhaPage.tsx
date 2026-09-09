@@ -70,7 +70,7 @@ export default function SelecionarTipoCampanhaPage() {
               <Send size={32} />
             </div>
             <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#1e293b', margin: 0 }}>Campanha simples</h3>
-            <p style={{ fontSize: '13px', color: '#64748b', margin: 0, lineHeight: '1.4' }}>Uma comunicação, de forma direta utilizando apenas um único tipo de peça.</p>
+            <p style={{ fontSize: '13px', color: '#64748b', margin: 0, lineHeight: '1.4' }}>Crie sua campanha usando uma única peça de comunicação e envie seu público alvo por arquivo.</p>
           </div>
 
           {/* Card Jornada */}

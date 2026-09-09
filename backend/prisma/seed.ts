@@ -92,18 +92,36 @@ async function main() {
     })
 
     // --- Público Alvo e Segmentos ---
-    const pessoaFisica = await prisma.publicoAlvo.create({ data: { nome: 'Pessoa Física' } })
-    const pessoaJuridica = await prisma.publicoAlvo.create({ data: { nome: 'Pessoa Jurídica' } })
+    let pessoaFisica = await prisma.publicoAlvo.findFirst({ where: { nome: 'Pessoa Física' } })
+    if (!pessoaFisica) {
+        pessoaFisica = await prisma.publicoAlvo.create({ data: { nome: 'Pessoa Física' } })
+    }
 
-    const segBaixaRenda = await prisma.segmento.create({
-        data: { nome: 'Baixa Renda', publicoAlvoId: pessoaFisica.id },
-    })
-    const segAposentado = await prisma.segmento.create({
-        data: { nome: 'Aposentado', publicoAlvoId: pessoaFisica.id },
-    })
-    const segMPE = await prisma.segmento.create({
-        data: { nome: 'Micro e Pequenas Empresas', publicoAlvoId: pessoaJuridica.id },
-    })
+    let pessoaJuridica = await prisma.publicoAlvo.findFirst({ where: { nome: 'Pessoa Jurídica' } })
+    if (!pessoaJuridica) {
+        pessoaJuridica = await prisma.publicoAlvo.create({ data: { nome: 'Pessoa Jurídica' } })
+    }
+
+    let segBaixaRenda = await prisma.segmento.findFirst({ where: { nome: 'Baixa Renda', publicoAlvoId: pessoaFisica.id } })
+    if (!segBaixaRenda) {
+        segBaixaRenda = await prisma.segmento.create({
+            data: { nome: 'Baixa Renda', publicoAlvoId: pessoaFisica.id },
+        })
+    }
+
+    let segAposentado = await prisma.segmento.findFirst({ where: { nome: 'Aposentado', publicoAlvoId: pessoaFisica.id } })
+    if (!segAposentado) {
+        segAposentado = await prisma.segmento.create({
+            data: { nome: 'Aposentado', publicoAlvoId: pessoaFisica.id },
+        })
+    }
+
+    let segMPE = await prisma.segmento.findFirst({ where: { nome: 'Micro e Pequenas Empresas', publicoAlvoId: pessoaJuridica.id } })
+    if (!segMPE) {
+        segMPE = await prisma.segmento.create({
+            data: { nome: 'Micro e Pequenas Empresas', publicoAlvoId: pessoaJuridica.id },
+        })
+    }
 
     // Vínculos Segmento ↔ Grupos (RN-10: mínimo 1 grupo)
     await prisma.segmentoGrupo.createMany({
@@ -116,9 +134,20 @@ async function main() {
     })
 
     // --- Assuntos ---
-    const assCredito = await prisma.assunto.create({ data: { nome: 'Crédito' } })
-    const assCartao = await prisma.assunto.create({ data: { nome: 'Cartão de Crédito' } })
-    const assFGTS = await prisma.assunto.create({ data: { nome: 'FGTS' } })
+    let assCredito = await prisma.assunto.findFirst({ where: { nome: 'Crédito' } })
+    if (!assCredito) {
+        assCredito = await prisma.assunto.create({ data: { nome: 'Crédito' } })
+    }
+
+    let assCartao = await prisma.assunto.findFirst({ where: { nome: 'Cartão de Crédito' } })
+    if (!assCartao) {
+        assCartao = await prisma.assunto.create({ data: { nome: 'Cartão de Crédito' } })
+    }
+
+    let assFGTS = await prisma.assunto.findFirst({ where: { nome: 'FGTS' } })
+    if (!assFGTS) {
+        assFGTS = await prisma.assunto.create({ data: { nome: 'FGTS' } })
+    }
 
     // Vínculos Assunto ↔ Grupos (RN-11: 0..N grupos)
     await prisma.assuntoGrupo.upsert({
