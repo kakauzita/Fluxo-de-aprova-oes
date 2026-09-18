@@ -104,7 +104,7 @@ export default function SelecionarTipoCampanhaPage() {
             <div style={{ background: '#e8f0fe', color: 'var(--caixa-blue)', padding: '20px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <GitBranch size={32} />
             </div>
-            <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#1e293b', margin: 0 }}>Campanha com fluxo</h3>
+            <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#1e293b', margin: 0 }}>Campanha com jornada</h3>
             <p style={{ fontSize: '13px', color: '#64748b', margin: 0, lineHeight: '1.4' }}>Combine várias peças, condições, regras e loops para definir diferentes caminhos de comunicação com múltiplas etapas.</p>
           </div>
         </div>
