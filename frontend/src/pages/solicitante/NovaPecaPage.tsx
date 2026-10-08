@@ -299,9 +299,9 @@ export default function NovaPecaPage() {
                             </select>
                         </div>
 
-                        {/* Segmento */}
+                        {/* Nicho */}
                         <div className="form-group">
-                            <label className="form-label">Segmento <span style={{ color: '#6b7280', fontWeight: 400 }}>Obrigatório</span></label>
+                            <label className="form-label">Nicho <span style={{ color: '#6b7280', fontWeight: 400 }}>Obrigatório</span></label>
                             <div style={{ display: 'flex', gap: 8 }}>
                                 <select
                                     id="select-segmento-peca"
@@ -410,7 +410,7 @@ export default function NovaPecaPage() {
                         <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 14 }}>Aprovadores</div>
                         {grupos.length === 0 ? (
                             <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                                Selecione público alvo, segmento e assunto para ver os aprovadores calculados automaticamente.
+                                Selecione público alvo, nicho e assunto para ver os aprovadores calculados automaticamente.
                             </div>
                         ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

@@ -37,6 +37,15 @@ import JornadaExplicada, { mapBlocksToJornadaNodes } from '../../components/Jorn
 // ─── (SVG backward line overlay removed — replaced by inline card badges) ─────
 
 // ─── Constants ────────────────────────────────────────────────────────────────
+const MANDATORY_EXCLUSIONS = [
+  'Menores de 18 anos',
+  'CPF Diferente de Regular na RFB',
+  'Pessoas em situação de vulnerabilidade',
+  'Não perturbe CAIXA',
+  'Não perturbe',
+  'Segmento exclusivo e grupo familiar'
+]
+
 const getUnitLabel = (freq: string, intervalo: number) => {
   if (freq === 'diaria') return intervalo === 1 ? 'dia' : 'dias'
   if (freq === 'semanal') return intervalo === 1 ? 'semana' : 'semanas'
@@ -115,30 +124,47 @@ const MOCK_PECAS = [
   { id: 'p7', name: 'Pontos do Cartão', channel: 'APP CAIXA', content: 'Seu cartão CAIXA acumula pontos que nunca expiram. Conheça as vantagens.' }
 ]
 
-const EXAMPLE_FLOW = [
-  { id: 'b1', type: 'trigger', config: { events: ['Cliente abrir conta'], operator: 'E', extra: 'Cliente movimentou a conta nos últimos 30 dias', conditions: ['Cliente movimentou a conta nos últimos 30 dias'] } },
-  { id: 'b3', type: 'send', config: { piece: { id: 'p1', name: 'Bem-vindo à CAIXA', channel: 'PUSH', content: 'Sua conta foi aberta com sucesso. Acesse o app e descubra suas vantagens.' }, wait: { type: 'immediate', amount: '1', unit: 'dia' } } },
-  { id: 'b5', type: 'send', config: { piece: { id: 'p2', name: 'Cadastre sua chave Pix', channel: 'SMS', content: 'Facilite suas transferências! Acesse o app e cadastre sua chave Pix agora mesmo.' }, wait: { type: 'after', amount: '1', unit: 'dia' } } },
+// ─── Template Flows ───────────────────────────────────────────────────────────
+const TEMPLATE_SIMPLES = [
+  { id: 'ts1', type: 'trigger', config: { events: ['Cliente abrir conta'], operator: 'E', extra: '', conditions: [] } },
+  { id: 'ts2', type: 'send', config: { piece: { id: 'p1', name: 'Bem-vindo à CAIXA', channel: 'PUSH', content: 'Sua conta foi aberta com sucesso. Acesse o app e descubra suas vantagens.' }, wait: { type: 'immediate', amount: '1', unit: 'dia' } } },
+]
+
+const TEMPLATE_DECISAO = [
+  { id: 'td1', type: 'trigger', config: { events: ['Cliente abrir conta'], operator: 'E', extra: '', conditions: [] } },
   {
-    id: 'b6', type: 'check', config: {
+    id: 'td2', type: 'check', config: {
       question: 'Cliente possui cartão pré-aprovado?',
       yes: [
-        { id: 'b8', type: 'send', config: { piece: { id: 'p3', name: 'Seu cartão pré-aprovado aguarda', channel: 'EMAIL', content: 'Temos um limite exclusivo para você. Acesse sua conta e desbloqueie seu cartão de crédito.' }, wait: { type: 'after', amount: '1', unit: 'dia' } } },
-        {
-          id: 'b9', type: 'check', config: {
-            question: 'Cliente desbloqueou o cartão?',
-            yes: [{ id: 'b10', type: 'end', config: { reason: 'Conversão realizada' } }],
-            no: [
-              { id: 'b12', type: 'send', config: { piece: { id: 'p4', name: 'Última chance para desbloquear', channel: 'SMS', content: 'Você ainda não desbloqueou seu cartão CAIXA. Desbloqueie hoje e não perca nossos benefícios.' }, wait: { type: 'after', amount: '5', unit: 'dias' } } },
-              { id: 'b13', type: 'end', config: { reason: 'Jornada concluída' } }
-            ]
-          }
-        },
+        { id: 'td3', type: 'send', config: { piece: { id: 'p3', name: 'Seu cartão pré-aprovado aguarda', channel: 'EMAIL', content: 'Temos um limite exclusivo para você. Acesse sua conta e desbloqueie seu cartão de crédito.' }, wait: { type: 'after', amount: '1', unit: 'dia' } } },
+        { id: 'td4', type: 'end', config: { reason: 'Conversão realizada' } }
       ],
-      no: [{ id: 'b14', type: 'end', config: { reason: 'Sem elegibilidade' } }]
+      no: [
+        { id: 'td5', type: 'send', config: { piece: { id: 'p2', name: 'Cadastre sua chave Pix', channel: 'SMS', content: 'Facilite suas transferências! Acesse o app e cadastre sua chave Pix agora mesmo.' }, wait: { type: 'after', amount: '1', unit: 'dia' } } },
+        { id: 'td6', type: 'end', config: { reason: 'Sem elegibilidade' } }
+      ]
     }
   },
 ]
+
+const TEMPLATE_RETORNO = [
+  { id: 'tr1', type: 'trigger', config: { events: ['Cliente abrir conta'], operator: 'E', extra: '', conditions: [] } },
+  {
+    id: 'tr2', type: 'check', config: {
+      question: 'Cliente ativou o produto?',
+      yes: [
+        { id: 'tr3', type: 'send', config: { piece: { id: 'p1', name: 'Parabéns pela ativação!', channel: 'PUSH', content: 'Você ativou o produto com sucesso. Aproveite todas as vantagens.' }, wait: { type: 'immediate', amount: '1', unit: 'dia' } } },
+        { id: 'tr4', type: 'end', config: { reason: 'Conversão realizada' } }
+      ],
+      no: [
+        { id: 'tr5', type: 'send', config: { piece: { id: 'p2', name: 'Lembrete de ativação', channel: 'SMS', content: 'Você ainda não ativou o produto. Acesse o app para ativar.' }, wait: { type: 'after', amount: '3', unit: 'dias' } } },
+        { id: 'tr6', type: 'connector', config: { targetBlockId: 'tr2', direction: 'backward', timing: 'delay', delay: { amount: '2', unit: 'dias' }, maxRepetitions: 3 } },
+      ]
+    }
+  },
+]
+
+const EXAMPLE_FLOW = TEMPLATE_RETORNO
 
 const CONDICAO_OPCOES = [
   'Cliente movimentou a conta nos últimos 30 dias',
@@ -417,6 +443,7 @@ export default function CampaignBuilderPage() {
   const [apiPecas, setApiPecas] = useState<any[]>([])
 
   // ─── Builder Canvas States ──────────────────────────────────────────────────
+  const [builderView, setBuilderView] = useState<'select' | 'canvas'>('select')
   const [blocks, setBlocks] = useState<any[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [backupBlockConfig, setBackupBlockConfig] = useState<any>(null)
@@ -665,7 +692,7 @@ export default function CampaignBuilderPage() {
     const traverseTimeline = (list: any[]) => {
       list.forEach(b => {
         const isEnd = b.id === 'end_auto' || b.type === 'end';
-        if (isEnd || b.type === 'connector') return;
+        if (isEnd) return;
 
         if (visited.has(b.id)) return;
         visited.add(b.id);
@@ -1124,11 +1151,21 @@ export default function CampaignBuilderPage() {
   }
 
   // Templates suggested helper
-  function loadTemplate(name: 'boasvindas' | 'cartao' | 'reengajamento') {
-    const flow = JSON.parse(JSON.stringify(EXAMPLE_FLOW))
+  function loadTemplate(name: 'simples' | 'decisao' | 'retorno' | 'boasvindas' | 'cartao' | 'reengajamento') {
+    const templateMap: Record<string, any[]> = {
+      simples: TEMPLATE_SIMPLES,
+      decisao: TEMPLATE_DECISAO,
+      retorno: TEMPLATE_RETORNO,
+      boasvindas: TEMPLATE_SIMPLES,
+      cartao: TEMPLATE_DECISAO,
+      reengajamento: TEMPLATE_RETORNO,
+    }
+    const source = templateMap[name] || TEMPLATE_SIMPLES
+    const flow = JSON.parse(JSON.stringify(source))
     setBlocks(ensureEndBlock(flow.filter((b: any) => b.type !== 'end')))
     setSelectedId(null)
     setInsertTarget(null)
+    setBuilderView('canvas')
     setTimeout(resetPanToCenter, 30)
   }
 
@@ -1152,9 +1189,11 @@ export default function CampaignBuilderPage() {
       segmento: selectedSegmentos,
       exclusoes: [
         'menores_18',
-        'obitos',
         'cpf_irregular_rfb',
         'vulnerabilidade',
+        'nao_perturbe_caixa',
+        'nao_perturbe',
+        'segmento_exclusivo_familiar',
         ...selectedExclusions
       ],
       fluxo: {
@@ -1305,7 +1344,9 @@ export default function CampaignBuilderPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             {isBackward ? <RotateCcw size={14} color="#6366f1" /> : <ChevronRight size={14} color="#6366f1" />}
             <strong style={{ color: '#1e293b' }}>
-              {isBackward ? 'Retorno' : 'Seguir para'}
+              {isBackward
+                ? (blockNumbersMap[b.id] ? `Etapa ${blockNumbersMap[b.id]} • Retorno` : 'Retorno')
+                : (blockNumbersMap[b.id] ? `Etapa ${blockNumbersMap[b.id]} • Seguir para` : 'Seguir para')}
             </strong>
           </div>
           {delayText && (
@@ -1550,12 +1591,14 @@ export default function CampaignBuilderPage() {
               })();
               const maxRep = ret.maxRepetitions;
               const tooltipText = `Retorno para esta etapa${maxRep ? (maxRep === -1 ? ' · Ilimitado' : ` · Máx. ${maxRep}×`) : ''}`;
-              // Find the step number of the block just before the connector
-              const connectorIdx = flatAll.findIndex((b: any) => b.id === ret.connectorId);
-              let prevStepNum: number | string = '?';
-              for (let ci = connectorIdx - 1; ci >= 0; ci--) {
-                const pb = flatAll[ci];
-                if (blockNumbersMap[pb.id] !== undefined) { prevStepNum = blockNumbersMap[pb.id] + 1; break; }
+              // Step number of the connector
+              let prevStepNum: number | string = blockNumbersMap[ret.connectorId] !== undefined ? blockNumbersMap[ret.connectorId] : '?';
+              if (prevStepNum === '?') {
+                const connectorIdx = flatAll.findIndex((b: any) => b.id === ret.connectorId);
+                for (let ci = connectorIdx - 1; ci >= 0; ci--) {
+                  const pb = flatAll[ci];
+                  if (blockNumbersMap[pb.id] !== undefined) { prevStepNum = blockNumbersMap[pb.id] + 1; break; }
+                }
               }
               return (
                 <div
@@ -1747,7 +1790,7 @@ export default function CampaignBuilderPage() {
           <p className="page-subtitle" style={{ marginBottom: 0 }}>Configure quando e como as mensagens serão enviadas ao cliente.</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {step === 2 && (
+          {step === 2 && builderView === 'canvas' && (
             <>
               <button className="btn btn-ghost" onClick={() => setStep(1)}>← Dados Gerais</button>
               <button
@@ -2037,9 +2080,9 @@ export default function CampaignBuilderPage() {
                     </div>
                   </div>
 
-                  {/* Segmento */}
+                  {/* Nicho */}
                   <div className="form-group" style={{ flex: 1 }}>
-                    <label className="form-label" style={{ fontWeight: 700 }}>Segmento</label>
+                    <label className="form-label" style={{ fontWeight: 700 }}>Nicho</label>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <select
                         className="form-select"
@@ -2048,7 +2091,7 @@ export default function CampaignBuilderPage() {
                         onChange={(e) => setTempSegmentoId(e.target.value)}
                         style={{ flex: 1 }}
                       >
-                        <option value="">Selecione o segmento</option>
+                        <option value="">Selecione o nicho</option>
                         {filteredSegmentos.map(s => (
                           <option key={s.id} value={s.id} disabled={selectedSegmentos.some(ss => ss.id === s.id)}>
                             {s.nome}
@@ -2076,7 +2119,7 @@ export default function CampaignBuilderPage() {
                       </button>
                     </div>
                     <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: 4 }}>
-                      Defina o segmento desta campanha
+                      Defina o nicho desta campanha
                     </div>
                     {/* Tags below */}
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
@@ -2129,40 +2172,20 @@ export default function CampaignBuilderPage() {
                   Listas de exclusão aplicadas automaticamente a todas as campanhas
                 </p>
                 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px', marginBottom: 16 }}>
-                  {[
-                    {
-                      title: 'Menores de 18 anos',
-                      desc: 'Excluídos automaticamente de todas as campanhas'
-                    },
-                    {
-                      title: 'CPF Diferente de Regular na RFB',
-                      desc: 'CPF que não estiver com situação regular na Receita Federal'
-                    },
-                    {
-                      title: 'Pessoas em situação de vulnerabilidade',
-                      desc: 'Lista atualizada diariamente pelo compliance'
-                    },
-                    {
-                      title: 'Óbitos registrados',
-                      desc: 'Clientes com registro de óbito são excluídos automaticamente de todas as campanhas'
-                    }
-                  ].map((item, idx) => (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 10px', marginBottom: 16 }}>
+                  {MANDATORY_EXCLUSIONS.map((item, idx) => (
                     <div key={idx} style={{
                       background: 'white',
-                      border: '1px solid #fed7aa',
+                      border: '1px solid #cbd5e1',
                       borderRadius: '6px',
-                      padding: '12px 16px',
-                      display: 'flex',
-                      gap: 12,
-                      alignItems: 'flex-start',
+                      padding: '6px 12px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 8,
                       boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
                     }}>
-                      <span style={{ color: '#f97316', fontSize: '14px', marginTop: '1px' }}>🔒</span>
-                      <div>
-                        <div style={{ fontWeight: 700, fontSize: '13px', color: '#1e293b' }}>{item.title}</div>
-                        <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px', lineHeight: '1.4' }}>{item.desc}</div>
-                      </div>
+                      <Lock size={13} style={{ color: '#d97706', strokeWidth: 2.2, flexShrink: 0 }} />
+                      <span style={{ fontWeight: 600, fontSize: '13px', color: '#1e293b' }}>{item}</span>
                     </div>
                   ))}
                 </div>
@@ -2197,8 +2220,6 @@ export default function CampaignBuilderPage() {
                     >
                       <option value="">Adicionar a lista de exclusão</option>
                       {[
-                        'Não Incomodar',
-                        'Segmento Exclusivo e Grupo Familiar',
                         'PPE - Pessoa Politicamente Exposta',
                         'Cadastro Desatualizado',
                         'Lei de Crédito Aposentado',
@@ -2321,7 +2342,263 @@ export default function CampaignBuilderPage() {
       </>)}
 
       {/* ── STEP 2: JOURNEY BUILDER ── */}
-      {step === 2 && (
+      {step === 2 && builderView === 'select' && (
+        <div style={{ maxWidth: 860, margin: '0 auto', padding: '20px 0' }}>
+          {/* Header */}
+          <div style={{ textAlign: 'center', marginBottom: 32 }}>
+            <h2 style={{ fontSize: 22, fontWeight: 700, color: 'var(--caixa-blue)', marginBottom: 6 }}>
+              Como deseja montar o fluxo da campanha?
+            </h2>
+            <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: 0 }}>
+              Escolha a melhor forma de criar o fluxo de comunicação para seus clientes
+            </p>
+          </div>
+
+          {/* Criar do zero */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            background: '#ffffff', border: '1px solid var(--builder-border)',
+            borderRadius: 10, padding: '20px 28px', marginBottom: 32,
+            boxShadow: '0 1px 4px rgba(0,0,0,0.04)'
+          }}>
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: '#1e293b', marginBottom: 4 }}>
+                Criar fluxo do zero
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                Monte sua campanha personalizada etapa por etapa
+              </div>
+            </div>
+            <button
+              className="btn"
+              style={{
+                background: 'var(--caixa-orange)', color: '#ffffff',
+                border: 'none', fontWeight: 700, fontSize: 14,
+                padding: '10px 24px', borderRadius: 6, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 6,
+                whiteSpace: 'nowrap'
+              }}
+              onClick={() => {
+                setBlocks([])
+                setSelectedId(null)
+                setInsertTarget(null)
+                setBuilderView('canvas')
+                setTimeout(resetPanToCenter, 30)
+              }}
+            >
+              Criar fluxo <ChevronRight size={15} />
+            </button>
+          </div>
+
+          {/* Modelos prontos */}
+          <div style={{ marginBottom: 16 }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: '#1e293b' }}>Modelos prontos</span>
+            <span
+              style={{
+                fontSize: 13, color: 'var(--caixa-blue)', marginLeft: 12,
+                cursor: 'pointer', textDecoration: 'underline', fontWeight: 500
+              }}
+              title="Veja como cada modelo funciona"
+            >
+              Aprenda com exemplos prontos
+            </span>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+            {/* Template: Fluxo simples */}
+            <div style={{
+              background: '#ffffff', border: '1px solid var(--builder-border)',
+              borderRadius: 10, padding: '24px 20px', display: 'flex', flexDirection: 'column',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.04)', minHeight: 320
+            }}>
+              {/* Mini flow diagram */}
+              <div style={{
+                flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
+                justifyContent: 'center', gap: 6, marginBottom: 20,
+                background: '#f8fafc', borderRadius: 8, padding: '20px 10px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, color: '#216E62', background: '#E4F7F4', padding: '4px 12px', borderRadius: 20 }}>
+                  <Zap size={10} /> Evento
+                </div>
+                <div style={{ width: 1, height: 16, background: '#cbd5e1' }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, color: '#4F213F', background: '#F8EAF3', padding: '4px 12px', borderRadius: 20 }}>
+                  <Send size={10} /> Peça
+                </div>
+                <div style={{ width: 1, height: 16, background: '#cbd5e1' }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, color: '#718096', background: '#f1f2f5', padding: '4px 12px', borderRadius: 20 }}>
+                  <Flag size={10} /> Encerrar
+                </div>
+              </div>
+              <div style={{ fontWeight: 700, fontSize: 14, color: '#1e293b', marginBottom: 4 }}>Fluxo simples</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14, lineHeight: 1.4 }}>
+                Uma comunicação única.
+              </div>
+              <button
+                style={{
+                  background: 'none', border: 'none', color: 'var(--caixa-blue)',
+                  fontWeight: 600, fontSize: 13, cursor: 'pointer', padding: 0,
+                  display: 'flex', alignItems: 'center', gap: 4, marginTop: 'auto'
+                }}
+                onClick={() => loadTemplate('simples')}
+              >
+                Usar modelo <ChevronRight size={14} />
+              </button>
+            </div>
+
+            {/* Template: Fluxo com decisão */}
+            <div style={{
+              background: '#ffffff', border: '1px solid var(--builder-border)',
+              borderRadius: 10, padding: '24px 20px', display: 'flex', flexDirection: 'column',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.04)', minHeight: 320
+            }}>
+              <div style={{
+                flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
+                justifyContent: 'center', gap: 6, marginBottom: 20,
+                background: '#f8fafc', borderRadius: 8, padding: '20px 10px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, color: '#216E62', background: '#E4F7F4', padding: '4px 12px', borderRadius: 20 }}>
+                  <Zap size={10} /> Evento
+                </div>
+                <div style={{ width: 1, height: 12, background: '#cbd5e1' }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, color: '#A65E00', background: '#FFF8F0', padding: '4px 12px', borderRadius: 20 }}>
+                  <GitBranch size={10} /> Condição
+                </div>
+                <div style={{ display: 'flex', gap: 24, marginTop: 6 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                    <div style={{ width: 1, height: 12, background: '#cbd5e1' }} />
+                    <div style={{ fontSize: 11, fontWeight: 600, color: '#4F213F', background: '#F8EAF3', padding: '4px 12px', borderRadius: 20 }}>
+                      Peça
+                    </div>
+                    <div style={{ width: 1, height: 12, background: '#cbd5e1' }} />
+                    <div style={{ fontSize: 11, fontWeight: 600, color: '#718096', background: '#f1f2f5', padding: '4px 10px', borderRadius: 20 }}>
+                      Encerrar
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                    <div style={{ width: 1, height: 12, background: '#cbd5e1' }} />
+                    <div style={{ fontSize: 11, fontWeight: 600, color: '#4F213F', background: '#F8EAF3', padding: '4px 12px', borderRadius: 20 }}>
+                      Peça
+                    </div>
+                    <div style={{ width: 1, height: 12, background: '#cbd5e1' }} />
+                    <div style={{ fontSize: 11, fontWeight: 600, color: '#718096', background: '#f1f2f5', padding: '4px 10px', borderRadius: 20 }}>
+                      Encerrar
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div style={{ fontWeight: 700, fontSize: 14, color: '#1e293b', marginBottom: 4 }}>Fluxo com decisão</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14, lineHeight: 1.4 }}>
+                Envia mensagens diferentes conforme uma condição.
+              </div>
+              <button
+                style={{
+                  background: 'none', border: 'none', color: 'var(--caixa-blue)',
+                  fontWeight: 600, fontSize: 13, cursor: 'pointer', padding: 0,
+                  display: 'flex', alignItems: 'center', gap: 4, marginTop: 'auto'
+                }}
+                onClick={() => loadTemplate('decisao')}
+              >
+                Usar modelo <ChevronRight size={14} />
+              </button>
+            </div>
+
+            {/* Template: Fluxo com retorno */}
+            <div style={{
+              background: '#ffffff', border: '1px solid var(--builder-border)',
+              borderRadius: 10, padding: '24px 20px', display: 'flex', flexDirection: 'column',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.04)', minHeight: 320
+            }}>
+              <div style={{
+                flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
+                justifyContent: 'center', gap: 6, marginBottom: 20,
+                background: '#f8fafc', borderRadius: 8, padding: '20px 10px', position: 'relative'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, color: '#216E62', background: '#E4F7F4', padding: '4px 12px', borderRadius: 20 }}>
+                  <Zap size={10} /> Evento
+                </div>
+                <div style={{ width: 1, height: 12, background: '#cbd5e1' }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, color: '#A65E00', background: '#FFF8F0', padding: '4px 12px', borderRadius: 20, position: 'relative' }}>
+                  <GitBranch size={10} /> Condição
+                </div>
+                <div style={{ display: 'flex', gap: 24, marginTop: 6 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                    <div style={{ width: 1, height: 12, background: '#cbd5e1' }} />
+                    <div style={{ fontSize: 11, fontWeight: 600, color: '#4F213F', background: '#F8EAF3', padding: '4px 12px', borderRadius: 20 }}>
+                      Peça
+                    </div>
+                    <div style={{ width: 1, height: 12, background: '#cbd5e1' }} />
+                    <div style={{ fontSize: 11, fontWeight: 600, color: '#718096', background: '#f1f2f5', padding: '4px 10px', borderRadius: 20 }}>
+                      Encerrar
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                    <div style={{ width: 1, height: 12, background: '#cbd5e1' }} />
+                    <div style={{ fontSize: 11, fontWeight: 600, color: '#4F213F', background: '#F8EAF3', padding: '4px 12px', borderRadius: 20 }}>
+                      Peça
+                    </div>
+                    <div style={{ width: 1, height: 12, background: '#cbd5e1' }} />
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600,
+                      color: '#6366f1', background: '#E0E7FF', padding: '4px 10px', borderRadius: 20
+                    }}>
+                      <RotateCcw size={9} /> Retorno
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div style={{ fontWeight: 700, fontSize: 14, color: '#1e293b', marginBottom: 4 }}>Fluxo com retorno</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14, lineHeight: 1.4 }}>
+                Permite retornar para uma etapa quando necessário.
+              </div>
+              <button
+                style={{
+                  background: 'none', border: 'none', color: 'var(--caixa-blue)',
+                  fontWeight: 600, fontSize: 13, cursor: 'pointer', padding: 0,
+                  display: 'flex', alignItems: 'center', gap: 4, marginTop: 'auto'
+                }}
+                onClick={() => loadTemplate('retorno')}
+              >
+                Usar modelo <ChevronRight size={14} />
+              </button>
+            </div>
+          </div>
+
+          {/* Footer buttons */}
+          <div style={{
+            display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 40,
+            borderTop: '1px solid var(--builder-border-light)', paddingTop: 20
+          }}>
+            <button
+              className="btn btn-ghost"
+              onClick={() => setStep(1)}
+              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              ← Anterior
+            </button>
+            <button
+              className="btn"
+              style={{
+                background: 'white', border: '1.5px solid var(--caixa-blue)',
+                color: 'var(--caixa-blue)', fontWeight: 700, fontSize: 14
+              }}
+              onClick={() => alert('Rascunho salvo com sucesso!')}
+            >
+              Salvar rascunho
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                setBlocks([])
+                setBuilderView('canvas')
+              }}
+            >
+              Próximo
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step === 2 && builderView === 'canvas' && (
         <div className="builder-layout">
           {/* Main Canvas Viewport — full width, no left sidebar */}
           <main className="canvas-area">
@@ -2349,9 +2626,9 @@ export default function CampaignBuilderPage() {
                     <div className="template-dropdown">
                       <div className="template-dropdown-title">Carregar modelo de jornada</div>
                       {[
-                        { key: 'boasvindas', icon: '🚀', name: 'Boas-vindas', desc: 'SMS + Push omnicanal para novos clientes' },
-                        { key: 'cartao', icon: '💳', name: 'Ativação Cartão', desc: 'SMS + E-mail + Regra condicional sim/não' },
-                        { key: 'reengajamento', icon: '🔄', name: 'Reengajamento', desc: 'Jornada de reconquista para clientes inativos' },
+                        { key: 'simples', icon: '📨', name: 'Fluxo simples', desc: 'Uma comunicação única e direta' },
+                        { key: 'decisao', icon: '🔀', name: 'Fluxo com decisão', desc: 'Caminhos diferentes conforme uma condição' },
+                        { key: 'retorno', icon: '🔄', name: 'Fluxo com retorno', desc: 'Permite retornar para uma etapa anterior' },
                       ].map(tpl => (
                         <button
                           key={tpl.key}
@@ -2369,7 +2646,7 @@ export default function CampaignBuilderPage() {
                   )}
                 </div>
                 <div className="toolbar-divider" />
-                <button className="canvas-btn-text" onClick={() => { setBlocks([]); setSelectedId(null); setInsertTarget(null); setTimeout(resetPanToCenter, 30) }}>Limpar</button>
+                <button className="canvas-btn-text" onClick={() => { setBlocks([]); setSelectedId(null); setInsertTarget(null); setBuilderView('select'); setTimeout(resetPanToCenter, 30) }}>Limpar</button>
               </div>
             </div>
 
@@ -4120,12 +4397,28 @@ export default function CampaignBuilderPage() {
                       <div>
                       </div>
                       <div>
-                        <div style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', marginBottom: 4 }}>Segmentos selecionados</div>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', marginBottom: 4 }}>Nichos selecionados</div>
                         <div style={{ fontSize: 15, color: '#4b5563', fontWeight: 400 }}>{selectedSegmentoName || 'Público Geral'}</div>
                       </div>
                       <div>
                         <div style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', marginBottom: 4 }}>Público alvo</div>
                         <div style={{ fontSize: 15, color: '#4b5563', fontWeight: 400 }}>{selectedPublicoName || 'Não informado'}</div>
+                      </div>
+                    </div>
+
+                    {/* Exclusões Obrigatórias */}
+                    <div style={{ marginTop: 12, marginBottom: 16 }}>
+                      <div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px', marginBottom: 8 }}>Exclusões Obrigatórias (Automáticas)</div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                        {MANDATORY_EXCLUSIONS.map(excl => (
+                          <span key={excl} style={{
+                            display: 'inline-flex', alignItems: 'center', gap: 4,
+                            background: '#fff7ed', border: '1px solid #ffedd5',
+                            borderRadius: 4, padding: '5px 12px', fontSize: 12, color: '#c2410c', fontWeight: 600
+                          }}>
+                            <Lock size={12} style={{ color: '#ea580c' }} /> {excl}
+                          </span>
+                        ))}
                       </div>
                     </div>
 

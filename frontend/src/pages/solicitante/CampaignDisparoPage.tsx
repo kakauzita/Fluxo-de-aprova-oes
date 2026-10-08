@@ -20,9 +20,19 @@ import {
   Upload,
   Trash2,
   AlertCircle,
-  Info
+  Info,
+  Lock
 } from 'lucide-react'
 import './CampaignBuilderPage.css'
+
+const MANDATORY_EXCLUSIONS = [
+  'Menores de 18 anos',
+  'CPF Diferente de Regular na RFB',
+  'Pessoas em situação de vulnerabilidade',
+  'Não perturbe CAIXA',
+  'Não perturbe',
+  'Segmento exclusivo e grupo familiar'
+]
 
 const MOCK_PECAS = [
   { id: 'p1', name: 'Bem-vindo à CAIXA', channel: 'PUSH', content: 'Sua conta foi aberta com sucesso. Acesse o app e descubra suas vantagens.' },
@@ -98,6 +108,27 @@ export default function CampaignDisparoPage() {
     }
     loadData()
   }, [])
+
+  // ─── Combined Communication Pieces ──────────────────────────────────────────
+  const allPecas = useMemo(() => {
+    const formattedApi = (apiPecas || []).map(p => ({
+      id: p.id,
+      name: p.nome,
+      channel: p.canal,
+      content: p.conteudo?.mensagem || p.conteudo?.corpo || p.conteudo?.corpoHtml || 'Peça cadastrada no sistema'
+    }))
+    return [...formattedApi, ...MOCK_PECAS]
+  }, [apiPecas])
+
+  // Filtered pieces based on query & channel tabs in modal
+  const filteredPecas = useMemo(() => {
+    return allPecas.filter(p => {
+      const matchTxt = (p.name || '').toLowerCase().includes(pecaSearch.toLowerCase()) ||
+        (p.content || '').toLowerCase().includes(pecaSearch.toLowerCase())
+      const matchCat = activeTab === 'Todos' || p.channel === activeTab
+      return matchTxt && matchCat
+    })
+  }, [allPecas, pecaSearch, activeTab])
 
   // ─── CSV Import & Toggle Helpers ───────────────────────────────────────────
   const handleDownloadTemplate = () => {
@@ -229,9 +260,11 @@ export default function CampaignDisparoPage() {
       csvRecordsCount: csvRecordsCount,
       exclusoes: [
         'menores_18',
-        'obitos',
         'cpf_irregular_rfb',
         'vulnerabilidade',
+        'nao_perturbe_caixa',
+        'nao_perturbe',
+        'segmento_exclusivo_familiar',
         ...selectedExclusions
       ],
       envioUnico: {
@@ -758,7 +791,7 @@ export default function CampaignDisparoPage() {
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                             <span style={{ fontWeight: 700, fontSize: '14px', color: 'var(--caixa-blue)' }}>{selectedPeca.name}</span>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <span className={`peca-channel ${selectedPeca.channel.toLowerCase().replace(' ', '-')}`} style={{ 
+                              <span className={`peca-channel ${(selectedPeca.channel || '').toLowerCase().replace(' ', '-')}`} style={{ 
                                 fontSize: '10px', 
                                 padding: '2px 8px', 
                                 borderRadius: '12px', 
@@ -938,28 +971,20 @@ export default function CampaignDisparoPage() {
                     Listas de exclusão aplicadas automaticamente a todas as campanhas
                   </p>
                   
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px', marginBottom: 16 }}>
-                    {[
-                      { title: 'Menores de 18 anos', desc: 'Excluídos automaticamente de todas as campanhas' },
-                      { title: 'CPF Diferente de Regular na RFB', desc: 'CPF que não estiver com situação regular na Receita Federal' },
-                      { title: 'Pessoas em situação de vulnerabilidade', desc: 'Lista atualizada diariamente pelo compliance' },
-                      { title: 'Óbitos registrados', desc: 'Clientes com registro de óbito são excluídos automaticamente de todas as campanhas' }
-                    ].map((item, idx) => (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 10px', marginBottom: 16 }}>
+                    {MANDATORY_EXCLUSIONS.map((item, idx) => (
                       <div key={idx} style={{
                         background: 'white',
-                        border: '1px solid #fed7aa',
+                        border: '1px solid #cbd5e1',
                         borderRadius: '6px',
-                        padding: '12px 16px',
-                        display: 'flex',
-                        gap: 12,
-                        alignItems: 'flex-start',
+                        padding: '6px 12px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 8,
                         boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
                       }}>
-                        <span style={{ color: '#f97316', fontSize: '14px', marginTop: '1px' }}>🔒</span>
-                        <div>
-                          <div style={{ fontWeight: 700, fontSize: '13px', color: '#1e293b' }}>{item.title}</div>
-                          <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px', lineHeight: '1.4' }}>{item.desc}</div>
-                        </div>
+                        <Lock size={13} style={{ color: '#d97706', strokeWidth: 2.2, flexShrink: 0 }} />
+                        <span style={{ fontWeight: 600, fontSize: '13px', color: '#1e293b' }}>{item}</span>
                       </div>
                     ))}
                   </div>
@@ -994,8 +1019,6 @@ export default function CampaignDisparoPage() {
                       >
                         <option value="">Adicionar a lista de exclusão</option>
                         {[
-                          'Não Incomodar',
-                          'Segmento Exclusivo e Grupo Familiar',
                           'PPE - Pessoa Politicamente Exposta',
                           'Cadastro Desatualizado',
                           'Lei de Crédito Aposentado',
@@ -1211,19 +1234,26 @@ export default function CampaignDisparoPage() {
                       </div>
 
                       <div>
-                        <div style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', marginBottom: '8px' }}>Exclusões Aplicadas</div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                          {['Menores de 18', 'CPF Irregular RFB', 'Vulnerabilidade', 'Óbitos'].map(e => (
-                            <span key={e} style={{ background: '#fff7ed', border: '1px solid #ffedd5', borderRadius: '4px', padding: '4px 10px', fontSize: '12px', color: '#c2410c', fontWeight: 600 }}>
-                              🔒 {e} (Auto)
-                            </span>
-                          ))}
-                          {selectedExclusions.map(e => (
-                            <span key={e} style={{ background: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '4px', padding: '4px 10px', fontSize: '12px', color: '#991b1b', fontWeight: 600 }}>
-                              🚫 {e}
+                        <div style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', marginBottom: '8px' }}>Exclusões Obrigatórias</div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: selectedExclusions.length > 0 ? '12px' : 0 }}>
+                          {MANDATORY_EXCLUSIONS.map(e => (
+                            <span key={e} style={{ background: '#fff7ed', border: '1px solid #ffedd5', borderRadius: '4px', padding: '4px 10px', fontSize: '12px', color: '#c2410c', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                              <Lock size={11} style={{ color: '#ea580c' }} /> {e} (Auto)
                             </span>
                           ))}
                         </div>
+                        {selectedExclusions.length > 0 && (
+                          <>
+                            <div style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', marginBottom: '8px', marginTop: '8px' }}>Exclusões Opcionais</div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                              {selectedExclusions.map(e => (
+                                <span key={e} style={{ background: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '4px', padding: '4px 10px', fontSize: '12px', color: '#991b1b', fontWeight: 600 }}>
+                                  🚫 {e}
+                                </span>
+                              ))}
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1467,7 +1497,7 @@ export default function CampaignDisparoPage() {
                     >
                       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '6px', gap: '8px' }}>
                         <span style={{ fontWeight: 700, fontSize: '14px', color: '#1a1a2e', lineHeight: 1.3 }}>{p.name}</span>
-                        <span className={`peca-channel ${p.channel.toLowerCase().replace(' ', '-')}`} style={{ flexShrink: 0 }}>
+                        <span className={`peca-channel ${(p.channel || '').toLowerCase().replace(' ', '-')}`} style={{ flexShrink: 0 }}>
                           {p.channel}
                         </span>
                       </div>
