@@ -1769,7 +1769,7 @@ export default function CampaignBuilderPage() {
   }
 
   return (
-    <div className={`main-inner builder-layout-container step-${step}`}>
+    <div className={`main-inner builder-layout-container step-${step} view-${builderView}`}>
       {/* ── Breadcrumb ── */}
       <div className="breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-secondary)' }}>
         <button className="breadcrumb-back" onClick={() => navigate('/campanhas')} style={{ background: 'none', border: 'none', color: 'var(--caixa-blue)', fontWeight: 600, cursor: 'pointer', padding: 0 }}>← Voltar</button>
@@ -2343,7 +2343,7 @@ export default function CampaignBuilderPage() {
 
       {/* ── STEP 2: JOURNEY BUILDER ── */}
       {step === 2 && builderView === 'select' && (
-        <div style={{ maxWidth: 860, margin: '0 auto', padding: '20px 0' }}>
+        <div style={{ maxWidth: 860, margin: '0 auto', padding: '20px 0 60px', width: '100%' }}>
           {/* Header */}
           <div style={{ textAlign: 'center', marginBottom: 32 }}>
             <h2 style={{ fontSize: 22, fontWeight: 700, color: 'var(--caixa-blue)', marginBottom: 6 }}>
@@ -2404,7 +2404,7 @@ export default function CampaignBuilderPage() {
             </span>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 20 }}>
             {/* Template: Fluxo simples */}
             <div style={{
               background: '#ffffff', border: '1px solid var(--builder-border)',
@@ -2566,7 +2566,7 @@ export default function CampaignBuilderPage() {
           {/* Footer buttons */}
           <div style={{
             display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 40,
-            borderTop: '1px solid var(--builder-border-light)', paddingTop: 20
+            borderTop: '1px solid var(--builder-border-light)', paddingTop: 20, marginBottom: 40
           }}>
             <button
               className="btn btn-ghost"
