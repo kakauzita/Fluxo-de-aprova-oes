@@ -36,7 +36,7 @@ async function aprovacaoRoutes(app) {
                 versaoPeca: {
                     include: {
                         peca: {
-                            include: { publicoAlvo: true, segmento: true, assunto: true },
+                            include: { publicoAlvo: true, segmento: true, assunto: true, solicitante: { select: { id: true, nome: true } } },
                         },
                         versaoGrupos: { include: { grupo: true } },
                         unidadesAdicionais: true,

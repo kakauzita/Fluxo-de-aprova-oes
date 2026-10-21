@@ -145,7 +145,31 @@ export async function pecasRoutes(app: FastifyInstance) {
             })
             .parse(req.body)
 
-        const updated = await prisma.peca.update({ where: { id }, data: body })
+        const { conteudo, ...pecaData } = body
+
+        const updated = await prisma.peca.update({ where: { id }, data: pecaData })
+
+        if (conteudo) {
+            const ultimaVersao = await prisma.versaoPeca.findFirst({
+                where: { pecaId: id },
+                orderBy: { numeroVersao: 'desc' },
+            })
+            if (ultimaVersao) {
+                await prisma.versaoPeca.update({
+                    where: { id: ultimaVersao.id },
+                    data: { conteudo: conteudo as any },
+                })
+            } else {
+                await prisma.versaoPeca.create({
+                    data: {
+                        pecaId: id,
+                        numeroVersao: 1,
+                        conteudo: conteudo as any,
+                        status: 'PENDENTE',
+                    },
+                })
+            }
+        }
 
         await prisma.eventoHistorico.create({
             data: { pecaId: id, usuarioId: user.id, evento: 'PECA_EDITADA' },

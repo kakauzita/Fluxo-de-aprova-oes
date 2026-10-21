@@ -18,7 +18,11 @@ const pecas_routes_1 = require("./modules/pecas/pecas.routes");
 const aprovacao_routes_1 = require("./modules/aprovacoes/aprovacao.routes");
 const app = (0, fastify_1.default)({ logger: true });
 // ── Plugins ──────────────────────────────────────────────────────────
-app.register(cors_1.default, { origin: '*' });
+app.register(cors_1.default, {
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+});
 app.register(jwt_1.default, {
     secret: process.env.JWT_SECRET ?? 'super-secret-change-in-production',
 });
@@ -33,6 +37,10 @@ app.decorate('authenticate', async function (req, reply) {
 });
 // ── Error Handler ──────────────────────────────────────────────────────
 app.setErrorHandler((error, _req, reply) => {
+    try {
+        require('fs').appendFileSync('api-errors.log', new Date().toISOString() + ' ' + (error?.message || 'err') + '\n' + (error?.stack || 'err') + '\n\n');
+    }
+    catch (e) { }
     if (error instanceof zod_1.ZodError) {
         return reply.status(400).send({
             error: 'Dados inválidos.',
@@ -43,7 +51,7 @@ app.setErrorHandler((error, _req, reply) => {
         return reply.status(error.statusCode).send({ error: error.message, code: error.code });
     }
     app.log.error(error);
-    return reply.status(500).send({ error: 'Erro interno do servidor.' });
+    return reply.status(500).send({ error: 'Erro interno do servidor.', message: error.message });
 });
 // ── Routes ────────────────────────────────────────────────────────────
 app.register(auth_routes_1.authRoutes);

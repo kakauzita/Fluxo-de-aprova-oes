@@ -34,12 +34,12 @@ export default function EditarPecaPage() {
     const navigate = useNavigate()
     const { id: urlParamId } = useParams()
     const { toast, show } = useToast()
-    const [step, setStep] = useState(0) // 0=canal, 1=dados, 2=conteúdo
+    const [step, setStep] = useState(1) // 0=canal, 1=dados, 2=conteúdo
     const [saving, setSaving] = useState(false)
     const [loadingPeca, setLoadingPeca] = useState(true)
 
     // Step 0 — canal
-    const [canal, setCanal] = useState<Canal>('PUSH')
+    const [canal, setCanal] = useState<Canal>('BANNER_APP')
 
     // Step 1 — dados
     const [nome, setNome] = useState('')
@@ -62,43 +62,56 @@ export default function EditarPecaPage() {
 
     useEffect(() => { loadConfig() }, [])
     async function loadConfig() {
-        const [p, s, a, pecaRes] = await Promise.all([
-            api.get('/admin/publicos-alvo'),
-            api.get('/admin/segmentos'),
-            api.get('/admin/assuntos'),
-            api.get(`/pecas/${urlParamId}`),
-        ])
-        setPublicos(p.data)
-        setAllSegmentos(s.data)
-        setAssuntos(a.data)
+        try {
+            const [p, s, a, pecaRes] = await Promise.all([
+                api.get('/admin/publicos-alvo'),
+                api.get('/admin/segmentos'),
+                api.get('/admin/assuntos'),
+                api.get(`/pecas/${urlParamId}`),
+            ])
+            setPublicos(p.data)
+            setAllSegmentos(s.data)
+            setAssuntos(a.data)
 
-        const peca = pecaRes.data
-        if (peca.status !== 'RASCUNHO') {
-            navigate('/pecas')
-            return
+            const peca = pecaRes.data
+            if (peca.status !== 'RASCUNHO') {
+                navigate('/pecas')
+                return
+            }
+
+            setPecaId(peca.id)
+            setCanal(peca.canal as Canal)
+            setNome(peca.nome || '')
+            setDescricao(peca.descricao || '')
+            setPublicoAlvoId(peca.publicoAlvoId)
+
+            // Filtra segmentos disponíveis para este público imediatamente a partir de s.data
+            const segsDoPublico = s.data.filter((item: any) => item.publicoAlvoId === peca.publicoAlvoId)
+            setSegmentos(segsDoPublico)
+
+            setSegmentosIds(peca.segmentoId ? [peca.segmentoId] : [])
+            setAssuntosIds(peca.assuntoId ? [peca.assuntoId] : [])
+
+            const lastVersao = peca.versoes?.[peca.versoes.length - 1]
+            const cont = lastVersao?.conteudo || {}
+            setConteudo(cont)
+            if (cont.app) setPushApp(cont.app)
+
+            if (peca.segmentoId && peca.assuntoId) {
+                loadGruposPreview(peca.segmentoId, peca.assuntoId)
+            }
+        } catch (e: any) {
+            show('Erro ao carregar dados da peça.', 'error')
+        } finally {
+            setLoadingPeca(false)
         }
-
-        setPecaId(peca.id)
-        setCanal(peca.canal as Canal)
-        setNome(peca.nome)
-        setDescricao(peca.descricao || '')
-        setPublicoAlvoId(peca.publicoAlvoId)
-        setSegmentosIds([peca.segmentoId])
-        setAssuntosIds([peca.assuntoId])
-
-        const lastVersao = peca.versoes?.[peca.versoes.length - 1]
-        const cont = lastVersao?.conteudo || {}
-        setConteudo(cont)
-        if (cont.app) setPushApp(cont.app)
-
-        setLoadingPeca(false)
     }
 
-    useEffect(() => {
-        setSegmentos(allSegmentos.filter((s: any) => s.publicoAlvoId === publicoAlvoId))
+    function handlePublicoAlvoChange(newPublicoId: string) {
+        setPublicoAlvoId(newPublicoId)
+        setSegmentos(allSegmentos.filter((s: any) => s.publicoAlvoId === newPublicoId))
         setSegmentosIds([])
-    }, [publicoAlvoId])
-
+    }
 
     // Carrega aprovadores reativamente sempre que segmento ou assunto mudar
     useEffect(() => {
@@ -129,14 +142,17 @@ export default function EditarPecaPage() {
     function removeAssunto(id: string) { setAssuntosIds(prev => prev.filter(x => x !== id)) }
 
     // ── Save dados ──────────────────────────────────────────────────────────────
-    async function salvarDados() {
+    async function salvarDados(andAdvance = true) {
         if (!nome.trim() || !publicoAlvoId || segmentosIds.length === 0 || assuntosIds.length === 0) {
-            show('Preencha todos os campos obrigatórios.', 'error'); return
+            show('Preencha todos os campos obrigatórios (Nome, Público Alvo, Nicho e Assunto).', 'error')
+            return false
         }
         setSaving(true)
         try {
-            const payload = {
-                nome, descricao, canal,
+            const payload: any = {
+                nome,
+                descricao,
+                canal,
                 publicoAlvoId,
                 segmentoId: segmentosIds[0],
                 assuntoId: assuntosIds[0],
@@ -147,10 +163,34 @@ export default function EditarPecaPage() {
             } else {
                 await api.patch(`/pecas/${pecaId}`, payload)
             }
-            show('Rascunho salvo!')
-            setStep(2)
+            show('Rascunho salvo com sucesso!')
+            if (andAdvance) setStep(2)
+            return true
         } catch (e: any) {
-            show(e.response?.data?.error ?? 'Erro ao salvar.', 'error')
+            show(e.response?.data?.error ?? 'Erro ao salvar rascunho.', 'error')
+            return false
+        } finally { setSaving(false) }
+    }
+
+    // ── Save draft conteudo (Step 2) ───────────────────────────────────────────
+    async function salvarRascunhoConteudo() {
+        if (!pecaId) return
+        setSaving(true)
+        try {
+            const payloadConteudo: Record<string, string> = { ...conteudo }
+            if (canal === 'PUSH' && pushApp) payloadConteudo.app = pushApp
+            await api.patch(`/pecas/${pecaId}`, {
+                nome,
+                descricao,
+                canal,
+                publicoAlvoId,
+                segmentoId: segmentosIds[0],
+                assuntoId: assuntosIds[0],
+                conteudo: payloadConteudo,
+            })
+            show('Rascunho salvo com sucesso!')
+        } catch (e: any) {
+            show(e.response?.data?.error ?? 'Erro ao salvar rascunho.', 'error')
         } finally { setSaving(false) }
     }
 
@@ -165,7 +205,13 @@ export default function EditarPecaPage() {
             show('Peça enviada para aprovação!')
             setTimeout(() => navigate('/pecas'), 1600)
         } catch (e: any) {
-            show(e.response?.data?.error ?? 'Erro ao submeter.', 'error')
+            const errData = e.response?.data
+            if (errData?.issues && Array.isArray(errData.issues)) {
+                const msg = errData.issues.map((i: any) => `${i.field}: ${i.message}`).join(', ')
+                show(`Dados inválidos: ${msg}`, 'error')
+            } else {
+                show(errData?.error ?? 'Erro ao submeter.', 'error')
+            }
         } finally { setSaving(false) }
     }
 
@@ -266,7 +312,7 @@ export default function EditarPecaPage() {
                 </div>
 
                 {/* Step tabs */}
-                <StepTabs step={1} />
+                <StepTabs step={1} onTabClick={tab => { if (tab === 2) salvarDados(true) }} />
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 32, alignItems: 'start' }}>
                     {/* Left: form */}
@@ -318,7 +364,7 @@ export default function EditarPecaPage() {
                         {/* Público Alvo */}
                         <div className="form-group">
                             <label className="form-label">Público Alvo <span style={{ color: '#6b7280', fontWeight: 400 }}>Obrigatório</span></label>
-                            <select id="select-publico-peca" className="form-select" value={publicoAlvoId} onChange={e => setPublicoAlvoId(e.target.value)}>
+                            <select id="select-publico-peca" className="form-select" value={publicoAlvoId} onChange={e => handlePublicoAlvoChange(e.target.value)}>
                                 <option value="">Selecione...</option>
                                 {publicos.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
                             </select>
@@ -477,6 +523,17 @@ export default function EditarPecaPage() {
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 32 }}>
                     <button className="btn btn-ghost" onClick={() => navigate('/pecas')}>Sair</button>
                     <button
+                        className="btn"
+                        style={{
+                            background: 'white', border: '1.5px solid var(--caixa-blue)',
+                            color: 'var(--caixa-blue)', fontWeight: 700, fontSize: 14,
+                        }}
+                        disabled={saving}
+                        onClick={() => salvarDados(false)}
+                    >
+                        Salvar rascunho
+                    </button>
+                    <button
                         id="btn-proximo-step"
                         style={{
                             background: 'var(--caixa-orange)', color: 'white',
@@ -485,7 +542,7 @@ export default function EditarPecaPage() {
                             cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
                         }}
                         disabled={saving}
-                        onClick={salvarDados}
+                        onClick={() => salvarDados(true)}
                     >
                         {saving ? <Loader2 size={14} style={{ animation: 'spin 0.6s linear infinite' }} /> : null}
                         Prosseguir para conteúdo da peça <ChevronRight size={16} />
@@ -528,7 +585,7 @@ export default function EditarPecaPage() {
             )}
 
             {/* Step tabs */}
-            <StepTabs step={2} />
+            <StepTabs step={2} onTabClick={tab => { if (tab === 1) setStep(1) }} />
 
             {/* Section title */}
             <h2 style={{
@@ -607,7 +664,18 @@ export default function EditarPecaPage() {
 
             {/* Footer */}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 32 }}>
-                <button className="btn btn-ghost" onClick={() => navigate('/pecas')}>Salvar</button>
+                <button className="btn btn-ghost" onClick={() => navigate('/pecas')}>Sair</button>
+                <button
+                    className="btn"
+                    style={{
+                        background: 'white', border: '1.5px solid var(--caixa-blue)',
+                        color: 'var(--caixa-blue)', fontWeight: 700, fontSize: 14,
+                    }}
+                    disabled={saving}
+                    onClick={salvarRascunhoConteudo}
+                >
+                    Salvar rascunho
+                </button>
                 <button
                     id="btn-submeter-peca"
                     style={{
@@ -631,7 +699,7 @@ export default function EditarPecaPage() {
 
 // ─── Helper Components ─────────────────────────────────────────────────────────
 
-function StepTabs({ step }: { step: 1 | 2 }) {
+function StepTabs({ step, onTabClick }: { step: 1 | 2; onTabClick?: (s: 1 | 2) => void }) {
     const tabs = [
         { n: 1, label: 'Dados da peça' },
         { n: 2, label: 'Conteúdo da peça' },
@@ -641,19 +709,24 @@ function StepTabs({ step }: { step: 1 | 2 }) {
             {tabs.map(t => {
                 const active = t.n === step
                 return (
-                    <div key={t.n} style={{
-                        padding: '10px 20px', fontSize: 14, fontWeight: active ? 700 : 500,
-                        color: active ? 'var(--caixa-blue)' : 'var(--text-muted)',
-                        borderBottom: active ? '2px solid var(--caixa-blue)' : '2px solid transparent',
-                        marginBottom: -1, display: 'flex', alignItems: 'center', gap: 7, cursor: 'default',
-                    }}>
+                    <div
+                        key={t.n}
+                        onClick={() => onTabClick && onTabClick(t.n as 1 | 2)}
+                        style={{
+                            padding: '10px 20px', fontSize: 14, fontWeight: active ? 700 : 500,
+                            color: active ? 'var(--caixa-blue)' : 'var(--text-muted)',
+                            borderBottom: active ? '2px solid var(--caixa-blue)' : '2px solid transparent',
+                            marginBottom: -1, display: 'flex', alignItems: 'center', gap: 7,
+                            cursor: onTabClick ? 'pointer' : 'default',
+                        }}
+                    >
                         <span style={{
                             background: active ? 'var(--caixa-blue)' : '#e2e8f0',
                             color: active ? 'white' : 'var(--text-muted)',
                             borderRadius: '50%', width: 20, height: 20,
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontSize: 11, fontWeight: 700,
-                        }}>{t.n > step ? '▶' : '▶'}</span>
+                        }}>▶</span>
                         {t.label}
                     </div>
                 )

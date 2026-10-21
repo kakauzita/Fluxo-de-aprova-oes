@@ -30,6 +30,10 @@ async function pecasRoutes(app) {
                 versoes: {
                     orderBy: { numeroVersao: 'desc' },
                     take: 1,
+                    include: {
+                        versaoGrupos: { include: { grupo: true } },
+                        manifestacoes: true,
+                    }
                 },
             },
             orderBy: { atualizadoEm: 'desc' },
@@ -128,7 +132,30 @@ async function pecasRoutes(app) {
             conteudo: zod_1.z.record(zod_1.z.string(), zod_1.z.unknown()).optional(),
         })
             .parse(req.body);
-        const updated = await prisma_1.prisma.peca.update({ where: { id }, data: body });
+        const { conteudo, ...pecaData } = body;
+        const updated = await prisma_1.prisma.peca.update({ where: { id }, data: pecaData });
+        if (conteudo) {
+            const ultimaVersao = await prisma_1.prisma.versaoPeca.findFirst({
+                where: { pecaId: id },
+                orderBy: { numeroVersao: 'desc' },
+            });
+            if (ultimaVersao) {
+                await prisma_1.prisma.versaoPeca.update({
+                    where: { id: ultimaVersao.id },
+                    data: { conteudo: conteudo },
+                });
+            }
+            else {
+                await prisma_1.prisma.versaoPeca.create({
+                    data: {
+                        pecaId: id,
+                        numeroVersao: 1,
+                        conteudo: conteudo,
+                        status: 'PENDENTE',
+                    },
+                });
+            }
+        }
         await prisma_1.prisma.eventoHistorico.create({
             data: { pecaId: id, usuarioId: user.id, evento: 'PECA_EDITADA' },
         });
