@@ -528,6 +528,24 @@ export default function CampaignBuilderPage() {
   const [pecaSearch, setPecaSearch] = useState('')
   const [activeTab, setActiveTab] = useState<'Todos' | 'PUSH' | 'SMS' | 'EMAIL' | 'WHATSAPP' | 'APP CAIXA'>('Todos')
 
+  // ESC key to close open modals — WCAG 2.1.2 e eMAG 2.2
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        if (pecasModalOpen) {
+          setPecasModalOpen(false)
+        } else if (insertTarget) {
+          setInsertTarget(null)
+          setConnectorConfigOpen(false)
+        } else if (selectedId) {
+          setSelectedId(null)
+        }
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [pecasModalOpen, insertTarget, selectedId])
+
   // Load configurations
   useEffect(() => {
     async function loadData() {
@@ -1527,6 +1545,62 @@ export default function CampaignBuilderPage() {
           className={`block-card type-${block.type} ${selectedId === block.id ? 'selected' : ''} ${block.id === 'end_auto' ? 'auto-end' : ''}`}
           onClick={(e) => { e.stopPropagation(); if (block.id !== 'end_auto' && block.type !== 'connector') setSelectedId(block.id); }}
         >
+          {/* Return-from badge — shown on the TARGET block of backward connectors */}
+          {incomingReturns.length > 0 && (
+            <div style={{ position: 'absolute', top: -12, right: 12, display: 'flex', gap: 4, zIndex: 20 }}>
+              {incomingReturns.map((ret, ri) => {
+                const flatAll = (() => {
+                  const flatten = (list: any[]): any[] => {
+                    let f: any[] = [];
+                    for (const b of list) {
+                      f.push(b);
+                      if (b.config?.yes) f = f.concat(flatten(b.config.yes));
+                      if (b.config?.no) f = f.concat(flatten(b.config.no));
+                    }
+                    return f;
+                  };
+                  return flatten(blocks);
+                })();
+                const maxRep = ret.maxRepetitions;
+                const tooltipText = `Retorno para esta etapa${maxRep ? (maxRep === -1 ? ' · Ilimitado' : ` · Máx. ${maxRep}×`) : ''}`;
+                // Step number of the connector
+                let prevStepNum: number | string = blockNumbersMap[ret.connectorId] !== undefined ? blockNumbersMap[ret.connectorId] : '?';
+                if (prevStepNum === '?') {
+                  const connectorIdx = flatAll.findIndex((b: any) => b.id === ret.connectorId);
+                  for (let ci = connectorIdx - 1; ci >= 0; ci--) {
+                    const pb = flatAll[ci];
+                    if (blockNumbersMap[pb.id] !== undefined) { prevStepNum = blockNumbersMap[pb.id] + 1; break; }
+                  }
+                }
+                return (
+                  <div
+                    key={ret.connectorId + ri}
+                    title={tooltipText}
+                    style={{
+                      background: '#6366f1',
+                      color: '#fff',
+                      borderRadius: '20px',
+                      padding: '3px 8px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      cursor: 'default',
+                      boxShadow: '0 1px 4px rgba(99,102,241,0.35)',
+                      border: '1.5px solid #4f46e5',
+                      userSelect: 'none',
+                    }}
+                  >
+                    <RotateCcw size={11} />
+                    Retorno da etapa {prevStepNum}
+                    {maxRep ? <span style={{ opacity: 0.8, fontWeight: 500 }}>· Máx. {maxRep}×</span> : null}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           <div className="block-header">
             <span className="block-type-badge">
               {stepNum ? `Etapa ${stepNum} • ` : ''}
@@ -1547,6 +1621,7 @@ export default function CampaignBuilderPage() {
               <button
                 className="block-delete"
                 onClick={(e) => { e.stopPropagation(); deleteBlock(block.id) }}
+                aria-label={`Excluir ${stepNum ? `etapa ${stepNum}` : 'esta etapa'}`}
               >✕</button>
             )}
           </div>
@@ -1572,62 +1647,6 @@ export default function CampaignBuilderPage() {
             })()}
           </div>
         </div>
-
-        {/* Return-from badge — shown on the TARGET block of backward connectors */}
-        {incomingReturns.length > 0 && (
-          <div style={{ position: 'absolute', top: -12, right: 8, display: 'flex', gap: 4, zIndex: 20 }}>
-            {incomingReturns.map((ret, ri) => {
-              const flatAll = (() => {
-                const flatten = (list: any[]): any[] => {
-                  let f: any[] = [];
-                  for (const b of list) {
-                    f.push(b);
-                    if (b.config?.yes) f = f.concat(flatten(b.config.yes));
-                    if (b.config?.no) f = f.concat(flatten(b.config.no));
-                  }
-                  return f;
-                };
-                return flatten(blocks);
-              })();
-              const maxRep = ret.maxRepetitions;
-              const tooltipText = `Retorno para esta etapa${maxRep ? (maxRep === -1 ? ' · Ilimitado' : ` · Máx. ${maxRep}×`) : ''}`;
-              // Step number of the connector
-              let prevStepNum: number | string = blockNumbersMap[ret.connectorId] !== undefined ? blockNumbersMap[ret.connectorId] : '?';
-              if (prevStepNum === '?') {
-                const connectorIdx = flatAll.findIndex((b: any) => b.id === ret.connectorId);
-                for (let ci = connectorIdx - 1; ci >= 0; ci--) {
-                  const pb = flatAll[ci];
-                  if (blockNumbersMap[pb.id] !== undefined) { prevStepNum = blockNumbersMap[pb.id] + 1; break; }
-                }
-              }
-              return (
-                <div
-                  key={ret.connectorId + ri}
-                  title={tooltipText}
-                  style={{
-                    background: '#6366f1',
-                    color: '#fff',
-                    borderRadius: '20px',
-                    padding: '3px 8px',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    cursor: 'default',
-                    boxShadow: '0 1px 4px rgba(99,102,241,0.35)',
-                    border: '1.5px solid #4f46e5',
-                    userSelect: 'none',
-                  }}
-                >
-                  <RotateCcw size={11} />
-                  Retorno da etapa {prevStepNum}
-                  {maxRep ? <span style={{ opacity: 0.8, fontWeight: 500 }}>· Máx. {maxRep}×</span> : null}
-                </div>
-              );
-            })}
-          </div>
-        )}
 
         {/* Check block branching (Sim/Não) */}
         {block.type === 'check' && (
@@ -2604,10 +2623,27 @@ export default function CampaignBuilderPage() {
           <main className="canvas-area">
             <div className="canvas-toolbar">
               <div className="canvas-toolbar-left">
-                <button className="canvas-btn" onClick={() => setZoom(Math.min(zoom + 0.1, 1.8))}>+</button>
-                <span className="zoom-label">{Math.round(zoom * 100)}%</span>
-                <button className="canvas-btn" onClick={() => setZoom(Math.max(zoom - 0.1, 0.5))}>−</button>
-                <button className="canvas-btn" onClick={() => setZoom(1)} title="Restaurar zoom"><RotateCcw size={13} /></button>
+                <button
+                  className="canvas-btn"
+                  onClick={() => setZoom(Math.min(zoom + 0.1, 1.8))}
+                  aria-label="Aumentar zoom do fluxo"
+                >+</button>
+                <span className="zoom-label" aria-live="polite" aria-label={`Nível de zoom: ${Math.round(zoom * 100)}%`}>
+                  {Math.round(zoom * 100)}%
+                </span>
+                <button
+                  className="canvas-btn"
+                  onClick={() => setZoom(Math.max(zoom - 0.1, 0.5))}
+                  aria-label="Diminuir zoom do fluxo"
+                >−</button>
+                <button
+                  className="canvas-btn"
+                  onClick={() => setZoom(1)}
+                  title="Restaurar zoom"
+                  aria-label="Restaurar zoom para 100%"
+                >
+                  <RotateCcw size={13} aria-hidden="true" />
+                </button>
                 <div className="toolbar-divider" />
                 <span className="canvas-stat-pill"><strong>{stats.total}</strong> passos</span>
                 <span className="canvas-stat-pill"><strong>{stats.paths}</strong> ramif.</span>
@@ -2723,13 +2759,24 @@ export default function CampaignBuilderPage() {
 
           {/* Step Picker Modal */}
           {insertTarget && (
-            <div className="modal-overlay" style={{ animation: 'fadeIn 0.2s ease' }}>
-              <div className="modal-container" style={{ maxWidth: 450 }}>
+            <div
+              className="modal-overlay"
+              style={{ animation: 'fadeIn 0.2s ease' }}
+              onClick={() => { setInsertTarget(null); setConnectorConfigOpen(false) }}
+            >
+              <div
+                className="modal-container"
+                style={{ maxWidth: 450 }}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby={connectorConfigOpen ? 'modal-conectar-etapa-title' : 'modal-proximos-passos-title'}
+                onClick={e => e.stopPropagation()}
+              >
                 {!connectorConfigOpen ? (
                   <React.Fragment>
                     <div className="modal-header">
-                      <div className="modal-title">Próximos passos</div>
-                      <button className="modal-close" onClick={() => { setInsertTarget(null); setConnectorConfigOpen(false) }}>✕</button>
+                      <div id="modal-proximos-passos-title" className="modal-title">Próximos passos</div>
+                      <button className="modal-close" onClick={() => { setInsertTarget(null); setConnectorConfigOpen(false) }} aria-label="Fechar janela de próximos passos">✕</button>
                     </div>
                     <div className="modal-body" style={{ padding: 24 }}>
                       <div style={{ fontSize: 13, color: 'var(--builder-muted)', marginBottom: 16 }}>
@@ -2757,18 +2804,6 @@ export default function CampaignBuilderPage() {
                             label: 'Verificar',
                             desc: 'Crie caminhos de "sim" e "não" na jornada'
                           },
-                          ...(insertTarget && 'branch' in insertTarget ? [
-                            {
-                              type: 'end' as const,
-                              icon: (
-                                <div style={{ background: '#f1f2f5', width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                  <Flag size={16} color="#718096" />
-                                </div>
-                              ),
-                              label: 'Encerrar campanha',
-                              desc: 'Concluir a jornada para o cliente neste ponto'
-                            }
-                          ] : []),
                           {
                             type: 'connector' as const,
                             icon: (
@@ -2886,13 +2921,13 @@ export default function CampaignBuilderPage() {
                   return (
                     <React.Fragment>
                       <div className="modal-header">
-                        <div className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div id="modal-conectar-etapa-title" className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <div style={{ background: '#E0E7FF', width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <Link2 size={15} color="#6366f1" />
                           </div>
                           Conectar a uma etapa existente
                         </div>
-                        <button className="modal-close" onClick={() => { setInsertTarget(null); setConnectorConfigOpen(false) }}>✕</button>
+                        <button className="modal-close" onClick={() => { setInsertTarget(null); setConnectorConfigOpen(false) }} aria-label="Fechar janela de conexão de etapa">✕</button>
                       </div>
                       <div className="modal-body" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
                         {availableSteps.length === 0 ? (
@@ -3084,16 +3119,27 @@ export default function CampaignBuilderPage() {
 
           {/* Block Configuration Modals */}
           {selectedId && selectedBlock && (
-            <div className="modal-overlay" style={{ animation: 'fadeIn 0.2s ease' }}>
-              <div className="modal-container" style={{ maxWidth: selectedBlock.type === 'send' ? 550 : 500 }}>
+            <div
+              className="modal-overlay"
+              style={{ animation: 'fadeIn 0.2s ease' }}
+              onClick={handleCancelEdit}
+            >
+              <div
+                className="modal-container"
+                style={{ maxWidth: selectedBlock.type === 'send' ? 550 : 500 }}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="modal-configurar-etapa-title"
+                onClick={e => e.stopPropagation()}
+              >
                 <div className="modal-header">
-                  <div className="modal-title">
+                  <div id="modal-configurar-etapa-title" className="modal-title">
                     {selectedBlock.type === 'trigger' && 'Configurar evento'}
                     {selectedBlock.type === 'send' && 'Configurar peça'}
                     {selectedBlock.type === 'check' && 'Configurar verificação'}
                     {selectedBlock.type === 'end' && 'Configurar encerramento'}
                   </div>
-                  <button className="modal-close" onClick={handleCancelEdit}>✕</button>
+                  <button className="modal-close" onClick={handleCancelEdit} aria-label="Fechar configuração de etapa">✕</button>
                 </div>
                 <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   
@@ -4590,21 +4636,22 @@ export default function CampaignBuilderPage() {
           <div className="menu-item" onClick={() => confirmAddBlock('check')}>
             <span className="menu-icon">🔀</span> Verificar
           </div>
-          {insertTarget && 'branch' in insertTarget && (
-            <div className="menu-item" onClick={() => confirmAddBlock('end')}>
-              <span className="menu-icon">🏁</span> Encerrar campanha
-            </div>
-          )}
         </div>
       )}
 
       {/* ── Communication Piece Selector Modal ── */}
       {pecasModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-container modal-lg">
+        <div className="modal-overlay" onClick={() => setPecasModalOpen(false)}>
+          <div
+            className="modal-container modal-lg"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-selecionar-peca-title"
+            onClick={e => e.stopPropagation()}
+          >
             <div className="modal-header">
-              <div className="modal-title">Selecionar Peça de Comunicação</div>
-              <button className="modal-close" onClick={() => setPecasModalOpen(false)}>✕</button>
+              <div id="modal-selecionar-peca-title" className="modal-title">Selecionar Peça de Comunicação</div>
+              <button className="modal-close" onClick={() => setPecasModalOpen(false)} aria-label="Fechar seleção de peça">✕</button>
             </div>
             <div className="modal-body">
               <div className="modal-toolbar">

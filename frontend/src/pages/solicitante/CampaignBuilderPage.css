@@ -11,12 +11,12 @@
   --builder-accent-dim: var(--caixa-blue-bg);
   --builder-accent-gradient: linear-gradient(135deg, var(--caixa-blue), var(--caixa-blue-dark));
   --builder-green: #1a7a4a;
-  --builder-amber: #e37b00;
+  --builder-amber: #c05600;
   --builder-red: #c0392b;
   --builder-blue: #1351b4;
   --builder-text: #1a1a2e;
   --builder-text-secondary: #4a5568;
-  --builder-muted: #718096;
+  --builder-muted: #4a5568;
 
   /* Override main-inner constraints */
   max-width: none !important;

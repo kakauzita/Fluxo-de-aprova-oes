@@ -325,7 +325,7 @@ export default function EditarPecaPage() {
 
                         <div className="form-group">
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
-                                <label className="form-label">Nome da peça <span style={{ color: '#6b7280', fontWeight: 400 }}>Obrigatório</span></label>
+                                <label htmlFor="input-nome-peca" className="form-label">Nome da peça <span style={{ color: '#6b7280', fontWeight: 400 }}>Obrigatório</span></label>
                                 <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{nome.length}/50</span>
                             </div>
                             <input
@@ -340,10 +340,11 @@ export default function EditarPecaPage() {
 
                         <div className="form-group">
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
-                                <label className="form-label">Descrição <span style={{ color: '#6b7280', fontWeight: 400 }}>Opcional</span></label>
+                                <label htmlFor="textarea-desc-peca" className="form-label">Descrição <span style={{ color: '#6b7280', fontWeight: 400 }}>Opcional</span></label>
                                 <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{descricao.length}/240</span>
                             </div>
                             <textarea
+                                id="textarea-desc-peca"
                                 className="form-input"
                                 style={{ minHeight: 80, resize: 'vertical' }}
                                 maxLength={240}
@@ -363,7 +364,7 @@ export default function EditarPecaPage() {
 
                         {/* Público Alvo */}
                         <div className="form-group">
-                            <label className="form-label">Público Alvo <span style={{ color: '#6b7280', fontWeight: 400 }}>Obrigatório</span></label>
+                            <label htmlFor="select-publico-peca" className="form-label">Público Alvo <span style={{ color: '#6b7280', fontWeight: 400 }}>Obrigatório</span></label>
                             <select id="select-publico-peca" className="form-select" value={publicoAlvoId} onChange={e => handlePublicoAlvoChange(e.target.value)}>
                                 <option value="">Selecione...</option>
                                 {publicos.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
@@ -372,7 +373,7 @@ export default function EditarPecaPage() {
 
                         {/* Nicho */}
                         <div className="form-group">
-                            <label className="form-label">Nicho <span style={{ color: '#6b7280', fontWeight: 400 }}>Obrigatório</span></label>
+                            <label htmlFor="select-segmento-peca" className="form-label">Nicho <span style={{ color: '#6b7280', fontWeight: 400 }}>Obrigatório</span></label>
                             <div style={{ display: 'flex', gap: 8 }}>
                                 <select
                                     id="select-segmento-peca"
@@ -401,8 +402,12 @@ export default function EditarPecaPage() {
                                                 borderRadius: 4, padding: '2px 8px', fontSize: 12, color: 'var(--caixa-blue)',
                                             }}>
                                                 {seg.nome}
-                                                <button onClick={() => removeSegmento(id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--caixa-blue)', lineHeight: 1 }}>
-                                                    <X size={11} />
+                                                <button
+                                                    onClick={() => removeSegmento(id)}
+                                                    aria-label={`Remover nicho ${seg.nome}`}
+                                                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--caixa-blue)', lineHeight: 1 }}
+                                                >
+                                                    <X size={11} aria-hidden="true" />
                                                 </button>
                                             </span>
                                         ) : null
@@ -413,7 +418,7 @@ export default function EditarPecaPage() {
 
                         {/* Assunto */}
                         <div className="form-group">
-                            <label className="form-label">Assunto <span style={{ color: '#6b7280', fontWeight: 400 }}>Obrigatório</span></label>
+                            <label htmlFor="select-assunto-peca" className="form-label">Assunto <span style={{ color: '#6b7280', fontWeight: 400 }}>Obrigatório</span></label>
                             <div style={{ display: 'flex', gap: 8 }}>
                                 <select
                                     id="select-assunto-peca"
@@ -440,8 +445,12 @@ export default function EditarPecaPage() {
                                                 borderRadius: 4, padding: '2px 8px', fontSize: 12, color: 'var(--caixa-blue)',
                                             }}>
                                                 {ass.nome}
-                                                <button onClick={() => removeAssunto(id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--caixa-blue)', lineHeight: 1 }}>
-                                                    <X size={11} />
+                                                <button
+                                                    onClick={() => removeAssunto(id)}
+                                                    aria-label={`Remover assunto ${ass.nome}`}
+                                                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--caixa-blue)', lineHeight: 1 }}
+                                                >
+                                                    <X size={11} aria-hidden="true" />
                                                 </button>
                                             </span>
                                         ) : null
@@ -455,7 +464,7 @@ export default function EditarPecaPage() {
                             Esta etapa é opcional. Caso precise de uma validação específica, você pode incluir unidades adicionais.
                         </p>
                         <div className="form-group">
-                            <label className="form-label">Código da unidade aprovadora</label>
+                            <label htmlFor="input-unidade-extra" className="form-label">Código da unidade aprovadora</label>
                             <div style={{ display: 'flex', gap: 8 }}>
                                 <input
                                     id="input-unidade-extra"

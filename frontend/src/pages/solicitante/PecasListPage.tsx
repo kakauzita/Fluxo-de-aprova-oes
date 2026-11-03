@@ -75,7 +75,7 @@ export default function PecasListPage() {
         <div className="main-inner">
             {/* Breadcrumb */}
             <div className="breadcrumb">
-                <button className="breadcrumb-back">← Voltar</button>
+                <button className="breadcrumb-back" onClick={() => navigate(-1)} aria-label="Voltar para a página anterior">← Voltar</button>
                 <span className="breadcrumb-sep">|</span>
                 <span className="breadcrumb-item">Home</span>
                 <span className="breadcrumb-sep">›</span>
@@ -87,7 +87,16 @@ export default function PecasListPage() {
 
             {/* CTA Banner */}
             <div
+                role="button"
+                tabIndex={0}
+                aria-label="Cadastrar peça de comunicação"
                 onClick={() => navigate('/pecas/nova')}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        navigate('/pecas/nova')
+                    }
+                }}
                 style={{
                     background: '#EBF1F2',
                     border: '1px solid #d1d5db',
@@ -177,10 +186,11 @@ export default function PecasListPage() {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
                 <div className="search-input-wrap" style={{ flex: 1, minWidth: 240 }}>
-                    <Search size={14} />
+                    <Search size={14} aria-hidden="true" />
                     <input
                         className="search-input"
                         placeholder="Busca apenas pelo nome da peça de comunicação"
+                        aria-label="Buscar pelo nome ou canal da peça de comunicação"
                         value={search}
                         onChange={e => { setSearch(e.target.value); setPage(1) }}
                     />
@@ -213,7 +223,16 @@ export default function PecasListPage() {
                         return (
                             <div
                                 key={peca.id}
+                                role="button"
+                                tabIndex={0}
+                                aria-label={`Ver detalhes da peça: ${peca.canal === 'BANNER_APP' ? 'App CAIXA' : peca.canal === 'WHATSAPP' ? 'Whatsapp' : peca.canal === 'EMAIL' ? 'Email Marketing' : peca.canal} - ${peca.nome}`}
                                 onClick={() => navigate(`/pecas/${peca.id}`)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault()
+                                        navigate(`/pecas/${peca.id}`)
+                                    }
+                                }}
                                 style={{
                                     background: 'white',
                                     border: '1px solid #e2e8f0',
@@ -320,6 +339,9 @@ export default function PecasListPage() {
                                             e.stopPropagation()
                                             setMenuOpenId(menuOpenId === peca.id ? null : peca.id)
                                         }}
+                                        aria-label={`Mais opções para ${peca.nome}`}
+                                        aria-haspopup="true"
+                                        aria-expanded={menuOpenId === peca.id}
                                         style={{
                                             background: 'transparent', border: 'none',
                                             color: '#64748b', cursor: 'pointer',
@@ -329,7 +351,7 @@ export default function PecasListPage() {
                                         onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
                                         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                                     >
-                                        <MoreVertical size={20} />
+                                        <MoreVertical size={20} aria-hidden="true" />
                                     </button>
 
                                     {menuOpenId === peca.id && (
@@ -392,6 +414,7 @@ export default function PecasListPage() {
                             value={pageSize}
                             onChange={e => { setPageSize(Number(e.target.value)); setPage(1) }}
                             className="form-select"
+                            aria-label="Quantidade de itens por página"
                             style={{ padding: '4px 8px', fontSize: 13, width: 'auto' }}
                         >
                             {PAGE_SIZE_OPTIONS.map(n => <option key={n} value={n}>{n}</option>)}
@@ -401,11 +424,11 @@ export default function PecasListPage() {
                         <span style={{ marginRight: 8 }}>
                             {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, filtered.length)} de {filtered.length}
                         </span>
-                        <button className="btn btn-ghost btn-sm btn-icon" disabled={page === 1} onClick={() => goPage(1)}><ChevronFirst size={14} /></button>
-                        <button className="btn btn-ghost btn-sm btn-icon" disabled={page === 1} onClick={() => goPage(page - 1)}><ChevronLeft size={14} /></button>
+                        <button className="btn btn-ghost btn-sm btn-icon" disabled={page === 1} onClick={() => goPage(1)} aria-label="Ir para a primeira página"><ChevronFirst size={14} aria-hidden="true" /></button>
+                        <button className="btn btn-ghost btn-sm btn-icon" disabled={page === 1} onClick={() => goPage(page - 1)} aria-label="Ir para a página anterior"><ChevronLeft size={14} aria-hidden="true" /></button>
                         <span style={{ padding: '0 8px' }}>Página {page} de {totalPages}</span>
-                        <button className="btn btn-ghost btn-sm btn-icon" disabled={page === totalPages} onClick={() => goPage(page + 1)}><ChevronRight size={14} /></button>
-                        <button className="btn btn-ghost btn-sm btn-icon" disabled={page === totalPages} onClick={() => goPage(totalPages)}><ChevronLast size={14} /></button>
+                        <button className="btn btn-ghost btn-sm btn-icon" disabled={page === totalPages} onClick={() => goPage(page + 1)} aria-label="Ir para a próxima página"><ChevronRight size={14} aria-hidden="true" /></button>
+                        <button className="btn btn-ghost btn-sm btn-icon" disabled={page === totalPages} onClick={() => goPage(totalPages)} aria-label="Ir para a última página"><ChevronLast size={14} aria-hidden="true" /></button>
                     </div>
                 </div>
             )}

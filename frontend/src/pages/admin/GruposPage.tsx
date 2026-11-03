@@ -31,6 +31,19 @@ export default function GruposPage() {
     const [saving, setSaving] = useState(false)
     const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
 
+    // ESC key listener — WCAG 2.1.2 e eMAG 2.2
+    useEffect(() => {
+        function handleKeyDown(e: KeyboardEvent) {
+            if (e.key === 'Escape') {
+                if (showMembersModal) setShowMembersModal(null)
+                else if (editingGrupo) setEditingGrupo(null)
+                else if (showModal) setShowModal(false)
+            }
+        }
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [showMembersModal, editingGrupo, showModal])
+
     useEffect(() => { load() }, [])
 
     async function load() {
@@ -246,13 +259,19 @@ export default function GruposPage() {
             {/* Edit Group Modal */}
             {editingGrupo && (
                 <div className="modal-overlay" onClick={() => setEditingGrupo(null)}>
-                    <div className="modal" onClick={e => e.stopPropagation()}>
+                    <div
+                        className="modal"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="modal-editar-grupo-title"
+                        onClick={e => e.stopPropagation()}
+                    >
                         <div className="modal-header">
-                            <h3 className="modal-title">Editar Grupo</h3>
-                            <button className="btn btn-ghost btn-icon btn-sm" onClick={() => setEditingGrupo(null)}><X size={16} /></button>
+                            <h3 id="modal-editar-grupo-title" className="modal-title">Editar Grupo</h3>
+                            <button className="btn btn-ghost btn-icon btn-sm" onClick={() => setEditingGrupo(null)} aria-label="Fechar janela de edição de grupo"><X size={16} aria-hidden="true" /></button>
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Nome do Grupo</label>
+                            <label htmlFor="input-editar-nome-grupo" className="form-label">Nome do Grupo</label>
                             <input
                                 id="input-editar-nome-grupo"
                                 className="form-input"
@@ -281,13 +300,19 @@ export default function GruposPage() {
             {/* Create Group Modal */}
             {showModal && (
                 <div className="modal-overlay" onClick={() => setShowModal(false)}>
-                    <div className="modal" onClick={e => e.stopPropagation()}>
+                    <div
+                        className="modal"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="modal-novo-grupo-title"
+                        onClick={e => e.stopPropagation()}
+                    >
                         <div className="modal-header">
-                            <h3 className="modal-title">Novo Grupo</h3>
-                            <button className="btn btn-ghost btn-icon btn-sm" onClick={() => setShowModal(false)}><X size={16} /></button>
+                            <h3 id="modal-novo-grupo-title" className="modal-title">Novo Grupo</h3>
+                            <button className="btn btn-ghost btn-icon btn-sm" onClick={() => setShowModal(false)} aria-label="Fechar janela de criação de grupo"><X size={16} aria-hidden="true" /></button>
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Nome do Grupo</label>
+                            <label htmlFor="input-nome-grupo" className="form-label">Nome do Grupo</label>
                             <input id="input-nome-grupo" className="form-input" value={nome} onChange={e => setNome(e.target.value)} placeholder="Ex: Marketing Digital" autoFocus />
                         </div>
                         <div className="modal-footer">
@@ -304,10 +329,16 @@ export default function GruposPage() {
             {/* Members Modal */}
             {showMembersModal && (
                 <div className="modal-overlay" onClick={() => setShowMembersModal(null)}>
-                    <div className="modal modal-lg" onClick={e => e.stopPropagation()}>
+                    <div
+                        className="modal modal-lg"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="modal-membros-title"
+                        onClick={e => e.stopPropagation()}
+                    >
                         <div className="modal-header">
-                            <h3 className="modal-title">Membros — {showMembersModal.nome}</h3>
-                            <button className="btn btn-ghost btn-icon btn-sm" onClick={() => setShowMembersModal(null)}><X size={16} /></button>
+                            <h3 id="modal-membros-title" className="modal-title">Membros — {showMembersModal.nome}</h3>
+                            <button className="btn btn-ghost btn-icon btn-sm" onClick={() => setShowMembersModal(null)} aria-label="Fechar janela de membros"><X size={16} aria-hidden="true" /></button>
                         </div>
 
                         <div className="grid-2" style={{ gap: 20 }}>

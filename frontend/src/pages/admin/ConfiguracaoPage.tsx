@@ -149,6 +149,20 @@ function GruposSection() {
     const [tempUsuarioCode, setTempUsuarioCode] = useState('')
     const [allUsuarios, setAllUsuarios] = useState<Usuario[]>([])
 
+    // ESC key listener — WCAG 2.1.2 e eMAG 2.2
+    useEffect(() => {
+        function handleKeyDown(e: KeyboardEvent) {
+            if (e.key === 'Escape') {
+                if (showDelete) setShowDelete(null)
+                else if (showUniversalConfirm) setShowUniversalConfirm(null)
+                else if (editingGrupo) { setEditingGrupo(null); setModalUnidades([]); setModalUsuarios([]) }
+                else if (showAdd) { setShowAdd(false); setModalUnidades([]); setModalUsuarios([]) }
+            }
+        }
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [showDelete, showUniversalConfirm, editingGrupo, showAdd])
+
     useEffect(() => { load() }, [])
 
     async function load() {
@@ -656,6 +670,22 @@ function PublicoAlvoSection() {
     const [saving, setSaving] = useState(false)
     const { toast, show } = useToast()
 
+    // ESC key listener — WCAG 2.1.2 e eMAG 2.2
+    useEffect(() => {
+        function handleKeyDown(e: KeyboardEvent) {
+            if (e.key === 'Escape') {
+                if (showDeleteSegmento) setShowDeleteSegmento(null)
+                else if (editingSegmento) { setEditingSegmento(null); setEditNomeSegmento(''); setEditGruposSegmento([]) }
+                else if (showDeletePublico) setShowDeletePublico(null)
+                else if (editingPublico) { setEditingPublico(null); setEditNomePublico('') }
+                else if (showAddSegmento) { setShowAddSegmento(null); setNomeSegmento(''); setGruposSelecionados([]) }
+                else if (showAddPublico) { setShowAddPublico(false); setNomePublico('') }
+            }
+        }
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [showDeleteSegmento, editingSegmento, showDeletePublico, editingPublico, showAddSegmento, showAddPublico])
+
     useEffect(() => { load() }, [])
 
     async function load() {
@@ -1063,6 +1093,18 @@ function AssuntosSection() {
     const [saving, setSaving] = useState(false)
     const { toast, show } = useToast()
 
+    // ESC key listener — WCAG 2.1.2 e eMAG 2.2
+    useEffect(() => {
+        function handleKeyDown(e: KeyboardEvent) {
+            if (e.key === 'Escape') {
+                if (editingAssunto) { setEditingAssunto(null); setEditNome(''); setEditGruposAssunto([]) }
+                else if (showAdd) setShowAdd(false)
+            }
+        }
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [editingAssunto, showAdd])
+
     useEffect(() => { load() }, [])
 
     async function load() {
@@ -1298,15 +1340,24 @@ export default function ConfiguracaoPage() {
             <p className="page-subtitle">As regras configuradas aqui determinam automaticamente quem aprova cada peça</p>
 
             {/* Section cards */}
-            <div className="section-cards">
+            <div className="section-cards" role="tablist" aria-label="Seções de configuração">
                 {cards.map(card => (
                     <div
                         key={card.id}
+                        role="tab"
+                        aria-selected={section === card.id}
+                        tabIndex={0}
                         className={`section-card${section === card.id ? ' active' : ''}`}
                         onClick={() => setSection(card.id)}
+                        onKeyDown={e => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault()
+                                setSection(card.id)
+                            }
+                        }}
                     >
                         <div className="section-card-title">
-                            <card.icon size={16} />
+                            <card.icon size={16} aria-hidden="true" />
                             {card.title}
                         </div>
                         <p className="section-card-desc" style={{ whiteSpace: 'pre-line' }}>{card.desc}</p>

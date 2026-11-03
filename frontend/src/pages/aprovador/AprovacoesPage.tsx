@@ -62,7 +62,7 @@ export default function AprovacoesPage() {
                     <div style={{
                         padding: '6px 14px', borderRadius: 20,
                         background: '#fef3c7', border: '1px solid #fde68a',
-                        color: '#d97706', fontSize: 13, fontWeight: 700
+                        color: '#92400e', fontSize: 13, fontWeight: 700
                     }}>
                         {unique.length} pendente{unique.length !== 1 ? 's' : ''}
                     </div>
@@ -142,9 +142,11 @@ export default function AprovacoesPage() {
                                                         background: bgColor,
                                                         fontSize: 10, fontWeight: 700, color,
                                                         textTransform: 'uppercase'
-                                                    }}>
-                                                        <Icon size={12} />
-                                                        <span>{vg.grupo.nome}</span>
+                                                    }}
+                                                    title={`${vg.grupo.nome}: ${decisao === 'APROVADO' ? 'Aprovado' : decisao === 'REPROVADO' ? 'Reprovado' : 'Pendente'}`}
+                                                    >
+                                                        <Icon size={12} aria-hidden="true" />
+                                                        <span>{vg.grupo.nome} ({decisao === 'APROVADO' ? 'Aprovado' : decisao === 'REPROVADO' ? 'Reprovado' : 'Pendente'})</span>
                                                     </div>
                                                 )
                                             })}
@@ -167,8 +169,9 @@ export default function AprovacoesPage() {
                                             className="btn btn-primary"
                                             style={{ width: '100%', justifyContent: 'center', background: '#005CA9', border: 'none', color: 'white' }}
                                             onClick={() => navigate(`/pecas/${peca.id}`)}
+                                            aria-label={`Visualizar conteúdo de ${peca.nome}`}
                                         >
-                                            <Eye size={16} /> Visualizar conteúdo
+                                            <Eye size={16} aria-hidden="true" /> Visualizar conteúdo
                                         </button>
                                     </div>
                                 </div>

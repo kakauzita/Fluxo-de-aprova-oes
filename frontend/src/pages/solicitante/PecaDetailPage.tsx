@@ -25,6 +25,19 @@ export default function PecaDetailPage() {
         setToast({ msg, type }); setTimeout(() => setToast(null), 3000)
     }
 
+    // ESC key listener — WCAG 2.1.2 e eMAG 2.2
+    useEffect(() => {
+        function handleKeyDown(e: KeyboardEvent) {
+            if (e.key === 'Escape' && votando) {
+                setVotando(false)
+                setDecisao(null)
+                setJustificativa('')
+            }
+        }
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [votando])
+
     useEffect(() => { load() }, [id])
     async function load() {
         setLoading(true)
@@ -373,23 +386,35 @@ export default function PecaDetailPage() {
             {/* Voting Modals */}
             {votando && decisao === 'REPROVADO' && (
                 <div className="modal-overlay" onClick={() => { setVotando(false); setDecisao(null); setJustificativa('') }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999 }}>
-                    <div className="modal" onClick={e => e.stopPropagation()} style={{ background: 'white', borderRadius: 8, width: 500, overflow: 'hidden', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+                    <div
+                        className="modal"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="modal-reprovar-title"
+                        onClick={e => e.stopPropagation()}
+                        style={{ background: 'white', borderRadius: 8, width: 500, overflow: 'hidden', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
+                    >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderBottom: '1px solid #e2e8f0' }}>
-                            <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#b91c1c' }}>Reprovar peça</h3>
-                            <button onClick={() => { setVotando(false); setDecisao(null); setJustificativa('') }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#b91c1c', display: 'flex', alignItems: 'center' }}>
-                                <X size={20} />
+                            <h3 id="modal-reprovar-title" style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#b91c1c' }}>Reprovar peça</h3>
+                            <button
+                                onClick={() => { setVotando(false); setDecisao(null); setJustificativa('') }}
+                                aria-label="Fechar janela de reprovação"
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#b91c1c', display: 'flex', alignItems: 'center', padding: '4px' }}
+                            >
+                                <X size={20} aria-hidden="true" />
                             </button>
                         </div>
                         <div style={{ padding: '24px' }}>
                             <div style={{ marginBottom: 16 }}>
-                                <label style={{ display: 'block', fontSize: 14, fontWeight: 700, color: '#1e293b', marginBottom: 8 }}>
+                                <label htmlFor="textarea-motivo-reprovacao" style={{ display: 'block', fontSize: 14, fontWeight: 700, color: '#1e293b', marginBottom: 8 }}>
                                     Motivo da reprovação
                                 </label>
                                 <textarea
+                                    id="textarea-motivo-reprovacao"
                                     value={justificativa}
                                     onChange={e => setJustificativa(e.target.value)}
                                     placeholder="Explique o motivo da reprovação e os ajustes necessários."
-                                    style={{ width: '100%', minHeight: 120, padding: 12, borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 14, resize: 'vertical', outline: 'none' }}
+                                    style={{ width: '100%', minHeight: 120, padding: 12, borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 14, resize: 'vertical' }}
                                 />
                                 <p style={{ margin: '8px 0 0 0', fontSize: 12, color: '#64748b' }}>
                                     Essa mensagem será exibida ao solicitante para que ele possa realizar os ajustes necessários.
@@ -406,7 +431,7 @@ export default function PecaDetailPage() {
                             <button
                                 onClick={votar}
                                 disabled={saving || !justificativa.trim()}
-                                style={{ background: '#e07604', color: 'white', border: 'none', borderRadius: 6, padding: '8px 24px', fontWeight: 600, cursor: saving || !justificativa.trim() ? 'not-allowed' : 'pointer', fontSize: 14, opacity: saving || !justificativa.trim() ? 0.7 : 1 }}
+                                style={{ background: 'var(--caixa-orange)', color: 'white', border: 'none', borderRadius: 6, padding: '8px 24px', fontWeight: 600, cursor: saving || !justificativa.trim() ? 'not-allowed' : 'pointer', fontSize: 14, opacity: saving || !justificativa.trim() ? 0.7 : 1 }}
                             >
                                 {saving ? <Loader2 size={16} className="animate-spin" style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} /> : null}
                                 Salvar
@@ -418,11 +443,22 @@ export default function PecaDetailPage() {
 
             {votando && decisao === 'APROVADO' && (
                 <div className="modal-overlay" onClick={() => { setVotando(false); setDecisao(null) }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999 }}>
-                    <div className="modal" onClick={e => e.stopPropagation()} style={{ background: 'white', borderRadius: 8, width: 440, overflow: 'hidden', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+                    <div
+                        className="modal"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="modal-aprovar-title"
+                        onClick={e => e.stopPropagation()}
+                        style={{ background: 'white', borderRadius: 8, width: 440, overflow: 'hidden', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
+                    >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', background: '#005CA9', color: 'white' }}>
-                            <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Aprovar peça?</h3>
-                            <button onClick={() => { setVotando(false); setDecisao(null) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'white', display: 'flex', alignItems: 'center' }}>
-                                <X size={20} />
+                            <h3 id="modal-aprovar-title" style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Aprovar peça?</h3>
+                            <button
+                                onClick={() => { setVotando(false); setDecisao(null) }}
+                                aria-label="Fechar janela de aprovação"
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'white', display: 'flex', alignItems: 'center', padding: '4px' }}
+                            >
+                                <X size={20} aria-hidden="true" />
                             </button>
                         </div>
                         <div style={{ padding: '40px 24px' }}>
@@ -435,12 +471,12 @@ export default function PecaDetailPage() {
                                 onClick={() => { setVotando(false); setDecisao(null) }}
                                 style={{ background: 'transparent', border: '1px solid #005CA9', color: '#005CA9', borderRadius: 6, padding: '8px 24px', fontWeight: 600, cursor: 'pointer', fontSize: 14 }}
                             >
-                                cancelar
+                                Cancelar
                             </button>
                             <button
                                 onClick={votar}
                                 disabled={saving}
-                                style={{ background: '#e07604', color: 'white', border: 'none', borderRadius: 6, padding: '8px 24px', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', fontSize: 14, opacity: saving ? 0.7 : 1 }}
+                                style={{ background: 'var(--caixa-orange)', color: 'white', border: 'none', borderRadius: 6, padding: '8px 24px', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', fontSize: 14, opacity: saving ? 0.7 : 1 }}
                             >
                                 {saving ? <Loader2 size={16} className="animate-spin" style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} /> : null}
                                 Aprovar
@@ -450,7 +486,7 @@ export default function PecaDetailPage() {
                 </div>
             )}
 
-            {toast && <div className={`toast toast-${toast.type}`}>{toast.msg}</div>}
+            {toast && <div className={`toast toast-${toast.type}`} role="status" aria-live="polite">{toast.msg}</div>}
         </div>
     )
 }

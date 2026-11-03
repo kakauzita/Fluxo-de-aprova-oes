@@ -164,7 +164,11 @@ export default function NovaPecaPage() {
                 <p className="page-subtitle" style={{ marginBottom: 28 }}>Escolha como você deseja se comunicar com o seu público</p>
 
                 {/* Canal grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 32 }}>
+                <div
+                    role="radiogroup"
+                    aria-label="Selecione o canal de comunicação"
+                    style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 32 }}
+                >
                     {CANAL_CFG.map((c, i) => {
                         const selected = canal === c.id
                         // Row 2 has only 2 items — center them
@@ -172,7 +176,27 @@ export default function NovaPecaPage() {
                         return (
                             <div
                                 key={c.id}
+                                id={`canal-radio-${c.id}`}
+                                role="radio"
+                                aria-checked={selected}
+                                tabIndex={selected ? 0 : -1}
                                 onClick={() => setCanal(c.id)}
+                                onKeyDown={(e) => {
+                                    if (e.key === ' ' || e.key === 'Enter') {
+                                        e.preventDefault()
+                                        setCanal(c.id)
+                                    } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                                        e.preventDefault()
+                                        const nextIdx = (i + 1) % CANAL_CFG.length
+                                        setCanal(CANAL_CFG[nextIdx].id)
+                                        document.getElementById(`canal-radio-${CANAL_CFG[nextIdx].id}`)?.focus()
+                                    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                                        e.preventDefault()
+                                        const prevIdx = (i - 1 + CANAL_CFG.length) % CANAL_CFG.length
+                                        setCanal(CANAL_CFG[prevIdx].id)
+                                        document.getElementById(`canal-radio-${CANAL_CFG[prevIdx].id}`)?.focus()
+                                    }
+                                }}
                                 style={{
                                     background: '#EBF1F2',
                                     border: `2px solid ${selected ? 'var(--caixa-blue)' : 'transparent'}`,
@@ -186,18 +210,21 @@ export default function NovaPecaPage() {
                                 }}
                             >
                                 {/* Radio top-right */}
-                                <div style={{
-                                    position: 'absolute', top: 16, right: 16,
-                                    width: 20, height: 20, borderRadius: '50%',
-                                    border: `2px solid ${selected ? '#16a34a' : '#9ca3af'}`,
-                                    background: selected ? '#16a34a' : 'white',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                }}>
+                                <div
+                                    aria-hidden="true"
+                                    style={{
+                                        position: 'absolute', top: 16, right: 16,
+                                        width: 20, height: 20, borderRadius: '50%',
+                                        border: `2px solid ${selected ? '#16a34a' : '#9ca3af'}`,
+                                        background: selected ? '#16a34a' : 'white',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    }}
+                                >
                                     {selected && <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'white' }} />}
                                 </div>
 
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                                    <span style={{ fontSize: 22 }}>{c.emoji}</span>
+                                    <span style={{ fontSize: 22 }} aria-hidden="true">{c.emoji}</span>
                                     <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--caixa-blue)' }}>{c.label}</span>
                                 </div>
                                 <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>{c.desc}</p>
@@ -223,7 +250,7 @@ export default function NovaPecaPage() {
                     </button>
                 </div>
 
-                {toast && <div className={`toast toast-${toast.type}`}>{toast.msg}</div>}
+                {toast && <div className={`toast toast-${toast.type}`} role="status" aria-live="polite">{toast.msg}</div>}
             </div>
         )
     }
@@ -254,7 +281,7 @@ export default function NovaPecaPage() {
 
                         <div className="form-group">
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
-                                <label className="form-label">Nome da peça <span style={{ color: '#6b7280', fontWeight: 400 }}>Obrigatório</span></label>
+                                <label htmlFor="input-nome-peca" className="form-label">Nome da peça <span style={{ color: '#6b7280', fontWeight: 400 }}>Obrigatório</span></label>
                                 <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{nome.length}/50</span>
                             </div>
                             <input
@@ -269,10 +296,11 @@ export default function NovaPecaPage() {
 
                         <div className="form-group">
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
-                                <label className="form-label">Descrição <span style={{ color: '#6b7280', fontWeight: 400 }}>Opcional</span></label>
+                                <label htmlFor="textarea-desc-peca" className="form-label">Descrição <span style={{ color: '#6b7280', fontWeight: 400 }}>Opcional</span></label>
                                 <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{descricao.length}/240</span>
                             </div>
                             <textarea
+                                id="textarea-desc-peca"
                                 className="form-input"
                                 style={{ minHeight: 80, resize: 'vertical' }}
                                 maxLength={240}
@@ -292,7 +320,7 @@ export default function NovaPecaPage() {
 
                         {/* Público Alvo */}
                         <div className="form-group">
-                            <label className="form-label">Público Alvo <span style={{ color: '#6b7280', fontWeight: 400 }}>Obrigatório</span></label>
+                            <label htmlFor="select-publico-peca" className="form-label">Público Alvo <span style={{ color: '#6b7280', fontWeight: 400 }}>Obrigatório</span></label>
                             <select id="select-publico-peca" className="form-select" value={publicoAlvoId} onChange={e => setPublicoAlvoId(e.target.value)}>
                                 <option value="">Selecione...</option>
                                 {publicos.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
@@ -301,7 +329,7 @@ export default function NovaPecaPage() {
 
                         {/* Nicho */}
                         <div className="form-group">
-                            <label className="form-label">Nicho <span style={{ color: '#6b7280', fontWeight: 400 }}>Obrigatório</span></label>
+                            <label htmlFor="select-segmento-peca" className="form-label">Nicho <span style={{ color: '#6b7280', fontWeight: 400 }}>Obrigatório</span></label>
                             <div style={{ display: 'flex', gap: 8 }}>
                                 <select
                                     id="select-segmento-peca"
@@ -330,8 +358,12 @@ export default function NovaPecaPage() {
                                                 borderRadius: 4, padding: '2px 8px', fontSize: 12, color: 'var(--caixa-blue)',
                                             }}>
                                                 {seg.nome}
-                                                <button onClick={() => removeSegmento(id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--caixa-blue)', lineHeight: 1 }}>
-                                                    <X size={11} />
+                                                <button
+                                                    onClick={() => removeSegmento(id)}
+                                                    aria-label={`Remover nicho ${seg.nome}`}
+                                                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--caixa-blue)', lineHeight: 1 }}
+                                                >
+                                                    <X size={11} aria-hidden="true" />
                                                 </button>
                                             </span>
                                         ) : null
@@ -342,7 +374,7 @@ export default function NovaPecaPage() {
 
                         {/* Assunto */}
                         <div className="form-group">
-                            <label className="form-label">Assunto <span style={{ color: '#6b7280', fontWeight: 400 }}>Obrigatório</span></label>
+                            <label htmlFor="select-assunto-peca" className="form-label">Assunto <span style={{ color: '#6b7280', fontWeight: 400 }}>Obrigatório</span></label>
                             <div style={{ display: 'flex', gap: 8 }}>
                                 <select
                                     id="select-assunto-peca"
@@ -369,8 +401,12 @@ export default function NovaPecaPage() {
                                                 borderRadius: 4, padding: '2px 8px', fontSize: 12, color: 'var(--caixa-blue)',
                                             }}>
                                                 {ass.nome}
-                                                <button onClick={() => removeAssunto(id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--caixa-blue)', lineHeight: 1 }}>
-                                                    <X size={11} />
+                                                <button
+                                                    onClick={() => removeAssunto(id)}
+                                                    aria-label={`Remover assunto ${ass.nome}`}
+                                                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--caixa-blue)', lineHeight: 1 }}
+                                                >
+                                                    <X size={11} aria-hidden="true" />
                                                 </button>
                                             </span>
                                         ) : null
@@ -384,7 +420,7 @@ export default function NovaPecaPage() {
                             Esta etapa é opcional. Caso precise de uma validação específica, você pode incluir unidades adicionais.
                         </p>
                         <div className="form-group">
-                            <label className="form-label">Código da unidade aprovadora</label>
+                            <label htmlFor="input-unidade-extra" className="form-label">Código da unidade aprovadora</label>
                             <div style={{ display: 'flex', gap: 8 }}>
                                 <input
                                     id="input-unidade-extra"
@@ -467,7 +503,7 @@ export default function NovaPecaPage() {
                     </button>
                 </div>
 
-                {toast && <div className={`toast toast-${toast.type}`}>{toast.msg}</div>}
+                {toast && <div className={`toast toast-${toast.type}`} role="status" aria-live="polite">{toast.msg}</div>}
             </div>
         )
     }

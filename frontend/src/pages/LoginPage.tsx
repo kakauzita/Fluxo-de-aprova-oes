@@ -39,25 +39,28 @@ export default function LoginPage() {
 
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
-                        <label className="form-label">E-mail</label>
+                        <label htmlFor="email" className="form-label">E-mail</label>
                         <input
                             id="email"
+                            name="email"
                             type="email"
+                            autoComplete="username"
                             className="form-input"
                             placeholder="seu@email.com"
                             value={email}
                             onChange={e => setEmail(e.target.value)}
                             required
-                            autoFocus
                         />
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Senha</label>
+                        <label htmlFor="senha" className="form-label">Senha</label>
                         <div className="relative">
                             <input
                                 id="senha"
+                                name="senha"
                                 type={showPassword ? 'text' : 'password'}
+                                autoComplete="current-password"
                                 className="form-input"
                                 placeholder="••••••••"
                                 value={senha}
@@ -68,19 +71,25 @@ export default function LoginPage() {
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
+                                aria-label={showPassword ? 'Ocultar senha' : 'Exibir senha'}
+                                aria-pressed={showPassword}
                                 style={{
                                     position: 'absolute', right: 10, top: '50%',
                                     transform: 'translateY(-50%)', background: 'none',
                                     border: 'none', color: 'var(--text-muted)', cursor: 'pointer',
-                                    display: 'flex', alignItems: 'center'
+                                    display: 'flex', alignItems: 'center', padding: '4px'
                                 }}
                             >
-                                {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                                {showPassword ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
                             </button>
                         </div>
                     </div>
 
-                    {error && <div className="login-error">{error}</div>}
+                    {error && (
+                        <div className="login-error" role="alert" aria-live="assertive">
+                            {error}
+                        </div>
+                    )}
 
                     <button
                         id="btn-login"
