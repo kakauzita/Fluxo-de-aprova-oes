@@ -1541,12 +1541,12 @@ export default function CampaignBuilderPage() {
     function buildBlockCard(block: any, stepNum: number | undefined, isEnd: boolean) {
       // Backward connectors that point to this block
       const incomingReturns = returnsToMap[block.id] ?? [];
-      const isAutoEnd = block.id === 'end_auto' || block.id.startsWith('end_auto_') || block.type === 'end';
+      const isAutoEnd = block.id === 'end_auto' || block.id.startsWith('end_auto_');
       return (
       <div id={`canvas-block-${block.id}`} className={`canvas-block${block.type === 'connector' && block.config?.direction === 'backward' ? ' connector-backward' : ''}`} style={{ position: 'relative' }} key={block.id}>
         <div
           className={`block-card type-${block.type} ${selectedId === block.id ? 'selected' : ''} ${isAutoEnd ? 'auto-end' : ''}`}
-          onClick={(e) => { e.stopPropagation(); if (!isAutoEnd && block.type !== 'connector') setSelectedId(block.id); }}
+          onClick={(e) => { e.stopPropagation(); if (!isAutoEnd) setSelectedId(block.id); }}
         >
           {/* Return-from badge — shown on the TARGET block of backward connectors */}
           {incomingReturns.length > 0 && (
@@ -1565,7 +1565,7 @@ export default function CampaignBuilderPage() {
                   return flatten(blocks);
                 })();
                 const maxRep = ret.maxRepetitions;
-                const tooltipText = `Retorno para esta etapa${maxRep ? (maxRep === -1 ? ' · Ilimitado' : ` · Máx. ${maxRep}×`) : ''}`;
+                const tooltipText = `Retorno para esta etapa${maxRep ? (maxRep === -1 ? ' · Ilimitado' : ` · Máx. ${maxRep}×`) : ''} — Clique para editar`;
                 // Step number of the connector
                 let prevStepNum: number | string = blockNumbersMap[ret.connectorId] !== undefined ? blockNumbersMap[ret.connectorId] : '?';
                 if (prevStepNum === '?') {
@@ -1579,6 +1579,10 @@ export default function CampaignBuilderPage() {
                   <div
                     key={ret.connectorId + ri}
                     title={tooltipText}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedId(ret.connectorId);
+                    }}
                     style={{
                       background: '#6366f1',
                       color: '#fff',
@@ -1589,7 +1593,7 @@ export default function CampaignBuilderPage() {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '4px',
-                      cursor: 'default',
+                      cursor: 'pointer',
                       boxShadow: '0 1px 4px rgba(99,102,241,0.35)',
                       border: '1.5px solid #4f46e5',
                       userSelect: 'none',
@@ -3182,6 +3186,7 @@ export default function CampaignBuilderPage() {
                     {selectedBlock.type === 'send' && 'Configurar peça'}
                     {selectedBlock.type === 'check' && 'Configurar verificação'}
                     {selectedBlock.type === 'end' && 'Configurar encerramento'}
+                    {selectedBlock.type === 'connector' && (selectedBlock.config?.direction === 'backward' ? 'Configurar retorno' : 'Configurar conexão')}
                   </div>
                   <button className="modal-close" onClick={handleCancelEdit} aria-label="Fechar configuração de etapa">✕</button>
                 </div>
@@ -4320,6 +4325,219 @@ export default function CampaignBuilderPage() {
                       </div>
                     </>
                   )}
+
+                  {/* CONNECTOR / RETORNO BLOCK CONFIG */}
+                  {selectedBlock.type === 'connector' && (() => {
+                    const availableSteps: { id: string; stepNum: number; label: string; type: string }[] = []
+                    const collectSteps = (clist: any[]) => {
+                      clist.forEach(b => {
+                        if (b.type === 'end' || b.type === 'connector' || b.id.startsWith('end_auto') || b.id === selectedBlock.id) return
+                        const num = blockNumbersMap[b.id]
+                        if (num) {
+                          let lbl = ''
+                          if (b.type === 'trigger') lbl = (b.config?.events || [])[0] || 'Início da campanha'
+                          else if (b.type === 'send') lbl = b.config?.piece?.name || 'Enviar peça'
+                          else if (b.type === 'check') lbl = b.config?.question || 'Verificação'
+                          availableSteps.push({ id: b.id, stepNum: num, label: lbl, type: b.type })
+                        }
+                        if (b.type === 'check') {
+                          collectSteps(b.config?.yes || [])
+                          collectSteps(b.config?.no || [])
+                        }
+                      })
+                    }
+                    collectSteps(blocks)
+                    availableSteps.sort((a, b) => a.stepNum - b.stepNum)
+
+                    const currentStepNum = blockNumbersMap[selectedBlock.id] || 999
+                    const targetId = selectedBlock.config?.targetBlockId || ''
+                    const selTarget = availableSteps.find(s => s.id === targetId)
+                    const isBackward = selTarget
+                      ? selTarget.stepNum <= currentStepNum
+                      : (selectedBlock.config?.direction === 'backward')
+
+                    const timing = selectedBlock.config?.timing || 'immediate'
+                    const delay = selectedBlock.config?.delay || { amount: '1', unit: 'dia' }
+                    const maxReps = selectedBlock.config?.maxRepetitions
+                    const isUnlimited = maxReps === -1
+
+                    return (
+                      <>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, borderBottom: '1px solid var(--builder-border-light)', paddingBottom: 12 }}>
+                          <div style={{ background: '#E0E7FF', color: '#6366f1', width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {isBackward ? <RotateCcw size={16} color="#6366f1" /> : <Link2 size={16} color="#6366f1" />}
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 700, fontSize: 14, color: '#1e293b' }}>
+                              {isBackward ? 'Configurar Retorno na Jornada' : 'Configurar Conexão na Jornada'}
+                            </div>
+                            <div style={{ fontSize: 12, color: 'var(--builder-muted)' }}>
+                              {isBackward ? 'Defina para qual etapa o cliente retornará e as regras de repetição.' : 'Defina para qual etapa posterior o cliente será direcionado.'}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Etapa de Destino */}
+                        <div className="detail-field" style={{ marginTop: 4 }}>
+                          <label className="detail-label" style={{ fontWeight: 700, color: '#1e293b', marginBottom: 6, display: 'block' }}>
+                            Etapa de destino
+                          </label>
+                          <select
+                            className="detail-select"
+                            style={{
+                              width: '100%', padding: '10px 12px', borderRadius: 8,
+                              border: '1.5px solid #d1d5db', fontSize: 14,
+                              background: '#fff', cursor: 'pointer', outline: 'none'
+                            }}
+                            value={targetId}
+                            onChange={(e) => {
+                              const newTargetId = e.target.value
+                              const targetStep = availableSteps.find(s => s.id === newTargetId)
+                              const newDir = targetStep && targetStep.stepNum <= currentStepNum ? 'backward' : 'forward'
+                              updateBlockConfig(selectedBlock.id, {
+                                targetBlockId: newTargetId,
+                                direction: newDir,
+                                ...(newDir === 'backward' && (!selectedBlock.config?.maxRepetitions || selectedBlock.config.maxRepetitions === 0) ? { maxRepetitions: 3 } : {})
+                              })
+                            }}
+                          >
+                            <option value="">Selecione uma etapa...</option>
+                            {availableSteps.map(s => (
+                              <option key={s.id} value={s.id}>
+                                Etapa {s.stepNum} • {s.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {isBackward && (
+                          <div style={{
+                            background: '#eff6ff', border: '1px solid #bfdbfe',
+                            borderRadius: 8, padding: '10px 14px',
+                            display: 'flex', alignItems: 'flex-start', gap: 8,
+                            fontSize: 13, color: '#1e40af'
+                          }}>
+                            <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>ℹ️</span>
+                            <span>Esta conexão cria um retorno na jornada. Defina quando e quantas vezes o retorno poderá acontecer.</span>
+                          </div>
+                        )}
+
+                        {/* Timing */}
+                        <div className="detail-field">
+                          <label style={{ fontWeight: 600, fontSize: 13, color: '#1e293b', marginBottom: 8, display: 'block' }}>
+                            {isBackward ? 'Quando retornar para esta etapa?' : 'Quando seguir para esta etapa?'}
+                          </label>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 14 }}>
+                              <input
+                                type="radio"
+                                name="selectedConnectorTiming"
+                                checked={timing === 'immediate'}
+                                onChange={() => updateBlockConfig(selectedBlock.id, 'timing', 'immediate')}
+                              />
+                              Imediatamente
+                            </label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 14 }}>
+                              <input
+                                type="radio"
+                                name="selectedConnectorTiming"
+                                checked={timing === 'delay'}
+                                onChange={() => updateBlockConfig(selectedBlock.id, 'timing', 'delay')}
+                              />
+                              Após um período
+                            </label>
+                          </div>
+                          {timing === 'delay' && (
+                            <div style={{ display: 'flex', gap: 8, marginTop: 10, paddingLeft: 24 }}>
+                              <input
+                                type="number" min="1" max="365"
+                                value={delay.amount || '1'}
+                                onChange={(e) => updateBlockConfig(selectedBlock.id, 'delay', { ...delay, amount: e.target.value })}
+                                style={{
+                                  width: 60, padding: '6px 8px', borderRadius: 6,
+                                  border: '1.5px solid #d1d5db', fontSize: 14, textAlign: 'center'
+                                }}
+                              />
+                              <select
+                                value={delay.unit || 'dias'}
+                                onChange={(e) => updateBlockConfig(selectedBlock.id, 'delay', { ...delay, unit: e.target.value })}
+                                style={{
+                                  padding: '6px 10px', borderRadius: 6,
+                                  border: '1.5px solid #d1d5db', fontSize: 14
+                                }}
+                              >
+                                <option value="minutos">minuto(s)</option>
+                                <option value="horas">hora(s)</option>
+                                <option value="dias">dia(s)</option>
+                                <option value="semanas">semana(s)</option>
+                              </select>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Repetições (apenas para retorno) */}
+                        {isBackward && (
+                          <div className="detail-field">
+                            <label style={{ fontWeight: 600, fontSize: 13, color: '#1e293b', marginBottom: 6, display: 'block' }}>
+                              Quantas vezes vai se repetir?
+                            </label>
+                            <input
+                              type="number" min="1" max="10"
+                              placeholder="Ex: 3"
+                              value={isUnlimited ? '' : (maxReps ?? '')}
+                              disabled={isUnlimited}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value)
+                                if (e.target.value === '') {
+                                  updateBlockConfig(selectedBlock.id, 'maxRepetitions', null)
+                                } else if (!isNaN(val) && val >= 1 && val <= 10) {
+                                  updateBlockConfig(selectedBlock.id, 'maxRepetitions', val)
+                                }
+                              }}
+                              style={{
+                                width: '100%', padding: '10px 12px', borderRadius: 8,
+                                border: '1.5px solid #d1d5db', fontSize: 14,
+                                opacity: isUnlimited ? 0.5 : 1,
+                                background: isUnlimited ? '#f1f5f9' : '#fff'
+                              }}
+                            />
+                            
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, cursor: 'pointer' }}>
+                              <div style={{
+                                position: 'relative', width: 36, height: 20, borderRadius: 20,
+                                background: isUnlimited ? '#6366f1' : '#cbd5e1',
+                                transition: 'background 0.2s', display: 'flex', alignItems: 'center', padding: 2
+                              }}>
+                                <input
+                                  type="checkbox"
+                                  checked={isUnlimited}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      updateBlockConfig(selectedBlock.id, 'maxRepetitions', -1)
+                                    } else {
+                                      updateBlockConfig(selectedBlock.id, 'maxRepetitions', 3)
+                                    }
+                                  }}
+                                  style={{ opacity: 0, position: 'absolute', width: '100%', height: '100%', cursor: 'pointer', margin: 0 }}
+                                />
+                                <div style={{
+                                  width: 16, height: 16, borderRadius: '50%', background: '#fff',
+                                  transform: isUnlimited ? 'translateX(16px)' : 'translateX(0)',
+                                  transition: 'transform 0.2s'
+                                }} />
+                              </div>
+                              <span style={{ fontSize: 14, fontWeight: 500, color: '#334155' }}>Ilimitado</span>
+                            </label>
+                          </div>
+                        )}
+
+                        <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, borderTop: '1px solid var(--builder-border-light)', paddingTop: 16 }}>
+                          <button className="btn btn-ghost" onClick={handleCancelEdit}>Cancelar</button>
+                          <button className="btn btn-primary" onClick={handleConfirmEdit} style={{ background: 'var(--caixa-blue)', color: 'white' }}>Confirmar</button>
+                        </div>
+                      </>
+                    )
+                  })()}
 
                 </div>
               </div>
