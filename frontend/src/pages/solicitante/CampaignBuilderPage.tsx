@@ -2487,7 +2487,7 @@ export default function CampaignBuilderPage() {
                 </div>
                 <div style={{ width: 1, height: 12, background: '#cbd5e1' }} />
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, color: '#A65E00', background: '#FFF8F0', padding: '4px 12px', borderRadius: 20 }}>
-                  <GitBranch size={10} /> Condição
+                  <GitBranch size={10} /> Verificar
                 </div>
                 <div style={{ display: 'flex', gap: 24, marginTop: 6 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
@@ -2544,7 +2544,7 @@ export default function CampaignBuilderPage() {
                 </div>
                 <div style={{ width: 1, height: 12, background: '#cbd5e1' }} />
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, color: '#A65E00', background: '#FFF8F0', padding: '4px 12px', borderRadius: 20, position: 'relative' }}>
-                  <GitBranch size={10} /> Condição
+                  <GitBranch size={10} /> Verificar
                 </div>
                 <div style={{ display: 'flex', gap: 24, marginTop: 6 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
@@ -3719,7 +3719,7 @@ export default function CampaignBuilderPage() {
                                       } else if (c.type === 'send') {
                                         label = `${prefix}📨 Enviar ${c.config.piece?.channel || 'SMS'}: ${c.config.piece?.name || 'Ação de Envio'}`;
                                       } else if (c.type === 'check') {
-                                        label = `${prefix}🔀 Condição: ${c.config.question || 'Verificação'}`;
+                                        label = `${prefix}🔀 Verificar: ${c.config.question || 'Verificação'}`;
                                       } else if (c.type === 'wait') {
                                         label = `${prefix}⏱️ Aguardar: ${c.config.amount} ${c.config.unit}`;
                                       } else {
@@ -3970,7 +3970,7 @@ export default function CampaignBuilderPage() {
                             <GitBranch size={18} color="#A65E00" />
                           </div>
                           <div>
-                            <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--caixa-blue)' }}>Condição</div>
+                            <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--caixa-blue)' }}>Verificar</div>
                             <div style={{ fontSize: 12, color: 'var(--builder-muted)' }}>Crie caminhos de "sim" e "não" na jornada.</div>
                           </div>
                         </div>
