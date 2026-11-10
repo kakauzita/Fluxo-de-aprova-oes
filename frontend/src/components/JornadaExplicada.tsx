@@ -196,7 +196,7 @@ export default function JornadaExplicada({ nodes }: { nodes: JornadaNode[] }) {
               A campanha será encerrada automaticamente, registrando uma <strong style={{ fontWeight: 700 }}>conversão realizada</strong>.
             </span>
           );
-        } else if (isYesBranch) {
+        } else if (isYesBranch && list.length > 1) {
           text = (
             <span>
               A campanha seguirá normalmente para as próximas etapas configuradas.

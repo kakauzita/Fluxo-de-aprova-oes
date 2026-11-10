@@ -1207,21 +1207,22 @@
 .step-picker-item {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 14px 16px;
-  border: 1px solid var(--builder-border-light);
-  border-radius: 8px;
-  background: var(--builder-card);
+  gap: 16px;
+  padding: 16px 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
   cursor: pointer;
   text-align: left;
-  transition: all 0.15s;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   width: 100%;
 }
 
 .step-picker-item:hover {
-  border-color: var(--builder-accent);
-  background: var(--builder-accent-dim);
-  transform: translateX(2px);
+  border-color: #005ca9;
+  background: #f8fafc;
+  box-shadow: 0 4px 16px rgba(0, 92, 169, 0.08);
+  transform: translateY(-1px);
 }
 
 .step-picker-icon {
@@ -1229,7 +1230,6 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 36px;
 }
 
 .step-picker-info {
@@ -1237,25 +1237,50 @@
 }
 
 .step-picker-name {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
-  color: var(--builder-text);
+  color: #1e293b;
   margin-bottom: 3px;
 }
 
 .step-picker-desc {
-  font-size: 11px;
-  color: var(--builder-muted);
-  line-height: 1.4;
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.step-picker-channels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.step-channel-tag {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.step-picker-item:hover .step-channel-tag {
+  background: #e8f0fe;
+  color: #005ca9;
+  border-color: #bfdbfe;
 }
 
 .step-picker-arrow {
-  color: var(--builder-muted);
+  color: #94a3b8;
   flex-shrink: 0;
+  transition: transform 0.2s ease, color 0.2s ease;
 }
 
 .step-picker-item:hover .step-picker-arrow {
-  color: var(--builder-accent);
+  color: #005ca9;
+  transform: translateX(3px);
 }
 
 .step-picker-cancel {

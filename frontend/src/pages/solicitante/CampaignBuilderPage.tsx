@@ -78,8 +78,8 @@ const BLOCK_META: Record<string, BlockMeta> = {
         <Send size={13} color="#4F213F" />
       </div>
     ),
-    label: 'Enviar',
-    badge: 'Enviar',
+    label: 'Enviar peça de comunicação',
+    badge: 'Enviar peça de comunicação',
     color: '#4F213F'
   },
   check: {
@@ -553,7 +553,7 @@ export default function CampaignBuilderPage() {
         const [p, s, pecasRes] = await Promise.all([
           api.get('/admin/publicos-alvo'),
           api.get('/admin/segmentos'),
-          api.get('/pecas')
+          api.get('/pecas', { params: { excludeStatus: 'RASCUNHO' } })
         ])
         setPublicos(p.data)
         setAllSegmentos(s.data)
@@ -598,12 +598,14 @@ export default function CampaignBuilderPage() {
 
   // ─── Combined Communication Pieces ──────────────────────────────────────────
   const allPecas = useMemo(() => {
-    const formattedApi = apiPecas.map(p => ({
-      id: p.id,
-      name: p.nome,
-      channel: p.canal,
-      content: p.conteudo?.mensagem || p.conteudo?.corpo || p.conteudo?.corpoHtml || 'Peça cadastrada no sistema'
-    }))
+    const formattedApi = (apiPecas || [])
+      .filter((p: any) => p.status !== 'RASCUNHO')
+      .map((p: any) => ({
+        id: p.id,
+        name: p.nome,
+        channel: p.canal,
+        content: p.conteudo?.mensagem || p.conteudo?.corpo || p.conteudo?.corpoHtml || 'Peça cadastrada no sistema'
+      }))
     return [...formattedApi, ...MOCK_PECAS]
   }, [apiPecas])
 
@@ -1013,24 +1015,22 @@ export default function CampaignBuilderPage() {
         const yesList = b.config?.yes || [];
         const noList = b.config?.no || [];
         
-        if (yesList.length === 0) {
+        if (yesList.length === 0 && noList.length === 0) {
           return {
             valid: false,
-            message: `A condicional "${b.config.question}" precisa ter pelo menos uma etapa configurada no caminho "Sim".`,
-          };
-        }
-        if (noList.length === 0) {
-          return {
-            valid: false,
-            message: `A condicional "${b.config.question}" precisa ter pelo menos uma etapa configurada no caminho "Não".`,
+            message: `A condicional "${b.config.question}" precisa ter pelo menos um dos caminhos configurados ("Sim" ou "Não").`,
           };
         }
         
-        const yesVal = validateCampaignJourney(yesList);
-        if (!yesVal.valid) return yesVal;
+        if (yesList.length > 0) {
+          const yesVal = validateCampaignJourney(yesList);
+          if (!yesVal.valid) return yesVal;
+        }
         
-        const noVal = validateCampaignJourney(noList);
-        if (!noVal.valid) return noVal;
+        if (noList.length > 0) {
+          const noVal = validateCampaignJourney(noList);
+          if (!noVal.valid) return noVal;
+        }
       }
       if (b.type === 'connector') {
         if (!b.config?.targetBlockId) {
@@ -1477,14 +1477,16 @@ export default function CampaignBuilderPage() {
   function renderBlockTree(list: any[], branchCtx?: { blockId: string; branch: 'yes' | 'no' }): React.ReactNode {
     if (list.length === 0) {
       if (branchCtx) {
-        return (
-          <React.Fragment key={`empty_branch_${branchCtx.blockId}_${branchCtx.branch}`}>
+        const endId = `end_auto_${branchCtx.blockId}_${branchCtx.branch}`;
+        return [
+          <React.Fragment key={`add_final_${endId}`}>
             {renderInlineAddBtn(() => {
               setInsertTarget({ blockId: branchCtx.blockId, branch: branchCtx.branch, index: 0 });
               setSelectedId(null);
             }, true)}
-          </React.Fragment>
-        );
+          </React.Fragment>,
+          buildBlockCard({ id: endId, type: 'end', config: {} }, undefined, true)
+        ];
       }
       return null;
     }
@@ -1536,14 +1538,15 @@ export default function CampaignBuilderPage() {
     }
 
     // ── Helper: build the card JSX for a single block
-    const buildBlockCard = (block: any, stepNum: number | undefined, isEnd: boolean) => {
+    function buildBlockCard(block: any, stepNum: number | undefined, isEnd: boolean) {
       // Backward connectors that point to this block
       const incomingReturns = returnsToMap[block.id] ?? [];
+      const isAutoEnd = block.id === 'end_auto' || block.id.startsWith('end_auto_') || block.type === 'end';
       return (
       <div id={`canvas-block-${block.id}`} className={`canvas-block${block.type === 'connector' && block.config?.direction === 'backward' ? ' connector-backward' : ''}`} style={{ position: 'relative' }} key={block.id}>
         <div
-          className={`block-card type-${block.type} ${selectedId === block.id ? 'selected' : ''} ${block.id === 'end_auto' ? 'auto-end' : ''}`}
-          onClick={(e) => { e.stopPropagation(); if (block.id !== 'end_auto' && block.type !== 'connector') setSelectedId(block.id); }}
+          className={`block-card type-${block.type} ${selectedId === block.id ? 'selected' : ''} ${isAutoEnd ? 'auto-end' : ''}`}
+          onClick={(e) => { e.stopPropagation(); if (!isAutoEnd && block.type !== 'connector') setSelectedId(block.id); }}
         >
           {/* Return-from badge — shown on the TARGET block of backward connectors */}
           {incomingReturns.length > 0 && (
@@ -1617,7 +1620,7 @@ export default function CampaignBuilderPage() {
               </span>
             )}
             {block.type !== 'connector' && renderBlockWaitHeader(block)}
-            {block.id !== 'end_auto' && (
+            {!isAutoEnd && (
               <button
                 className="block-delete"
                 onClick={(e) => { e.stopPropagation(); deleteBlock(block.id) }}
@@ -1774,7 +1777,7 @@ export default function CampaignBuilderPage() {
             if (branchCtx) {
               setInsertTarget({ blockId: branchCtx.blockId, branch: branchCtx.branch, index: displayList.length });
             } else {
-              setInsertTarget({ index: blocks.filter((b: any) => b.id !== 'end_auto').length });
+              setInsertTarget({ index: blocks.filter((b: any) => !b.id.startsWith('end_auto')).length });
             }
             setSelectedId(null);
           })}
@@ -2787,18 +2790,41 @@ export default function CampaignBuilderPage() {
                           {
                             type: 'send' as const,
                             icon: (
-                              <div style={{ background: '#F8EAF3', width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Send size={16} color="#4F213F" />
+                              <div style={{
+                                background: '#F8EAF3',
+                                border: '1px solid #e9d5e3',
+                                width: 38,
+                                height: 38,
+                                borderRadius: '10px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                boxShadow: '0 2px 6px rgba(79, 33, 63, 0.08)',
+                                flexShrink: 0
+                              }}>
+                                <Send size={18} color="#4F213F" />
                               </div>
                             ),
-                            label: 'Enviar',
-                            desc: 'Enviar SMS, Push, WhatsApp, E-mail ou App CAIXA'
+                            label: 'Enviar peça de comunicação',
+                            desc: 'Dispare mensagens via SMS, Push, WhatsApp, E-mail ou App CAIXA',
+                            channels: ['SMS', 'Push', 'WhatsApp', 'E-mail', 'App CAIXA']
                           },
                           {
                             type: 'check' as const,
                             icon: (
-                              <div style={{ background: '#FFF8F0', width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <GitBranch size={16} color="#A65E00" />
+                              <div style={{
+                                background: '#FFF8F0',
+                                border: '1px solid #fed7aa',
+                                width: 38,
+                                height: 38,
+                                borderRadius: '10px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                boxShadow: '0 2px 6px rgba(166, 94, 0, 0.08)',
+                                flexShrink: 0
+                              }}>
+                                <GitBranch size={18} color="#A65E00" />
                               </div>
                             ),
                             label: 'Verificar',
@@ -2807,8 +2833,19 @@ export default function CampaignBuilderPage() {
                           {
                             type: 'connector' as const,
                             icon: (
-                              <div style={{ background: '#E0E7FF', width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Link2 size={16} color="#6366f1" />
+                              <div style={{
+                                background: '#EEF2FF',
+                                border: '1px solid #c7d2fe',
+                                width: 38,
+                                height: 38,
+                                borderRadius: '10px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                boxShadow: '0 2px 6px rgba(99, 102, 241, 0.08)',
+                                flexShrink: 0
+                              }}>
+                                <Link2 size={18} color="#4f46e5" />
                               </div>
                             ),
                             label: 'Conectar a uma etapa existente',
@@ -2835,8 +2872,15 @@ export default function CampaignBuilderPage() {
                             <div className="step-picker-info">
                               <div className="step-picker-name">{item.label}</div>
                               <div className="step-picker-desc">{item.desc}</div>
+                              {'channels' in item && item.channels && (
+                                <div className="step-picker-channels">
+                                  {item.channels.map(ch => (
+                                    <span key={ch} className="step-channel-tag">{ch}</span>
+                                  ))}
+                                </div>
+                              )}
                             </div>
-                            <ChevronRight size={16} className="step-picker-arrow" />
+                            <ChevronRight size={18} className="step-picker-arrow" />
                           </button>
                         ))}
                       </div>
@@ -4631,7 +4675,7 @@ export default function CampaignBuilderPage() {
           onClick={(e) => e.stopPropagation()}
         >
           <div className="menu-item" onClick={() => confirmAddBlock('send')}>
-            <span className="menu-icon">📨</span> Enviar
+            <span className="menu-icon">📨</span> Enviar peça de comunicação
           </div>
           <div className="menu-item" onClick={() => confirmAddBlock('check')}>
             <span className="menu-icon">🔀</span> Verificar

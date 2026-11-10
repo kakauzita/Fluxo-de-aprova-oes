@@ -21,8 +21,16 @@ async function pecasRoutes(app) {
     // GET /pecas — Lista peças do solicitante logado
     app.get('/pecas', solicitanteOnly, async (req) => {
         const user = req.user;
+        const { status, excludeStatus } = req.query;
+        const where = { solicitanteId: user.id };
+        if (status) {
+            where.status = status;
+        }
+        else if (excludeStatus) {
+            where.status = { not: excludeStatus };
+        }
         return prisma_1.prisma.peca.findMany({
-            where: { solicitanteId: user.id },
+            where,
             include: {
                 publicoAlvo: true,
                 segmento: true,
@@ -38,6 +46,32 @@ async function pecasRoutes(app) {
             },
             orderBy: { atualizadoEm: 'desc' },
         });
+    });
+    // DELETE /pecas/:id — Exclui peça (somente RASCUNHO)
+    app.delete('/pecas/:id', solicitanteOnly, async (req, reply) => {
+        const { id } = req.params;
+        const user = req.user;
+        const peca = await prisma_1.prisma.peca.findUnique({ where: { id } });
+        if (!peca)
+            throw new errors_1.NotFoundError('Peça', id);
+        if (peca.solicitanteId !== user.id)
+            throw new errors_1.ForbiddenError();
+        if (peca.status !== 'RASCUNHO') {
+            throw new errors_1.UnprocessableError('Apenas peças em RASCUNHO podem ser excluídas.');
+        }
+        await prisma_1.prisma.$transaction(async (tx) => {
+            const versoes = await tx.versaoPeca.findMany({ where: { pecaId: id }, select: { id: true } });
+            const versaoIds = versoes.map(v => v.id);
+            if (versaoIds.length > 0) {
+                await tx.manifestacaoGrupo.deleteMany({ where: { versaoPecaId: { in: versaoIds } } });
+                await tx.unidadeAdicional.deleteMany({ where: { versaoPecaId: { in: versaoIds } } });
+                await tx.versaoGrupo.deleteMany({ where: { versaoPecaId: { in: versaoIds } } });
+                await tx.versaoPeca.deleteMany({ where: { pecaId: id } });
+            }
+            await tx.eventoHistorico.deleteMany({ where: { pecaId: id } });
+            await tx.peca.delete({ where: { id } });
+        });
+        return reply.status(204).send();
     });
     // GET /pecas/:id — Detalhe completo da peça
     app.get('/pecas/:id', autenticado, async (req) => {

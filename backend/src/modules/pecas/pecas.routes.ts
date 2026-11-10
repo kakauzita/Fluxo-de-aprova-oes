@@ -24,8 +24,17 @@ export async function pecasRoutes(app: FastifyInstance) {
     // GET /pecas — Lista peças do solicitante logado
     app.get('/pecas', solicitanteOnly, async (req) => {
         const user = (req as any).user as { id: string }
+        const { status, excludeStatus } = req.query as { status?: string; excludeStatus?: string }
+
+        const where: Prisma.PecaWhereInput = { solicitanteId: user.id }
+        if (status) {
+            where.status = status as any
+        } else if (excludeStatus) {
+            where.status = { not: excludeStatus as any }
+        }
+
         return prisma.peca.findMany({
-            where: { solicitanteId: user.id },
+            where,
             include: {
                 publicoAlvo: true,
                 segmento: true,
@@ -41,6 +50,34 @@ export async function pecasRoutes(app: FastifyInstance) {
             },
             orderBy: { atualizadoEm: 'desc' },
         })
+    })
+
+    // DELETE /pecas/:id — Exclui peça (somente RASCUNHO)
+    app.delete('/pecas/:id', solicitanteOnly, async (req, reply) => {
+        const { id } = req.params as { id: string }
+        const user = (req as any).user as { id: string }
+
+        const peca = await prisma.peca.findUnique({ where: { id } })
+        if (!peca) throw new NotFoundError('Peça', id)
+        if (peca.solicitanteId !== user.id) throw new ForbiddenError()
+        if (peca.status !== 'RASCUNHO') {
+            throw new UnprocessableError('Apenas peças em RASCUNHO podem ser excluídas.')
+        }
+
+        await prisma.$transaction(async (tx) => {
+            const versoes = await tx.versaoPeca.findMany({ where: { pecaId: id }, select: { id: true } })
+            const versaoIds = versoes.map(v => v.id)
+            if (versaoIds.length > 0) {
+                await tx.manifestacaoGrupo.deleteMany({ where: { versaoPecaId: { in: versaoIds } } })
+                await tx.unidadeAdicional.deleteMany({ where: { versaoPecaId: { in: versaoIds } } })
+                await tx.versaoGrupo.deleteMany({ where: { versaoPecaId: { in: versaoIds } } })
+                await tx.versaoPeca.deleteMany({ where: { pecaId: id } })
+            }
+            await tx.eventoHistorico.deleteMany({ where: { pecaId: id } })
+            await tx.peca.delete({ where: { id } })
+        })
+
+        return reply.status(204).send()
     })
 
     // GET /pecas/:id — Detalhe completo da peça

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { api } from '../../lib/api'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { MoreVertical, Search, SlidersHorizontal, FileText, ChevronFirst, ChevronLast, ChevronLeft, ChevronRight, Plus, Calendar, ThumbsUp, ThumbsDown, Clock, Edit2, Eye } from 'lucide-react'
+import { MoreVertical, Search, SlidersHorizontal, FileText, ChevronFirst, ChevronLast, ChevronLeft, ChevronRight, Plus, Calendar, ThumbsUp, ThumbsDown, Clock, Edit2, Eye, Trash2 } from 'lucide-react'
 
 interface Peca {
     id: string
@@ -43,12 +43,29 @@ export default function PecasListPage() {
     const [page, setPage] = useState(1)
     const [pageSize, setPageSize] = useState(30)
     const [menuOpenId, setMenuOpenId] = useState<string | null>(null)
+    const [pecaToDelete, setPecaToDelete] = useState<Peca | null>(null)
+    const [deleting, setDeleting] = useState(false)
 
     async function load() {
         setLoading(true)
         const { data } = await api.get('/pecas')
         setPecas(data)
         setLoading(false)
+    }
+
+    async function handleConfirmDelete() {
+        if (!pecaToDelete) return
+        setDeleting(true)
+        try {
+            await api.delete(`/pecas/${pecaToDelete.id}`)
+            setPecas(prev => prev.filter(p => p.id !== pecaToDelete.id))
+            setPecaToDelete(null)
+        } catch (err: any) {
+            console.error('Erro ao excluir peça:', err)
+            alert(err.response?.data?.message || 'Erro ao excluir a peça em rascunho.')
+        } finally {
+            setDeleting(false)
+        }
     }
 
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -377,20 +394,40 @@ export default function PecasListPage() {
                                             </button>
 
                                             {peca.status === 'RASCUNHO' && (
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); navigate(`/pecas/${peca.id}/editar`) }}
-                                                    style={{
-                                                        display: 'flex', alignItems: 'center', gap: 8,
-                                                        width: '100%', padding: '8px 12px',
-                                                        background: 'transparent', border: 'none',
-                                                        textAlign: 'left', fontSize: 13, color: '#334155',
-                                                        cursor: 'pointer', borderRadius: 4, fontWeight: 500,
-                                                    }}
-                                                    onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
-                                                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                                                >
-                                                    <Edit2 size={16} /> Editar
-                                                </button>
+                                                <>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); navigate(`/pecas/${peca.id}/editar`) }}
+                                                        style={{
+                                                            display: 'flex', alignItems: 'center', gap: 8,
+                                                            width: '100%', padding: '8px 12px',
+                                                            background: 'transparent', border: 'none',
+                                                            textAlign: 'left', fontSize: 13, color: '#334155',
+                                                            cursor: 'pointer', borderRadius: 4, fontWeight: 500,
+                                                        }}
+                                                        onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
+                                                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                                    >
+                                                        <Edit2 size={16} /> Editar
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            setMenuOpenId(null)
+                                                            setPecaToDelete(peca)
+                                                        }}
+                                                        style={{
+                                                            display: 'flex', alignItems: 'center', gap: 8,
+                                                            width: '100%', padding: '8px 12px',
+                                                            background: 'transparent', border: 'none',
+                                                            textAlign: 'left', fontSize: 13, color: '#dc2626',
+                                                            cursor: 'pointer', borderRadius: 4, fontWeight: 500,
+                                                        }}
+                                                        onMouseEnter={e => e.currentTarget.style.background = '#fef2f2'}
+                                                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                                    >
+                                                        <Trash2 size={16} /> Excluir
+                                                    </button>
+                                                </>
                                             )}
                                         </div>
                                     )}
@@ -429,6 +466,43 @@ export default function PecasListPage() {
                         <span style={{ padding: '0 8px' }}>Página {page} de {totalPages}</span>
                         <button className="btn btn-ghost btn-sm btn-icon" disabled={page === totalPages} onClick={() => goPage(page + 1)} aria-label="Ir para a próxima página"><ChevronRight size={14} aria-hidden="true" /></button>
                         <button className="btn btn-ghost btn-sm btn-icon" disabled={page === totalPages} onClick={() => goPage(totalPages)} aria-label="Ir para a última página"><ChevronLast size={14} aria-hidden="true" /></button>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de confirmação para excluir peça em rascunho */}
+            {pecaToDelete && (
+                <div className="modal-overlay" onClick={() => !deleting && setPecaToDelete(null)}>
+                    <div className="modal confirm-dialog" onClick={e => e.stopPropagation()}>
+                        <div className="modal-body">
+                            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+                                <div style={{ background: '#fee2e2', color: '#dc2626', padding: 12, borderRadius: '50%' }}>
+                                    <Trash2 size={32} />
+                                </div>
+                            </div>
+                            <h3 className="confirm-title">Excluir peça em rascunho?</h3>
+                            <p className="confirm-text">
+                                Tem certeza que deseja excluir a peça <strong>"{pecaToDelete.nome}"</strong>?<br />
+                                Esta ação não poderá ser desfeita.
+                            </p>
+                        </div>
+                        <div className="confirm-footer">
+                            <button
+                                className="btn btn-ghost"
+                                onClick={() => setPecaToDelete(null)}
+                                disabled={deleting}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                className="btn btn-danger"
+                                style={{ background: '#dc2626', color: '#fff', border: 'none' }}
+                                onClick={handleConfirmDelete}
+                                disabled={deleting}
+                            >
+                                {deleting ? 'Excluindo...' : 'Excluir'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
