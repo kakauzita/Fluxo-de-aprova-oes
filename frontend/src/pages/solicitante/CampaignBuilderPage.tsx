@@ -78,8 +78,8 @@ const BLOCK_META: Record<string, BlockMeta> = {
         <Send size={13} color="#4F213F" />
       </div>
     ),
-    label: 'Enviar peça de comunicação',
-    badge: 'Enviar peça de comunicação',
+    label: 'Enviar',
+    badge: 'Enviar',
     color: '#4F213F'
   },
   check: {
