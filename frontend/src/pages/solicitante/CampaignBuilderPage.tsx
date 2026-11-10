@@ -1823,7 +1823,7 @@ export default function CampaignBuilderPage() {
                 className="btn btn-primary"
                 onClick={goToStep3}
               >
-                Revisar Jornada <ChevronRight size={15} style={{ marginLeft: 6 }} />
+                Revisar campanha <ChevronRight size={15} style={{ marginLeft: 6 }} />
               </button>
             </>
           )}
