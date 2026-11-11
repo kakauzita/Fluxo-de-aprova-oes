@@ -27,7 +27,13 @@ async function pecasRoutes(app) {
             where.status = status;
         }
         else if (excludeStatus) {
-            where.status = { not: excludeStatus };
+            const list = excludeStatus.split(',').map(s => s.trim());
+            if (list.length === 1) {
+                where.status = { not: list[0] };
+            }
+            else {
+                where.status = { notIn: list };
+            }
         }
         return prisma_1.prisma.peca.findMany({
             where,
@@ -56,8 +62,8 @@ async function pecasRoutes(app) {
             throw new errors_1.NotFoundError('Peça', id);
         if (peca.solicitanteId !== user.id)
             throw new errors_1.ForbiddenError();
-        if (peca.status !== 'RASCUNHO') {
-            throw new errors_1.UnprocessableError('Apenas peças em RASCUNHO podem ser excluídas.');
+        if (!['RASCUNHO', 'REPROVADA'].includes(peca.status)) {
+            throw new errors_1.UnprocessableError('Apenas peças em RASCUNHO ou REPROVADA podem ser excluídas.');
         }
         await prisma_1.prisma.$transaction(async (tx) => {
             const versoes = await tx.versaoPeca.findMany({ where: { pecaId: id }, select: { id: true } });

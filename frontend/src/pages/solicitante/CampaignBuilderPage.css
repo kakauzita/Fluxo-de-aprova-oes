@@ -21,13 +21,23 @@
   /* Override main-inner constraints */
   max-width: none !important;
   margin: 0 !important;
-  padding: 16px 24px 0 !important;
+  padding: 0 24px 24px !important;
   width: 100%;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  background: var(--bg-page);
+}
+
+.builder-sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: var(--bg-page);
+  padding-top: 16px;
+  width: 100%;
 }
 
 .builder-layout-container.step-2.view-canvas {
@@ -71,7 +81,7 @@
 .setup-layout {
   display: flex;
   gap: 24px;
-  padding: 8px 0 24px 0;
+  padding: 24px 0 24px 0;
   height: 100%;
 }
 

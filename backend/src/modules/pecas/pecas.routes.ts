@@ -30,7 +30,12 @@ export async function pecasRoutes(app: FastifyInstance) {
         if (status) {
             where.status = status as any
         } else if (excludeStatus) {
-            where.status = { not: excludeStatus as any }
+            const list = excludeStatus.split(',').map(s => s.trim())
+            if (list.length === 1) {
+                where.status = { not: list[0] as any }
+            } else {
+                where.status = { notIn: list as any }
+            }
         }
 
         return prisma.peca.findMany({
@@ -60,8 +65,8 @@ export async function pecasRoutes(app: FastifyInstance) {
         const peca = await prisma.peca.findUnique({ where: { id } })
         if (!peca) throw new NotFoundError('Peça', id)
         if (peca.solicitanteId !== user.id) throw new ForbiddenError()
-        if (peca.status !== 'RASCUNHO') {
-            throw new UnprocessableError('Apenas peças em RASCUNHO podem ser excluídas.')
+        if (!['RASCUNHO', 'REPROVADA'].includes(peca.status)) {
+            throw new UnprocessableError('Apenas peças em RASCUNHO ou REPROVADA podem ser excluídas.')
         }
 
         await prisma.$transaction(async (tx) => {

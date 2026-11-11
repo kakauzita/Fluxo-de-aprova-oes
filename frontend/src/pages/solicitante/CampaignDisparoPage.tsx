@@ -100,7 +100,7 @@ export default function CampaignDisparoPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const pecasRes = await api.get('/pecas', { params: { excludeStatus: 'RASCUNHO' } })
+        const pecasRes = await api.get('/pecas', { params: { excludeStatus: 'RASCUNHO,REPROVADA' } })
         setApiPecas(pecasRes.data)
       } catch (err) {
         console.error('Falha ao carregar dados do banco:', err)
@@ -112,7 +112,7 @@ export default function CampaignDisparoPage() {
   // ─── Combined Communication Pieces ──────────────────────────────────────────
   const allPecas = useMemo(() => {
     const formattedApi = (apiPecas || [])
-      .filter((p: any) => p.status !== 'RASCUNHO')
+      .filter((p: any) => p.status !== 'RASCUNHO' && p.status !== 'REPROVADA')
       .map(p => ({
         id: p.id,
         name: p.nome,

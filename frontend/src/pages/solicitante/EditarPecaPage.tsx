@@ -74,7 +74,7 @@ export default function EditarPecaPage() {
             setAssuntos(a.data)
 
             const peca = pecaRes.data
-            if (peca.status !== 'RASCUNHO') {
+            if (!['RASCUNHO', 'REPROVADA'].includes(peca.status)) {
                 navigate('/pecas')
                 return
             }

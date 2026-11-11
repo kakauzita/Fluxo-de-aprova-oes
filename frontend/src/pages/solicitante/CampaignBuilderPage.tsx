@@ -22,6 +22,7 @@ import {
   Lock,
   FileText,
   ChevronRight,
+  ChevronDown,
   HelpCircle,
   FolderOpen,
   Mail,
@@ -391,6 +392,255 @@ const PREDEFINED_EVENTS = TRIGGER_CATEGORIES.flatMap(cat => cat.items);
 interface Option {
   id: string
   nome: string
+  [key: string]: any
+}
+
+interface MultiSelectProps {
+  label: string
+  subtitle?: string
+  placeholder: string
+  options: Option[]
+  selected: Option[]
+  onChange: (newSelected: Option[]) => void
+  disabled?: boolean
+  disabledMessage?: string
+}
+
+function MultiSelectDropdown({
+  label,
+  subtitle,
+  placeholder,
+  options,
+  selected,
+  onChange,
+  disabled = false,
+  disabledMessage
+}: MultiSelectProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isOpen])
+
+  const allSelected = options.length > 0 && selected.length === options.length
+
+  const handleToggleAll = () => {
+    if (disabled) return
+    if (allSelected) {
+      onChange([])
+    } else {
+      onChange([...options])
+    }
+  }
+
+  const handleToggleOption = (option: Option) => {
+    if (disabled) return
+    const exists = selected.some(item => item.id === option.id)
+    if (exists) {
+      onChange(selected.filter(item => item.id !== option.id))
+    } else {
+      onChange([...selected, option])
+    }
+  }
+
+  const handleRemoveChip = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    onChange(selected.filter(item => item.id !== id))
+  }
+
+  return (
+    <div className="form-group" style={{ flex: 1, position: 'relative' }} ref={containerRef}>
+      <label className="form-label" style={{ fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.3px', color: '#1e293b', marginBottom: 6 }}>
+        {label}
+      </label>
+
+      {/* Select Box Container */}
+      <div
+        onClick={() => {
+          if (!disabled) setIsOpen(!isOpen)
+        }}
+        style={{
+          border: isOpen ? '1.5px solid var(--caixa-blue)' : '1px solid #cbd5e1',
+          borderRadius: 6,
+          minHeight: 44,
+          padding: '6px 36px 6px 10px',
+          background: disabled ? '#f8fafc' : '#ffffff',
+          cursor: disabled ? 'not-allowed' : 'pointer',
+          position: 'relative',
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 6,
+          alignItems: 'center',
+          boxShadow: isOpen ? '0 0 0 2px rgba(0, 92, 169, 0.12)' : 'none',
+          transition: 'border-color 0.15s, box-shadow 0.15s'
+        }}
+      >
+        {selected.length === 0 ? (
+          <span style={{ color: '#94a3b8', fontSize: 13, userSelect: 'none' }}>
+            {disabled && disabledMessage ? disabledMessage : placeholder}
+          </span>
+        ) : (
+          selected.map(item => (
+            <span
+              key={item.id}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '2px 8px',
+                borderRadius: 4,
+                border: '1px solid var(--caixa-blue)',
+                background: '#ffffff',
+                color: 'var(--caixa-blue)',
+                fontSize: 12.5,
+                fontWeight: 500,
+                lineHeight: 1.3
+              }}
+            >
+              {item.nome}
+              <span
+                role="button"
+                onClick={(e) => handleRemoveChip(item.id, e)}
+                style={{
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--caixa-blue)',
+                  fontWeight: 700,
+                  fontSize: 12,
+                  marginLeft: 2,
+                  padding: '0 2px'
+                }}
+                title="Remover"
+              >
+                ✕
+              </span>
+            </span>
+          ))
+        )}
+
+        <ChevronDown
+          size={18}
+          style={{
+            position: 'absolute',
+            right: 12,
+            top: '50%',
+            transform: `translateY(-50%) ${isOpen ? 'rotate(180deg)' : ''}`,
+            color: '#64748b',
+            transition: 'transform 0.2s ease',
+            pointerEvents: 'none'
+          }}
+        />
+      </div>
+
+      {subtitle && (
+        <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: 4 }}>
+          {subtitle}
+        </div>
+      )}
+
+      {/* Dropdown Popover */}
+      {isOpen && !disabled && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 4px)',
+            left: 0,
+            right: 0,
+            zIndex: 100,
+            background: '#ffffff',
+            border: '1px solid #cbd5e1',
+            borderRadius: 6,
+            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
+            overflow: 'hidden'
+          }}
+        >
+          {/* Selecionar tudo */}
+          <div
+            onClick={handleToggleAll}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: '10px 14px',
+              cursor: 'pointer',
+              fontSize: 13.5,
+              fontWeight: 500,
+              color: '#1e293b',
+              userSelect: 'none',
+              background: '#ffffff',
+              transition: 'background 0.1s'
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f1f5f9')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#ffffff')}
+          >
+            <input
+              type="checkbox"
+              checked={allSelected}
+              readOnly
+              style={{ cursor: 'pointer', width: 16, height: 16, accentColor: 'var(--caixa-blue)', pointerEvents: 'none' }}
+            />
+            <span>Selecionar tudo</span>
+          </div>
+
+          <div style={{ height: 1, background: '#cbd5e1', margin: 0 }} />
+
+          {/* Options list */}
+          <div style={{ maxHeight: 200, overflowY: 'auto' }}>
+            {options.length === 0 ? (
+              <div style={{ padding: '12px 14px', fontSize: 13, color: '#94a3b8', fontStyle: 'italic' }}>
+                Nenhuma opção disponível
+              </div>
+            ) : (
+              options.map(option => {
+                const isChecked = selected.some(item => item.id === option.id)
+                return (
+                  <div
+                    key={option.id}
+                    onClick={() => handleToggleOption(option)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      padding: '9px 14px',
+                      cursor: 'pointer',
+                      fontSize: 13,
+                      color: '#334155',
+                      userSelect: 'none',
+                      background: isChecked ? '#f8fafc' : '#ffffff',
+                      transition: 'background 0.1s'
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f1f5f9')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = isChecked ? '#f8fafc' : '#ffffff')}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      readOnly
+                      style={{ cursor: 'pointer', width: 16, height: 16, accentColor: 'var(--caixa-blue)', pointerEvents: 'none' }}
+                    />
+                    <span>{option.nome}</span>
+                  </div>
+                )
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function CampaignBuilderPage() {
@@ -403,6 +653,10 @@ export default function CampaignBuilderPage() {
   const [recorrenciaTipo, setRecorrenciaTipo] = useState<'pontual' | 'recorrente'>('pontual')
   const [recorrenciaFrequencia, setRecorrenciaFrequencia] = useState<string>('mensal')
   const [recorrenciaIntervalo, setRecorrenciaIntervalo] = useState<number>(2)
+
+  const handleSaveDraft = () => {
+    alert('Rascunho salvo com sucesso!')
+  }
   const [selectedPublicos, setSelectedPublicos] = useState<Option[]>([])
   const [selectedSegmentos, setSelectedSegmentos] = useState<any[]>([])
   const [tempPublicoId, setTempPublicoId] = useState('')
@@ -553,7 +807,7 @@ export default function CampaignBuilderPage() {
         const [p, s, pecasRes] = await Promise.all([
           api.get('/admin/publicos-alvo'),
           api.get('/admin/segmentos'),
-          api.get('/pecas', { params: { excludeStatus: 'RASCUNHO' } })
+          api.get('/pecas', { params: { excludeStatus: 'RASCUNHO,REPROVADA' } })
         ])
         setPublicos(p.data)
         setAllSegmentos(s.data)
@@ -599,7 +853,7 @@ export default function CampaignBuilderPage() {
   // ─── Combined Communication Pieces ──────────────────────────────────────────
   const allPecas = useMemo(() => {
     const formattedApi = (apiPecas || [])
-      .filter((p: any) => p.status !== 'RASCUNHO')
+      .filter((p: any) => p.status !== 'RASCUNHO' && p.status !== 'REPROVADA')
       .map((p: any) => ({
         id: p.id,
         name: p.nome,
@@ -1796,94 +2050,291 @@ export default function CampaignBuilderPage() {
 
   return (
     <div className={`main-inner builder-layout-container step-${step} view-${builderView}`}>
-      {/* ── Breadcrumb ── */}
-      <div className="breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-secondary)' }}>
-        <button className="breadcrumb-back" onClick={() => navigate('/campanhas')} style={{ background: 'none', border: 'none', color: 'var(--caixa-blue)', fontWeight: 600, cursor: 'pointer', padding: 0 }}>← Voltar</button>
-        <span className="breadcrumb-sep" style={{ color: '#cbd5e1' }}>|</span>
-        <span className="breadcrumb-item">Home</span>
-        <span className="breadcrumb-sep">/</span>
-        <span className="breadcrumb-item">Campanhas</span>
-        <span className="breadcrumb-sep">/</span>
-        <span className="breadcrumb-item current" style={{ fontWeight: 600 }}>Criar Campanha</span>
-      </div>
+      {/* ── STICKY TOP HEADER (Breadcrumb + Title & Lateral Buttons + Stepper Tabs) ── */}
+      <div className="builder-sticky-header">
+        {/* ── Breadcrumb ── */}
+        <div className="breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#64748b', marginBottom: 12 }}>
+          <button className="breadcrumb-back" onClick={() => navigate('/campanhas')} style={{ background: 'none', border: 'none', color: 'var(--caixa-blue)', fontWeight: 600, cursor: 'pointer', padding: 0 }}>← Voltar</button>
+          <span className="breadcrumb-sep" style={{ color: '#cbd5e1', margin: '0 4px' }}>|</span>
+          <span className="breadcrumb-item" style={{ color: '#64748b' }}>Início</span>
+          <span className="breadcrumb-sep" style={{ color: '#94a3b8', margin: '0 4px' }}>&gt;</span>
+          <span className="breadcrumb-item current" style={{ fontWeight: 600, color: 'var(--caixa-blue)' }}>Campanha</span>
+        </div>
 
-      {/* ── Stepper Header ── */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <h1 className="page-title" style={{ borderLeft: '4px solid var(--caixa-orange)', paddingLeft: 14, fontSize: 28, fontWeight: 800, color: 'var(--caixa-blue)', lineHeight: 1.1, margin: '8px 0 6px 0' }}>
-            {campaignName || 'Campanha com jornada'}
-          </h1>
-          <p className="page-subtitle" style={{ marginBottom: 0 }}>Configure quando e como as mensagens serão enviadas ao cliente.</p>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {step === 2 && builderView === 'canvas' && (
-            <>
-              <button className="btn btn-ghost" onClick={() => setStep(1)}>← Dados Gerais</button>
-              <button
-                className="btn btn-primary"
-                onClick={goToStep3}
-              >
-                Revisar campanha <ChevronRight size={15} style={{ marginLeft: 6 }} />
-              </button>
-            </>
-          )}
-        </div>
-      </div>
+        {/* ── Title & Lateral Buttons Row ── */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+          <div>
+            <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--caixa-blue)', lineHeight: 1.2, margin: 0 }}>
+              {campaignName || 'Criar campanha'}
+            </h1>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {step === 1 && (
+              <>
+                <button
+                  type="button"
+                  className="btn"
+                  style={{
+                    background: '#ffffff',
+                    border: '1.5px solid var(--caixa-blue)',
+                    color: 'var(--caixa-blue)',
+                    fontWeight: 700,
+                    fontSize: 14,
+                    padding: '8px 18px',
+                    borderRadius: 4,
+                    cursor: 'pointer',
+                    boxShadow: 'none',
+                    height: 38,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  onClick={handleSaveDraft}
+                >
+                  Salvar rascunho
+                </button>
+                <button
+                  type="button"
+                  className="btn"
+                  disabled={!campaignName || selectedPublicos.length === 0 || selectedSegmentos.length === 0}
+                  onClick={() => setStep(2)}
+                  style={{
+                    background: (!campaignName || selectedPublicos.length === 0 || selectedSegmentos.length === 0) ? '#cbd5e1' : 'var(--caixa-orange)',
+                    color: 'white',
+                    border: 'none',
+                    fontWeight: 700,
+                    fontSize: 14,
+                    padding: '8px 24px',
+                    borderRadius: 4,
+                    cursor: (!campaignName || selectedPublicos.length === 0 || selectedSegmentos.length === 0) ? 'not-allowed' : 'pointer',
+                    boxShadow: 'none',
+                    height: 38,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  Próximo
+                </button>
+              </>
+            )}
 
-      {/* ── Stepper Navigation pills ── */}
-      <div style={{ display: 'flex', borderBottom: '1px solid var(--builder-border-light)', marginBottom: 24 }}>
-        <div
-          onClick={() => setStep(1)}
-          style={{
-            padding: '10px 20px', fontSize: 14, fontWeight: step === 1 ? 700 : 500,
-            color: step === 1 ? 'var(--caixa-blue)' : 'var(--text-muted)',
-            borderBottom: step === 1 ? '2.5px solid var(--caixa-blue)' : '2.5px solid transparent',
-            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
-          }}
-        >
-          <span style={{
-            background: step === 1 ? 'var(--caixa-blue)' : '#e2e8f0',
-            color: step === 1 ? 'white' : 'var(--text-muted)',
-            borderRadius: '50%', width: 20, height: 20,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700
-          }}>1</span>
-          Dados da campanha
+            {step === 2 && builderView === 'select' && (
+              <>
+                <button
+                  type="button"
+                  className="btn"
+                  style={{
+                    background: '#ffffff',
+                    border: '1.5px solid var(--caixa-blue)',
+                    color: 'var(--caixa-blue)',
+                    fontWeight: 700,
+                    fontSize: 14,
+                    padding: '8px 18px',
+                    borderRadius: 4,
+                    cursor: 'pointer',
+                    boxShadow: 'none',
+                    height: 38,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  onClick={handleSaveDraft}
+                >
+                  Salvar rascunho
+                </button>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => {
+                    setBlocks([])
+                    setBuilderView('canvas')
+                  }}
+                  style={{
+                    background: 'var(--caixa-orange)',
+                    color: 'white',
+                    border: 'none',
+                    fontWeight: 700,
+                    fontSize: 14,
+                    padding: '8px 24px',
+                    borderRadius: 4,
+                    cursor: 'pointer',
+                    boxShadow: 'none',
+                    height: 38,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  Próximo
+                </button>
+              </>
+            )}
+
+            {step === 2 && builderView === 'canvas' && (
+              <>
+                <button
+                  type="button"
+                  className="btn"
+                  style={{
+                    background: '#ffffff',
+                    border: '1.5px solid var(--caixa-blue)',
+                    color: 'var(--caixa-blue)',
+                    fontWeight: 700,
+                    fontSize: 14,
+                    padding: '8px 18px',
+                    borderRadius: 4,
+                    cursor: 'pointer',
+                    boxShadow: 'none',
+                    height: 38,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  onClick={handleSaveDraft}
+                >
+                  Salvar rascunho
+                </button>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={goToStep3}
+                  style={{
+                    background: 'var(--caixa-orange)',
+                    color: 'white',
+                    border: 'none',
+                    fontWeight: 700,
+                    fontSize: 14,
+                    padding: '8px 24px',
+                    borderRadius: 4,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                    cursor: 'pointer',
+                    boxShadow: 'none',
+                    height: 38
+                  }}
+                >
+                  Revisar campanha <ChevronRight size={15} />
+                </button>
+              </>
+            )}
+
+            {step === 3 && (
+              <>
+                <button
+                  type="button"
+                  className="btn"
+                  style={{
+                    background: '#ffffff',
+                    border: '1.5px solid var(--caixa-blue)',
+                    color: 'var(--caixa-blue)',
+                    fontWeight: 700,
+                    fontSize: 14,
+                    padding: '8px 18px',
+                    borderRadius: 4,
+                    cursor: 'pointer',
+                    boxShadow: 'none',
+                    height: 38,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  onClick={handleSaveDraft}
+                >
+                  Salvar rascunho
+                </button>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={publishCampaign}
+                  disabled={publishing || published}
+                  style={{
+                    background: 'var(--caixa-orange)',
+                    color: 'white',
+                    border: 'none',
+                    fontWeight: 700,
+                    fontSize: 14,
+                    padding: '8px 24px',
+                    borderRadius: 4,
+                    cursor: (publishing || published) ? 'not-allowed' : 'pointer',
+                    boxShadow: 'none',
+                    height: 38,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  {publishing ? 'Enviando...' : published ? '✅ Enviada para Análise!' : 'Enviar para Análise'}
+                </button>
+              </>
+            )}
+          </div>
         </div>
-        <div
-          onClick={() => { if (campaignName && selectedPublicos.length > 0 && selectedSegmentos.length > 0) { setStep(2); } }}
-          style={{
-            padding: '10px 20px', fontSize: 14, fontWeight: step === 2 ? 700 : 500,
-            color: step === 2 ? 'var(--caixa-blue)' : 'var(--text-muted)',
-            borderBottom: step === 2 ? '2.5px solid var(--caixa-blue)' : '2.5px solid transparent',
-            cursor: campaignName && selectedPublicos.length > 0 && selectedSegmentos.length > 0 ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', gap: 8,
-            opacity: campaignName && selectedPublicos.length > 0 && selectedSegmentos.length > 0 ? 1 : 0.6
-          }}
-        >
-          <span style={{
-            background: step === 2 ? 'var(--caixa-blue)' : '#e2e8f0',
-            color: step === 2 ? 'white' : 'var(--text-muted)',
-            borderRadius: '50%', width: 20, height: 20,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700
-          }}>2</span>
-          Fluxo de comunicação
-        </div>
-        <div
-          onClick={() => { if (campaignName && selectedPublicos.length > 0 && selectedSegmentos.length > 0) { goToStep3(); } }}
-          style={{
-            padding: '10px 20px', fontSize: 14, fontWeight: step === 3 ? 700 : 500,
-            color: step === 3 ? 'var(--caixa-blue)' : 'var(--text-muted)',
-            borderBottom: step === 3 ? '2.5px solid var(--caixa-blue)' : '2.5px solid transparent',
-            cursor: campaignName && selectedPublicos.length > 0 && selectedSegmentos.length > 0 ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', gap: 8,
-            opacity: campaignName && selectedPublicos.length > 0 && selectedSegmentos.length > 0 ? 1 : 0.6
-          }}
-        >
-          <span style={{
-            background: step === 3 ? 'var(--caixa-blue)' : '#e2e8f0',
-            color: step === 3 ? 'white' : 'var(--text-muted)',
-            borderRadius: '50%', width: 20, height: 20,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700
-          }}>3</span>
-          Revisar fluxo
+
+        {/* ── Stepper Navigation Tabs ── */}
+        <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', marginBottom: 0 }}>
+          <div
+            onClick={() => setStep(1)}
+            style={{
+              padding: '10px 16px 12px 0',
+              marginRight: 24,
+              fontSize: 14,
+              fontWeight: step === 1 ? 700 : 500,
+              color: step === 1 ? 'var(--caixa-blue)' : '#64748b',
+              borderBottom: step === 1 ? '2.5px solid var(--caixa-blue)' : '2.5px solid transparent',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            1. Dados da campanha
+          </div>
+          <div
+            onClick={() => {
+              if (campaignName && selectedPublicos.length > 0 && selectedSegmentos.length > 0) {
+                setStep(2);
+              }
+            }}
+            style={{
+              padding: '10px 16px 12px 0',
+              marginRight: 24,
+              fontSize: 14,
+              fontWeight: step === 2 ? 700 : 500,
+              color: step === 2 ? 'var(--caixa-blue)' : '#64748b',
+              borderBottom: step === 2 ? '2.5px solid var(--caixa-blue)' : '2.5px solid transparent',
+              cursor: (campaignName && selectedPublicos.length > 0 && selectedSegmentos.length > 0) ? 'pointer' : 'not-allowed',
+              display: 'flex',
+              alignItems: 'center',
+              opacity: (campaignName && selectedPublicos.length > 0 && selectedSegmentos.length > 0) ? 1 : 0.6,
+              transition: 'all 0.15s ease',
+            }}
+          >
+            2. Fluxo de comunicação
+          </div>
+          <div
+            onClick={() => {
+              if (campaignName && selectedPublicos.length > 0 && selectedSegmentos.length > 0) {
+                goToStep3();
+              }
+            }}
+            style={{
+              padding: '10px 16px 12px 0',
+              fontSize: 14,
+              fontWeight: step === 3 ? 700 : 500,
+              color: step === 3 ? 'var(--caixa-blue)' : '#64748b',
+              borderBottom: step === 3 ? '2.5px solid var(--caixa-blue)' : '2.5px solid transparent',
+              cursor: (campaignName && selectedPublicos.length > 0 && selectedSegmentos.length > 0) ? 'pointer' : 'not-allowed',
+              display: 'flex',
+              alignItems: 'center',
+              opacity: (campaignName && selectedPublicos.length > 0 && selectedSegmentos.length > 0) ? 1 : 0.6,
+              transition: 'all 0.15s ease',
+            }}
+          >
+            3. Revisar campanha
+          </div>
         </div>
       </div>
 
@@ -2031,159 +2482,31 @@ export default function CampaignBuilderPage() {
               <div className="setup-card">
                 <div className="form-row" style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
                   {/* Público Alvo */}
-                  <div className="form-group" style={{ flex: 1 }}>
-                    <label className="form-label" style={{ fontWeight: 700 }}>Público alvo</label>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <select
-                        className="form-select"
-                        value={tempPublicoId}
-                        onChange={(e) => setTempPublicoId(e.target.value)}
-                        style={{ flex: 1 }}
-                      >
-                        <option value="">Selecione o público que receberá a campanha</option>
-                        {publicos.map(p => (
-                          <option key={p.id} value={p.id} disabled={selectedPublicos.some(sp => sp.id === p.id)}>
-                            {p.nome}
-                          </option>
-                        ))}
-                      </select>
-                      <button
-                        className="btn"
-                        type="button"
-                        onClick={handleAddPublico}
-                        style={{
-                          background: 'white',
-                          border: '1.5px solid var(--caixa-blue)',
-                          color: 'var(--caixa-blue)',
-                          fontWeight: 700,
-                          padding: '0 16px',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontSize: '13px'
-                        }}
-                      >
-                        Adicionar
-                      </button>
-                    </div>
-                    <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: 4 }}>
-                      Defina o público alvo desta campanha
-                    </div>
-                    {/* Tags below */}
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-                      {selectedPublicos.map(p => (
-                        <span key={p.id} style={{
-                          background: '#e8f0fe',
-                          color: 'var(--caixa-blue)',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          padding: '4px 8px',
-                          borderRadius: '4px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 6,
-                          border: '1px solid var(--caixa-blue-light)'
-                        }}>
-                          {p.nome}
-                          <button
-                            type="button"
-                            onClick={() => handleRemovePublico(p.id)}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              color: 'var(--caixa-blue)',
-                              cursor: 'pointer',
-                              padding: 0,
-                              fontSize: '12px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              fontWeight: 700
-                            }}
-                          >
-                            ✕
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
+                  <MultiSelectDropdown
+                    label="PÚBLICO ALVO"
+                    subtitle="Defina o público alvo desta campanha"
+                    placeholder="Selecione o público que receberá a campanha"
+                    options={publicos}
+                    selected={selectedPublicos}
+                    onChange={(newPublicos) => {
+                      setSelectedPublicos(newPublicos)
+                      setSelectedSegmentos(prev => prev.filter(s => newPublicos.some(p => p.id === s.publicoAlvoId)))
+                    }}
+                  />
 
                   {/* Nicho */}
-                  <div className="form-group" style={{ flex: 1 }}>
-                    <label className="form-label" style={{ fontWeight: 700 }}>Nicho</label>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <select
-                        className="form-select"
-                        value={tempSegmentoId}
-                        disabled={selectedPublicos.length === 0}
-                        onChange={(e) => setTempSegmentoId(e.target.value)}
-                        style={{ flex: 1 }}
-                      >
-                        <option value="">Selecione o nicho</option>
-                        {filteredSegmentos.map(s => (
-                          <option key={s.id} value={s.id} disabled={selectedSegmentos.some(ss => ss.id === s.id)}>
-                            {s.nome}
-                          </option>
-                        ))}
-                      </select>
-                      <button
-                        className="btn"
-                        type="button"
-                        onClick={handleAddSegmento}
-                        disabled={selectedPublicos.length === 0}
-                        style={{
-                          background: 'white',
-                          border: '1.5px solid var(--caixa-blue)',
-                          color: 'var(--caixa-blue)',
-                          fontWeight: 700,
-                          padding: '0 16px',
-                          borderRadius: '4px',
-                          cursor: selectedPublicos.length === 0 ? 'not-allowed' : 'pointer',
-                          fontSize: '13px',
-                          opacity: selectedPublicos.length === 0 ? 0.6 : 1
-                        }}
-                      >
-                        Adicionar
-                      </button>
-                    </div>
-                    <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: 4 }}>
-                      Defina o nicho desta campanha
-                    </div>
-                    {/* Tags below */}
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-                      {selectedSegmentos.map(s => (
-                        <span key={s.id} style={{
-                          background: '#e8f0fe',
-                          color: 'var(--caixa-blue)',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          padding: '4px 8px',
-                          borderRadius: '4px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 6,
-                          border: '1px solid var(--caixa-blue-light)'
-                        }}>
-                          {s.nome}
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveSegmento(s.id)}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              color: 'var(--caixa-blue)',
-                              cursor: 'pointer',
-                              padding: 0,
-                              fontSize: '12px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              fontWeight: 700
-                            }}
-                          >
-                            ✕
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
+                  <MultiSelectDropdown
+                    label="NICHO"
+                    subtitle="Defina o nicho desta campanha"
+                    placeholder="Selecione o nicho"
+                    disabledMessage="Selecione primeiro o público alvo"
+                    options={filteredSegmentos}
+                    selected={selectedSegmentos}
+                    disabled={selectedPublicos.length === 0}
+                    onChange={(newSegmentos) => {
+                      setSelectedSegmentos(newSegmentos)
+                    }}
+                  />
                 </div>
               </div>
             </div>
@@ -2333,38 +2656,7 @@ export default function CampaignBuilderPage() {
           </div>
         </div>
         
-        {/* Footer buttons at the bottom of the page */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 32, borderTop: '1px solid var(--builder-border-light)', paddingTop: 20, marginBottom: 40 }}>
-          <button 
-            className="btn" 
-            style={{ background: 'white', border: '1px solid #cbd5e1', color: '#64748b', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 500, fontSize: 14, cursor: 'not-allowed' }}
-            disabled
-          >
-            ← Anterior
-          </button>
-          <button 
-            className="btn" 
-            style={{ background: 'white', border: '1.5px solid var(--caixa-blue)', color: 'var(--caixa-blue)', fontWeight: 700, fontSize: 14 }}
-            onClick={() => alert('Rascunho salvo com sucesso!')}
-          >
-            Salvar rascunho
-          </button>
-          <button
-            className="btn"
-            disabled={!campaignName || selectedPublicos.length === 0 || selectedSegmentos.length === 0}
-            onClick={() => { setStep(2); }}
-            style={{ 
-              background: (!campaignName || selectedPublicos.length === 0 || selectedSegmentos.length === 0) ? '#cbd5e1' : 'var(--caixa-blue)', 
-              color: 'white', 
-              border: 'none', 
-              fontWeight: 700, 
-              fontSize: 14,
-              cursor: (!campaignName || selectedPublicos.length === 0 || selectedSegmentos.length === 0) ? 'not-allowed' : 'pointer'
-            }}
-          >
-            Próximo
-          </button>
-        </div>
+        <div style={{ marginBottom: 40 }} />
       </>)}
 
       {/* ── STEP 2: JOURNEY BUILDER ── */}
@@ -2589,38 +2881,7 @@ export default function CampaignBuilderPage() {
             </div>
           </div>
 
-          {/* Footer buttons */}
-          <div style={{
-            display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 40,
-            borderTop: '1px solid var(--builder-border-light)', paddingTop: 20, marginBottom: 40
-          }}>
-            <button
-              className="btn btn-ghost"
-              onClick={() => setStep(1)}
-              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-            >
-              ← Anterior
-            </button>
-            <button
-              className="btn"
-              style={{
-                background: 'white', border: '1.5px solid var(--caixa-blue)',
-                color: 'var(--caixa-blue)', fontWeight: 700, fontSize: 14
-              }}
-              onClick={() => alert('Rascunho salvo com sucesso!')}
-            >
-              Salvar rascunho
-            </button>
-            <button
-              className="btn btn-primary"
-              onClick={() => {
-                setBlocks([])
-                setBuilderView('canvas')
-              }}
-            >
-              Próximo
-            </button>
-          </div>
+          <div style={{ marginBottom: 40 }} />
         </div>
       )}
 
@@ -4637,7 +4898,7 @@ export default function CampaignBuilderPage() {
         };
 
         return (
-          <div className="review-layout" style={{ animation: 'fadeIn 0.3s ease' }}>
+          <div className="review-layout" style={{ animation: 'fadeIn 0.3s ease', paddingTop: 24, paddingBottom: 40 }}>
             
             {published ? (
               /* SUCCESS PANEL */
@@ -4785,7 +5046,7 @@ export default function CampaignBuilderPage() {
                     padding: '24px 20px',
                     boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
                     position: 'sticky',
-                    top: 20
+                    top: 175
                   }}>
                     <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>
                       Canais utilizados e assuntos
@@ -4866,18 +5127,7 @@ export default function CampaignBuilderPage() {
                   </div>
                 </div>
 
-                {/* Footer buttons at the bottom of the page */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 32, borderTop: '1px solid var(--builder-border-light)', paddingTop: 20 }}>
-                  <button className="btn btn-ghost" onClick={() => setStep(2)}>← Desenhar Jornada</button>
-                  <button
-                    className="btn btn-primary"
-                    onClick={publishCampaign}
-                    disabled={publishing || published}
-                    style={{ background: 'var(--caixa-orange)', color: 'white', border: 'none', fontWeight: 700 }}
-                  >
-                    {publishing ? 'Enviando...' : published ? '✅ Enviada para Análise!' : '🚀 Enviar para Análise'}
-                  </button>
-                </div>
+                <div style={{ marginBottom: 40 }} />
               </>
             )}
 

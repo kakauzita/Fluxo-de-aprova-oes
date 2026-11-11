@@ -62,7 +62,7 @@ export default function PecasListPage() {
             setPecaToDelete(null)
         } catch (err: any) {
             console.error('Erro ao excluir peça:', err)
-            alert(err.response?.data?.message || 'Erro ao excluir a peça em rascunho.')
+            alert(err.response?.data?.message || 'Erro ao excluir a peça.')
         } finally {
             setDeleting(false)
         }
@@ -393,7 +393,7 @@ export default function PecasListPage() {
                                                 <Eye size={16} /> Visualizar
                                             </button>
 
-                                            {peca.status === 'RASCUNHO' && (
+                                            {['RASCUNHO', 'REPROVADA'].includes(peca.status) && (
                                                 <>
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); navigate(`/pecas/${peca.id}/editar`) }}
@@ -480,7 +480,7 @@ export default function PecasListPage() {
                                     <Trash2 size={32} />
                                 </div>
                             </div>
-                            <h3 className="confirm-title">Excluir peça em rascunho?</h3>
+                            <h3 className="confirm-title">Excluir peça de comunicação?</h3>
                             <p className="confirm-text">
                                 Tem certeza que deseja excluir a peça <strong>"{pecaToDelete.nome}"</strong>?<br />
                                 Esta ação não poderá ser desfeita.
