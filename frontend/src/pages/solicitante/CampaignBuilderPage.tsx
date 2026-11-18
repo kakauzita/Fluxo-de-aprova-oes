@@ -34,6 +34,70 @@ import {
 } from 'lucide-react'
 import './CampaignBuilderPage.css'
 import JornadaExplicada, { mapBlocksToJornadaNodes } from '../../components/JornadaExplicada'
+import { GuidedTour, type TourStep } from '../../components/GuidedTour'
+
+const TOUR_EVENTO_KEY = 'caixa_tour_evento_completed'
+const TOUR_OUTROS_KEY = 'caixa_tour_outros_completed'
+
+const TOUR_EVENTO_STEPS: TourStep[] = [
+  {
+    target: '[data-tour="event-trigger-block"]',
+    title: 'Escolha o que inicia a campanha',
+    content: 'O evento é o gatilho: quando ele acontece, o cliente entra na jornada.',
+    placement: 'bottom',
+  },
+  {
+    target: '[data-tour="add-rule-btn"]',
+    title: 'Combine mais de um evento',
+    content: 'Adicione outros eventos para definir com mais precisão quem entra na campanha.',
+    placement: 'top',
+  },
+  {
+    target: '[data-tour="operator-toggle"]',
+    title: 'E ou OU?',
+    content: 'E: o cliente precisa atender a todos os eventos. OU: basta atender a pelo menos um.',
+    placement: 'bottom',
+  },
+  {
+    target: '[data-tour="event-search-input"]',
+    title: 'Não achou o evento? Crie na hora',
+    content: 'Digite o nome na busca e clique em Criar para cadastrar um novo evento.',
+    placement: 'bottom',
+  },
+  {
+    target: '[data-tour="modal-how-it-works"]',
+    title: 'Esqueceu? Está sempre aqui',
+    content: 'Clique em Como funciona? sempre que quiser rever este guia.',
+    placement: 'top',
+  },
+]
+
+const TOUR_OUTROS_STEPS: TourStep[] = [
+  {
+    target: '[data-tour="step-picker-send"]',
+    title: 'Peça de comunicação',
+    content: 'Escolha o conteúdo, mensagem ou comunicação que será enviada ao cliente.',
+    placement: 'right',
+  },
+  {
+    target: '[data-tour="step-picker-check"]',
+    title: 'Verifique antes de seguir',
+    content: 'Cria uma regra sobre o cliente. A jornada se divide em dois caminhos: um para quem atende à regra (Sim) e outro para quem não atende (Não).',
+    placement: 'right',
+  },
+  {
+    target: '[data-tour="step-picker-connector"]',
+    title: 'Conectar: reaproveite um caminho',
+    content: 'Liga este ponto a uma etapa que já existe no fluxo.',
+    placement: 'right',
+  },
+  {
+    target: '[data-tour="step-picker-how-it-works"]',
+    title: 'Esqueceu? Está sempre aqui',
+    content: 'Clique em Como funciona? sempre que quiser rever este guia.',
+    placement: 'top',
+  },
+]
 
 // ─── (SVG backward line overlay removed — replaced by inline card badges) ─────
 
@@ -723,6 +787,12 @@ export default function CampaignBuilderPage() {
   const [connectorMaxRepetitions, setConnectorMaxRepetitions] = useState<string>('')
   const [connectorUnlimited, setConnectorUnlimited] = useState<boolean>(false)
 
+  // Guided Tour states
+  const [activeTour, setActiveTour] = useState<'evento' | 'outros' | null>(null)
+  const [tourStep, setTourStep] = useState(0)
+  const [pulseAddButton, setPulseAddButton] = useState(false)
+  const [howItWorksModalOpen, setHowItWorksModalOpen] = useState(false)
+
   // ─── Pan / Drag navigation (Figma-style) ─────────────────────────────
   // The canvas-grid is a 4000×4000px absolute surface.
   // Content is centered horizontally at x=2000. We init panOffset so that
@@ -1168,11 +1238,23 @@ export default function CampaignBuilderPage() {
         return updated
       })
     }
+    if (activeTour === 'evento') {
+      setActiveTour(null)
+    }
     setSelectedId(null)
     setBackupBlockConfig(null)
   }
 
   const handleConfirmEdit = () => {
+    if (selectedBlock?.type === 'trigger') {
+      if (activeTour === 'evento') {
+        localStorage.setItem(TOUR_EVENTO_KEY, 'true')
+        setActiveTour(null)
+      }
+      if (!localStorage.getItem(TOUR_OUTROS_KEY)) {
+        setPulseAddButton(true)
+      }
+    }
     setSelectedId(null)
     setBackupBlockConfig(null)
   }
@@ -1712,17 +1794,34 @@ export default function CampaignBuilderPage() {
     )
   }
 
-  function renderInlineAddBtn(onClickInsert: () => void, isEnd?: boolean) {
+  function renderInlineAddBtn(onClickInsert: () => void, isEnd?: boolean, isPulsing?: boolean) {
     return (
       <div className="inline-add-wrapper">
         <div className="block-connector" />
-        <button
-          className={`inline-add-btn${isEnd ? ' end-add-btn' : ''}`}
-          onClick={(e) => { e.stopPropagation(); onClickInsert() }}
-          title="Adicionar etapa aqui"
-        >
-          +
-        </button>
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {isPulsing && (
+            <div className="tour-pulse-hint">
+              Clique aqui para adicionar etapas
+            </div>
+          )}
+          <button
+            className={`inline-add-btn${isEnd ? ' end-add-btn' : ''}${isPulsing ? ' pulsing-tour-btn' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation()
+              if (isPulsing) {
+                setPulseAddButton(false)
+                setTimeout(() => {
+                  setActiveTour('outros')
+                  setTourStep(0)
+                }, 100)
+              }
+              onClickInsert()
+            }}
+            title={isPulsing ? "Clique para adicionar novos passos" : "Adicionar etapa aqui"}
+          >
+            +
+          </button>
+        </div>
         <div className="block-connector" />
       </div>
     )
@@ -1959,6 +2058,7 @@ export default function CampaignBuilderPage() {
         // Add button before the end block (insert at tail)
         if (isEnd) {
           const prevSeg = si > 0 ? segments[si - 1] : null;
+          const shouldPulse = !branchCtx && pulseAddButton;
           result.push(
             <React.Fragment key={`add_end_${block.id}`}>
               {renderInlineAddBtn(() => {
@@ -1979,7 +2079,7 @@ export default function CampaignBuilderPage() {
                   }
                 }
                 setSelectedId(null);
-              }, true)}
+              }, true, shouldPulse)}
             </React.Fragment>
           );
         }
@@ -2038,7 +2138,7 @@ export default function CampaignBuilderPage() {
               setInsertTarget({ index: blocks.filter((b: any) => !b.id.startsWith('end_auto')).length });
             }
             setSelectedId(null);
-          })}
+          }, false, !branchCtx && pulseAddButton)}
         </React.Fragment>
       );
       
@@ -2951,6 +3051,14 @@ export default function CampaignBuilderPage() {
                 </div>
                 <div className="toolbar-divider" />
                 <button className="canvas-btn-text" onClick={() => { setBlocks([]); setSelectedId(null); setInsertTarget(null); setBuilderView('select'); setTimeout(resetPanToCenter, 30) }}>Limpar</button>
+                <div className="toolbar-divider" />
+                <button
+                  className="canvas-btn-text"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: 'var(--caixa-blue)', fontWeight: 600 }}
+                  onClick={() => setHowItWorksModalOpen(true)}
+                >
+                  <HelpCircle size={14} /> Como funciona?
+                </button>
               </div>
             </div>
 
@@ -3013,6 +3121,12 @@ export default function CampaignBuilderPage() {
                         const t = createBlockObj(id, 'trigger');
                         setBlocks(ensureEndBlock([t]));
                         setSelectedId(id);
+                        if (!localStorage.getItem(TOUR_EVENTO_KEY)) {
+                          setTimeout(() => {
+                            setActiveTour('evento');
+                            setTourStep(0);
+                          }, 150);
+                        }
                       }}
                     >
                       Iniciar fluxo
@@ -3030,7 +3144,7 @@ export default function CampaignBuilderPage() {
             <div
               className="modal-overlay"
               style={{ animation: 'fadeIn 0.2s ease' }}
-              onClick={() => { setInsertTarget(null); setConnectorConfigOpen(false) }}
+              onClick={() => { setInsertTarget(null); setConnectorConfigOpen(false); if (activeTour === 'outros') setActiveTour(null); }}
             >
               <div
                 className="modal-container"
@@ -3044,7 +3158,7 @@ export default function CampaignBuilderPage() {
                   <React.Fragment>
                     <div className="modal-header">
                       <div id="modal-proximos-passos-title" className="modal-title">Próximos passos</div>
-                      <button className="modal-close" onClick={() => { setInsertTarget(null); setConnectorConfigOpen(false) }} aria-label="Fechar janela de próximos passos">✕</button>
+                      <button className="modal-close" onClick={() => { setInsertTarget(null); setConnectorConfigOpen(false); if (activeTour === 'outros') setActiveTour(null); }} aria-label="Fechar janela de próximos passos">✕</button>
                     </div>
                     <div className="modal-body" style={{ padding: 24 }}>
                       <div style={{ fontSize: 13, color: 'var(--builder-muted)', marginBottom: 16 }}>
@@ -3054,6 +3168,7 @@ export default function CampaignBuilderPage() {
                         {[
                           {
                             type: 'send' as const,
+                            tourId: 'step-picker-send',
                             icon: (
                               <div style={{
                                 background: '#F8EAF3',
@@ -3076,6 +3191,7 @@ export default function CampaignBuilderPage() {
                           },
                           {
                             type: 'check' as const,
+                            tourId: 'step-picker-check',
                             icon: (
                               <div style={{
                                 background: '#FFF8F0',
@@ -3097,6 +3213,7 @@ export default function CampaignBuilderPage() {
                           },
                           {
                             type: 'connector' as const,
+                            tourId: 'step-picker-connector',
                             icon: (
                               <div style={{
                                 background: '#EEF2FF',
@@ -3119,8 +3236,10 @@ export default function CampaignBuilderPage() {
                         ].map(item => (
                           <button
                             key={item.type}
+                            data-tour={item.tourId}
                             className="step-picker-item"
                             onClick={() => {
+                              if (activeTour === 'outros') setActiveTour(null);
                               if (item.type === 'connector') {
                                 setConnectorConfigOpen(true)
                                 setConnectorTargetId(null)
@@ -3148,6 +3267,32 @@ export default function CampaignBuilderPage() {
                             <ChevronRight size={18} className="step-picker-arrow" />
                           </button>
                         ))}
+                      </div>
+
+                      <div style={{ marginTop: 18, paddingTop: 14, borderTop: '1px solid var(--builder-border-light)', display: 'flex', justifyContent: 'flex-start' }}>
+                        <button
+                          type="button"
+                          data-tour="step-picker-how-it-works"
+                          onClick={() => {
+                            setActiveTour('outros');
+                            setTourStep(0);
+                          }}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--caixa-blue)',
+                            fontSize: 13,
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            padding: '6px 8px',
+                            borderRadius: 6
+                          }}
+                        >
+                          <HelpCircle size={15} /> Como funciona?
+                        </button>
                       </div>
                     </div>
                   </React.Fragment>
@@ -3491,7 +3636,7 @@ export default function CampaignBuilderPage() {
 
                     return (
                       <>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, borderBottom: '1px solid var(--builder-border-light)', paddingBottom: 12 }}>
+                        <div data-tour="event-trigger-block" style={{ display: 'flex', alignItems: 'center', gap: 10, borderBottom: '1px solid var(--builder-border-light)', paddingBottom: 12 }}>
                           <div style={{ background: '#E4F7F4', color: '#216E62', width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <Zap size={18} color="#216E62" fill="#216E62" />
                           </div>
@@ -3564,6 +3709,7 @@ export default function CampaignBuilderPage() {
                                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                                   <input
                                     type="text"
+                                    data-tour="event-search-input"
                                     className="detail-input"
                                     placeholder="Busque um evento ou crie um"
                                     value={isTriggerDropdownOpen ? triggerSearchQuery : currentEvent}
@@ -3746,8 +3892,11 @@ export default function CampaignBuilderPage() {
                         {/* Elegibilidade Extra */}
                         <div className="detail-field" style={{ marginTop: 8 }}>
                           <label className="detail-label" style={{ marginBottom: 8, display: 'block', fontWeight: 700 }}>CONDIÇÕES DE ELEGIBILIDADE EXTRA</label>
-                          {conditions.length > 0 && (
-                            <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+                          <div data-tour="operator-toggle" style={{ marginBottom: 12 }}>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', marginBottom: 6 }}>
+                              COMBINAR REGRAS COM:
+                            </div>
+                            <div style={{ display: 'flex', gap: 6 }}>
                               <button
                                 type="button"
                                 onClick={() => handleOperatorChange('E')}
@@ -3756,9 +3905,9 @@ export default function CampaignBuilderPage() {
                                   fontSize: 13,
                                   fontWeight: 700,
                                   borderRadius: 4,
-                                  border: `1.5px solid ${selectedBlock.config.operator === 'E' ? 'var(--caixa-blue)' : '#d1d9e0'}`,
-                                  background: selectedBlock.config.operator === 'E' ? 'var(--caixa-blue-bg)' : '#ffffff',
-                                  color: selectedBlock.config.operator === 'E' ? 'var(--caixa-blue)' : '#4a5568',
+                                  border: `1.5px solid ${selectedBlock.config.operator !== 'OU' ? 'var(--caixa-blue)' : '#d1d9e0'}`,
+                                  background: selectedBlock.config.operator !== 'OU' ? 'var(--caixa-blue-bg)' : '#ffffff',
+                                  color: selectedBlock.config.operator !== 'OU' ? 'var(--caixa-blue)' : '#4a5568',
                                   cursor: 'pointer',
                                   transition: 'all 0.15s'
                                 }}
@@ -3783,7 +3932,7 @@ export default function CampaignBuilderPage() {
                                 OU
                               </button>
                             </div>
-                          )}
+                          </div>
 
                           {conditions.map((cond: string, idx: number) => (
                             <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
@@ -3832,6 +3981,7 @@ export default function CampaignBuilderPage() {
 
                           <button
                             type="button"
+                            data-tour="add-rule-btn"
                             onClick={handleAddCondition}
                             style={{
                               display: 'inline-flex',
@@ -3862,9 +4012,34 @@ export default function CampaignBuilderPage() {
                           </button>
                         </div>
 
-                        <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, borderTop: '1px solid var(--builder-border-light)', paddingTop: 16 }}>
-                          <button className="btn btn-ghost" onClick={handleCancelEdit}>Cancelar</button>
-                          <button className="btn btn-primary" onClick={handleConfirmEdit} style={{ background: 'var(--caixa-orange)', color: 'white' }}>Confirmar</button>
+                        <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 24, borderTop: '1px solid var(--builder-border-light)', paddingTop: 16 }}>
+                          <button
+                            type="button"
+                            data-tour="modal-how-it-works"
+                            onClick={() => {
+                              setActiveTour('evento');
+                              setTourStep(0);
+                            }}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: 'var(--caixa-blue)',
+                              fontSize: 13,
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 6,
+                              padding: '6px 8px',
+                              borderRadius: 6
+                            }}
+                          >
+                            <HelpCircle size={15} /> Como funciona?
+                          </button>
+                          <div style={{ display: 'flex', gap: 12 }}>
+                            <button className="btn btn-ghost" onClick={handleCancelEdit}>Cancelar</button>
+                            <button className="btn btn-primary" onClick={handleConfirmEdit} style={{ background: 'var(--caixa-orange)', color: 'white' }}>Confirmar</button>
+                          </div>
                         </div>
                       </>
                     )
@@ -5221,6 +5396,196 @@ export default function CampaignBuilderPage() {
           </div>
         </div>
       )}
+
+      {/* Modal "Como funciona?" - Central de Ajuda e Tutoriais */}
+      {howItWorksModalOpen && (
+        <div
+          className="modal-overlay"
+          style={{ animation: 'fadeIn 0.2s ease', zIndex: 10000 }}
+          onClick={() => setHowItWorksModalOpen(false)}
+        >
+          <div
+            className="modal-container"
+            style={{ maxWidth: 520 }}
+            role="dialog"
+            aria-modal="true"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <div className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <HelpCircle size={20} color="var(--caixa-blue)" />
+                Como funciona? — Guia interativo
+              </div>
+              <button className="modal-close" onClick={() => setHowItWorksModalOpen(false)}>✕</button>
+            </div>
+            <div className="modal-body" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <p style={{ fontSize: 13.5, color: '#475569', margin: 0, lineHeight: 1.5 }}>
+                Selecione qual parte do fluxo você deseja conhecer ou rever com nosso tutorial passo a passo:
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {/* Card Tutorial 1 */}
+                <div
+                  style={{
+                    padding: '16px',
+                    border: '1.5px solid #e2e8f0',
+                    borderRadius: '10px',
+                    background: '#f8fafc',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '14px',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onClick={() => {
+                    setHowItWorksModalOpen(false);
+                    let triggerBlk = blocks.find(b => b.type === 'trigger');
+                    if (!triggerBlk) {
+                      const id = 'b' + Date.now();
+                      triggerBlk = createBlockObj(id, 'trigger');
+                      setBlocks(ensureEndBlock([triggerBlk]));
+                    }
+                    setSelectedId(triggerBlk.id);
+                    setTimeout(() => {
+                      setActiveTour('evento');
+                      setTourStep(0);
+                    }, 150);
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.borderColor = 'var(--caixa-blue)';
+                    e.currentTarget.style.background = '#f0f7ff';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.borderColor = '#e2e8f0';
+                    e.currentTarget.style.background = '#f8fafc';
+                  }}
+                >
+                  <div style={{ background: '#E4F7F4', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Zap size={20} color="#216E62" />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--caixa-blue)', marginBottom: 2 }}>
+                      1. Configuração do Evento Inicial
+                    </div>
+                    <div style={{ fontSize: 12, color: '#64748b' }}>
+                      Entenda como definir o gatilho da campanha, combinar regras com E/OU e criar novos eventos.
+                    </div>
+                  </div>
+                  <ChevronRight size={18} color="#94a3b8" />
+                </div>
+
+                {/* Card Tutorial 2 */}
+                <div
+                  style={{
+                    padding: '16px',
+                    border: '1.5px solid #e2e8f0',
+                    borderRadius: '10px',
+                    background: '#f8fafc',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '14px',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onClick={() => {
+                    setHowItWorksModalOpen(false);
+                    if (blocks.length === 0) {
+                      const id = 'b' + Date.now();
+                      const triggerBlk = createBlockObj(id, 'trigger');
+                      setBlocks(ensureEndBlock([triggerBlk]));
+                    }
+                    setSelectedId(null);
+                    setInsertTarget({ index: 1 });
+                    setTimeout(() => {
+                      setActiveTour('outros');
+                      setTourStep(0);
+                    }, 150);
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.borderColor = 'var(--caixa-blue)';
+                    e.currentTarget.style.background = '#f0f7ff';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.borderColor = '#e2e8f0';
+                    e.currentTarget.style.background = '#f8fafc';
+                  }}
+                >
+                  <div style={{ background: '#FFF8F0', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Plus size={20} color="#A65E00" />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--caixa-blue)', marginBottom: 2 }}>
+                      2. Adicionar Novos Passos à Jornada
+                    </div>
+                    <div style={{ fontSize: 12, color: '#64748b' }}>
+                      Conheça as etapas de envio de Peça, Verificação (Condição) e Conexão de etapas.
+                    </div>
+                  </div>
+                  <ChevronRight size={18} color="#94a3b8" />
+                </div>
+              </div>
+
+              <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    localStorage.removeItem(TOUR_EVENTO_KEY);
+                    localStorage.removeItem(TOUR_OUTROS_KEY);
+                    alert('Tutoriais redefinidos! Eles serão exibidos automaticamente na sua próxima navegação.');
+                    setHowItWorksModalOpen(false);
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#64748b',
+                    fontSize: 12,
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                    padding: 0
+                  }}
+                >
+                  Redefinir tutoriais da primeira vez
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => setHowItWorksModalOpen(false)}
+                  style={{ fontSize: 13 }}
+                >
+                  Fechar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Guided Tour Component */}
+      <GuidedTour
+        isOpen={activeTour !== null}
+        steps={activeTour === 'evento' ? TOUR_EVENTO_STEPS : TOUR_OUTROS_STEPS}
+        currentStep={tourStep}
+        onNext={() => setTourStep(s => s + 1)}
+        onPrev={() => setTourStep(s => Math.max(0, s - 1))}
+        onSkip={() => {
+          if (activeTour === 'evento') {
+            localStorage.setItem(TOUR_EVENTO_KEY, 'true');
+          } else if (activeTour === 'outros') {
+            localStorage.setItem(TOUR_OUTROS_KEY, 'true');
+          }
+          setActiveTour(null);
+        }}
+        onFinish={() => {
+          if (activeTour === 'evento') {
+            localStorage.setItem(TOUR_EVENTO_KEY, 'true');
+            setActiveTour(null);
+            setPulseAddButton(true);
+          } else if (activeTour === 'outros') {
+            localStorage.setItem(TOUR_OUTROS_KEY, 'true');
+            setActiveTour(null);
+          }
+        }}
+      />
     </div>
   )
 }
