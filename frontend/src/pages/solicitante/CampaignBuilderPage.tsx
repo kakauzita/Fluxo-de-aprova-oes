@@ -3,6 +3,13 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../lib/api'
 import {
+  assessCampaignStudy,
+  getCampaignStudyTask,
+  trackCampaignStudy,
+  trackCampaignStudyBlock,
+  trackCampaignStudyResult,
+} from '../../lib/campaign-study'
+import {
   Zap,
   Clock,
   Send,
@@ -762,6 +769,24 @@ export default function CampaignBuilderPage() {
 
   // ─── Builder Canvas States ──────────────────────────────────────────────────
   const [builderView, setBuilderView] = useState<'select' | 'canvas'>('select')
+  const studyTask = getCampaignStudyTask(campaignName)
+  const trackedFlowViews = useRef(new Set<string>())
+
+  useEffect(() => {
+    if (!studyTask || step !== 2) return
+    const key = `${studyTask}:${builderView}`
+    if (trackedFlowViews.current.has(key)) return
+    trackedFlowViews.current.add(key)
+    trackCampaignStudy(studyTask, builderView === 'select' ? 'aba_fluxo_aberta' : 'editor_aberto')
+  }, [studyTask, step, builderView])
+
+  function advanceToFlow() {
+    if (step === 1) {
+      if (!campaignName || !selectedPublicos.length || !selectedSegmentos.length) return
+      trackCampaignStudy(studyTask, 'dados_avancou')
+    }
+    setStep(2)
+  }
   const [blocks, setBlocks] = useState<any[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [backupBlockConfig, setBackupBlockConfig] = useState<any>(null)
@@ -1246,6 +1271,7 @@ export default function CampaignBuilderPage() {
   }
 
   const handleConfirmEdit = () => {
+    trackCampaignStudyBlock(studyTask, selectedBlock)
     if (selectedBlock?.type === 'trigger') {
       if (activeTour === 'evento') {
         localStorage.setItem(TOUR_EVENTO_KEY, 'true')
@@ -1397,10 +1423,12 @@ export default function CampaignBuilderPage() {
   const goToStep3 = () => {
     const validation = validateCampaignJourney(blocks);
     if (!validation.valid) {
+      trackCampaignStudy(studyTask, 'revisao_bloqueada')
       alert(validation.message);
       return;
     }
     setStep(3);
+    if (step !== 3) trackCampaignStudy(studyTask, 'revisao_aberta')
   };
 
   function openAddMenu(e: React.MouseEvent, blockId: string, branch: 'yes' | 'no') {
@@ -1515,6 +1543,8 @@ export default function CampaignBuilderPage() {
       reengajamento: TEMPLATE_RETORNO,
     }
     const source = templateMap[name] || TEMPLATE_SIMPLES
+    trackCampaignStudy(studyTask, source === TEMPLATE_RETORNO ? 'modelo_retorno'
+      : source === TEMPLATE_DECISAO ? 'modelo_decisao' : 'modelo_simples')
     const flow = JSON.parse(JSON.stringify(source))
     setBlocks(ensureEndBlock(flow.filter((b: any) => b.type !== 'end')))
     setSelectedId(null)
@@ -1530,6 +1560,8 @@ export default function CampaignBuilderPage() {
   const [templateDropdownOpen, setTemplateDropdownOpen] = useState(false)
 
   function publishCampaign() {
+    trackCampaignStudy(studyTask, 'enviar_clicado')
+    const studyIssues = studyTask && assessCampaignStudy(studyTask, blocks, selectedPublicos, selectedSegmentos)
     const campaignPayload = {
       tipoCampanha: 'jornada',
       nome: campaignName,
@@ -1561,6 +1593,10 @@ export default function CampaignBuilderPage() {
     setTimeout(() => {
       setPublishing(false)
       setPublished(true)
+      if (studyTask && studyIssues) {
+        trackCampaignStudy(studyTask, 'confirmacao_exibida')
+        trackCampaignStudyResult(studyTask, studyIssues)
+      }
     }, 1500)
   }
 
@@ -2197,7 +2233,7 @@ export default function CampaignBuilderPage() {
                   type="button"
                   className="btn"
                   disabled={!campaignName || selectedPublicos.length === 0 || selectedSegmentos.length === 0}
-                  onClick={() => setStep(2)}
+                  onClick={advanceToFlow}
                   style={{
                     background: (!campaignName || selectedPublicos.length === 0 || selectedSegmentos.length === 0) ? '#cbd5e1' : 'var(--caixa-orange)',
                     color: 'white',
@@ -2247,6 +2283,7 @@ export default function CampaignBuilderPage() {
                   type="button"
                   className="btn"
                   onClick={() => {
+                    trackCampaignStudy(studyTask, 'do_zero')
                     setBlocks([])
                     setBuilderView('canvas')
                   }}
@@ -2393,11 +2430,7 @@ export default function CampaignBuilderPage() {
             1. Dados da campanha
           </div>
           <div
-            onClick={() => {
-              if (campaignName && selectedPublicos.length > 0 && selectedSegmentos.length > 0) {
-                setStep(2);
-              }
-            }}
+            onClick={advanceToFlow}
             style={{
               padding: '10px 16px 12px 0',
               marginRight: 24,
@@ -2797,6 +2830,7 @@ export default function CampaignBuilderPage() {
                 whiteSpace: 'nowrap'
               }}
               onClick={() => {
+                trackCampaignStudy(studyTask, 'do_zero')
                 setBlocks([])
                 setSelectedId(null)
                 setInsertTarget(null)
@@ -3370,6 +3404,7 @@ export default function CampaignBuilderPage() {
                     setInsertTarget(null)
                     setConnectorConfigOpen(false)
                     setConnectorTargetId(null)
+                    trackCampaignStudyBlock(studyTask, newBlock)
                   }
 
                   return (
