@@ -1,5 +1,5 @@
 import React from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import AppShell from './components/Sidebar'
 import LoginPage from './pages/LoginPage'
@@ -22,7 +22,11 @@ import AprovacoesPage from './pages/aprovador/AprovacoesPage'
 
 function RequireAuth({ children, allowedProfiles }: { children: React.ReactNode; allowedProfiles?: string[] }) {
   const { user } = useAuth()
-  if (!user) return <Navigate to="/login" replace />
+  const location = useLocation()
+  const studyTask = location.pathname === '/campanhas/nova/jornada'
+    ? new URLSearchParams(location.search).get('ux')
+    : null
+  if (!user) return <Navigate to="/login" replace state={{ studyTask }} />
   if (allowedProfiles && !allowedProfiles.includes(user.perfil)) {
     return <Navigate to="/" replace />
   }

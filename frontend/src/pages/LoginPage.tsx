@@ -1,11 +1,12 @@
 import React, { useState } from 'react'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 export default function LoginPage() {
     const { login, isLoading } = useAuth()
     const navigate = useNavigate()
+    const { state } = useLocation()
     const [email, setEmail] = useState('')
     const [senha, setSenha] = useState('')
     const [showPassword, setShowPassword] = useState(false)
@@ -16,7 +17,10 @@ export default function LoginPage() {
         setError('')
         try {
             await login(email, senha)
-            navigate('/')
+            const task = state?.studyTask
+            navigate(task === 'pix' || task === 'cartao'
+                ? `/campanhas/nova/jornada?ux=${task}`
+                : '/', { replace: true })
         } catch (err: any) {
             if (!err?.response) {
                 setError('⚠️ Não foi possível conectar ao servidor. Certifique-se de que o backend está rodando.')

@@ -1568,12 +1568,24 @@ export default function CampaignBuilderPage() {
   // Publish flow state
   const [publishing, setPublishing] = useState(false)
   const [published, setPublished] = useState(false)
+  const pendingStudyConfirmation = useRef<{ task: typeof studyTask; issues?: string[] } | null>(null)
+
+  useEffect(() => {
+    if (step !== 3 || !published || !pendingStudyConfirmation.current) return
+    const { task, issues } = pendingStudyConfirmation.current
+    pendingStudyConfirmation.current = null
+    trackCampaignStudy(task, 'confirmacao_exibida')
+    if (task && issues) trackCampaignStudyResult(task, issues)
+  }, [step, published])
   const [campaignObservation, setCampaignObservation] = useState('')
   const [templateDropdownOpen, setTemplateDropdownOpen] = useState(false)
 
   function publishCampaign() {
     trackCampaignStudy(studyTask, 'enviar_clicado')
-    const studyIssues = studyTask && assessCampaignStudy(studyTask, blocks, selectedPublicos, selectedSegmentos)
+    pendingStudyConfirmation.current = {
+      task: studyTask,
+      issues: studyTask ? assessCampaignStudy(studyTask, blocks, selectedPublicos, selectedSegmentos) : undefined,
+    }
     const campaignPayload = {
       tipoCampanha: 'jornada',
       nome: campaignName,
@@ -1605,10 +1617,6 @@ export default function CampaignBuilderPage() {
     setTimeout(() => {
       setPublishing(false)
       setPublished(true)
-      trackCampaignStudy(studyTask, 'confirmacao_exibida')
-      if (studyTask && studyIssues) {
-        trackCampaignStudyResult(studyTask, studyIssues)
-      }
     }, 1500)
   }
 
