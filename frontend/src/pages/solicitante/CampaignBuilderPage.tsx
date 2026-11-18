@@ -5,8 +5,10 @@ import { api } from '../../lib/api'
 import {
   assessCampaignStudy,
   getCampaignStudyTask,
+  inferCampaignStudyTask,
   trackCampaignStudy,
   trackCampaignStudyBlock,
+  trackCampaignStudyMilestones,
   trackCampaignStudyResult,
 } from '../../lib/campaign-study'
 import {
@@ -769,25 +771,33 @@ export default function CampaignBuilderPage() {
 
   // ─── Builder Canvas States ──────────────────────────────────────────────────
   const [builderView, setBuilderView] = useState<'select' | 'canvas'>('select')
-  const studyTask = getCampaignStudyTask(campaignName)
+  const [blocks, setBlocks] = useState<any[]>([])
+  const studyParam = new URLSearchParams(window.location.search).get('ux')
+  const studyTask = (studyParam === 'pix' || studyParam === 'cartao' ? studyParam : undefined)
+    ?? getCampaignStudyTask(campaignName) ?? inferCampaignStudyTask(blocks)
   const trackedFlowViews = useRef(new Set<string>())
+  const trackedStudyMilestones = useRef(new Set<string>())
 
   useEffect(() => {
-    if (!studyTask || step !== 2) return
-    const key = `${studyTask}:${builderView}`
-    if (trackedFlowViews.current.has(key)) return
-    trackedFlowViews.current.add(key)
+    if (step !== 2 || trackedFlowViews.current.has(builderView)) return
+    trackedFlowViews.current.add(builderView)
     trackCampaignStudy(studyTask, builderView === 'select' ? 'aba_fluxo_aberta' : 'editor_aberto')
   }, [studyTask, step, builderView])
+
+  function recordStudyMilestones(journey = blocks) {
+    if (!studyTask) return
+    const issues = assessCampaignStudy(studyTask, journey, selectedPublicos, selectedSegmentos)
+    trackCampaignStudyMilestones(studyTask, issues, trackedStudyMilestones.current)
+  }
 
   function advanceToFlow() {
     if (step === 1) {
       if (!campaignName || !selectedPublicos.length || !selectedSegmentos.length) return
       trackCampaignStudy(studyTask, 'dados_avancou')
+      recordStudyMilestones()
     }
     setStep(2)
   }
-  const [blocks, setBlocks] = useState<any[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [backupBlockConfig, setBackupBlockConfig] = useState<any>(null)
   const [customEventId, setCustomEventId] = useState<string | null>(null)
@@ -1272,6 +1282,7 @@ export default function CampaignBuilderPage() {
 
   const handleConfirmEdit = () => {
     trackCampaignStudyBlock(studyTask, selectedBlock)
+    recordStudyMilestones()
     if (selectedBlock?.type === 'trigger') {
       if (activeTour === 'evento') {
         localStorage.setItem(TOUR_EVENTO_KEY, 'true')
@@ -1428,6 +1439,7 @@ export default function CampaignBuilderPage() {
       return;
     }
     setStep(3);
+    recordStudyMilestones()
     if (step !== 3) trackCampaignStudy(studyTask, 'revisao_aberta')
   };
 
@@ -1593,8 +1605,8 @@ export default function CampaignBuilderPage() {
     setTimeout(() => {
       setPublishing(false)
       setPublished(true)
+      trackCampaignStudy(studyTask, 'confirmacao_exibida')
       if (studyTask && studyIssues) {
-        trackCampaignStudy(studyTask, 'confirmacao_exibida')
         trackCampaignStudyResult(studyTask, studyIssues)
       }
     }, 1500)
@@ -3386,10 +3398,11 @@ export default function CampaignBuilderPage() {
                       newBlock.config.maxRepetitions = connectorUnlimited ? -1 : (parseInt(connectorMaxRepetitions) || 1)
                     }
 
+                    let updatedJourney = blocks
                     if ('index' in insertTarget && !('blockId' in insertTarget)) {
                       const withoutEnd = blocks.filter(b => b.id !== 'end_auto')
                       withoutEnd.splice(insertTarget.index, 0, newBlock)
-                      setBlocks(ensureEndBlock(withoutEnd))
+                      updatedJourney = ensureEndBlock(withoutEnd)
                     } else if ('blockId' in insertTarget) {
                       const tgt = insertTarget as { blockId: string; branch: 'yes' | 'no'; index: number }
                       const updated = [...blocks]
@@ -3398,8 +3411,10 @@ export default function CampaignBuilderPage() {
                         if (!parent.config[br]) parent.config[br] = []
                         parent.config[br].splice(tgt.index, 0, newBlock)
                       })
-                      setBlocks(updated)
+                      updatedJourney = updated
                     }
+                    setBlocks(updatedJourney)
+                    recordStudyMilestones(updatedJourney)
 
                     setInsertTarget(null)
                     setConnectorConfigOpen(false)

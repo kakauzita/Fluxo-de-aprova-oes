@@ -38,11 +38,13 @@ type StudyEvent =
   | 'gatilho_confirmado' | 'envio_confirmado' | 'verificacao_confirmada' | 'retorno_confirmado'
   | 'revisao_bloqueada' | 'revisao_aberta' | 'enviar_clicado'
   | 'confirmacao_exibida' | 'configuracao_correta' | 'configuracao_incorreta'
+  | 'publico_configurado' | 'gatilho_configurado' | 'primeiro_envio_configurado'
+  | 'verificacao_configurada' | 'ramo_sim_encerrado' | 'sms_ramo_nao_configurado'
+  | 'retorno_configurado'
 
 export function trackCampaignStudy(task: StudyTask | undefined, event: StudyEvent) {
-  if (!task) return
   const { clarity } = window as Window & { clarity?: (...args: string[]) => void }
-  const eventName = `ux_${task}_${event}`
+  const eventName = `ux_${task ?? 'jornada'}_${event}`
   clarity?.('event', eventName)
   console.log('[Clarity UX]', eventName, { apiDisponivel: typeof clarity === 'function' })
 }
@@ -73,6 +75,15 @@ const scenarios = {
     sms: 'Última chance para desbloquear',
     days: 5,
   },
+}
+
+export function inferCampaignStudyTask(blocks: JourneyBlock[]): StudyTask | undefined {
+  const trigger = blocks.find(block => block.type === 'trigger')
+  const tasks = Object.keys(scenarios) as StudyTask[]
+  return tasks.find(task => trigger?.config?.events?.some(event =>
+    normalize(event) === normalize(scenarios[task].trigger),
+  )) ?? tasks.find(task => blocks.some(block => block.type === 'check'
+    && normalize(block.config?.question) === normalize(scenarios[task].check)))
 }
 
 function matchesPiece(block: JourneyBlock | undefined, name: string, channel: string) {
@@ -107,7 +118,7 @@ export function assessCampaignStudy(
     primeiro_envio: matchesPiece(firstSend, scenario.firstPiece, scenario.firstChannel)
       && firstSend?.config?.wait?.type === 'immediate',
     verificacao: check?.type === 'check' && normalize(check.config?.question) === normalize(scenario.check),
-    ramo_sim: endsJourney(check?.config?.yes ?? []),
+    ramo_sim: check?.type === 'check' && endsJourney(check.config?.yes ?? []),
     sms: matchesPiece(sms, scenario.sms, 'SMS'),
     prazo_sms: wait?.type === 'after' && Number(wait.amount) === scenario.days
       && ['dia', 'dias'].includes(wait.unit ?? '')
@@ -120,6 +131,25 @@ export function assessCampaignStudy(
     fim: endsJourney(tail),
   }
   return Object.entries(checks).filter(([, passed]) => !passed).map(([criterion]) => criterion)
+}
+
+export function trackCampaignStudyMilestones(task: StudyTask, issues: string[], recorded: Set<string>) {
+  const milestones: [StudyEvent, string[]][] = [
+    ['publico_configurado', ['publico']],
+    ['gatilho_configurado', ['gatilho']],
+    ['primeiro_envio_configurado', ['primeiro_envio']],
+    ['verificacao_configurada', ['verificacao']],
+    ['ramo_sim_encerrado', ['verificacao', 'ramo_sim']],
+    ['sms_ramo_nao_configurado', ['verificacao', 'sms', 'prazo_sms']],
+    ['retorno_configurado', ['verificacao', 'sms', 'retorno']],
+  ]
+  for (const [event, criteria] of milestones) {
+    if ((task === 'pix' && event === 'retorno_configurado') || (task === 'cartao' && event === 'publico_configurado')) continue
+    const key = `${task}:${event}`
+    if (recorded.has(key) || criteria.some(criterion => issues.includes(criterion))) continue
+    recorded.add(key)
+    trackCampaignStudy(task, event)
+  }
 }
 
 export function trackCampaignStudyResult(task: StudyTask, issues: string[]) {
