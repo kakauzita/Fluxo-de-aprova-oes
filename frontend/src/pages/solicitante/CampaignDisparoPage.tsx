@@ -391,7 +391,7 @@ export default function CampaignDisparoPage() {
                       </label>
                       <textarea
                         className="form-input"
-                        maxLength={45}
+                        maxLength={90}
                         rows={3}
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
@@ -399,7 +399,7 @@ export default function CampaignDisparoPage() {
                         style={{ resize: 'vertical', minHeight: '80px', fontFamily: 'inherit' }}
                       />
                       <div style={{ textAlign: 'right', fontSize: '11px', color: '#94a3b8', marginTop: 4 }}>
-                        {description.length}/45
+                        {description.length}/90
                       </div>
                     </div>
                   </div>
