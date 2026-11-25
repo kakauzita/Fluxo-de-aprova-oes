@@ -96,8 +96,8 @@ const TOUR_OUTROS_STEPS: TourStep[] = [
   },
   {
     target: '[data-tour="step-picker-connector"]',
-    title: 'Conectar: reaproveite um caminho',
-    content: 'Liga este ponto a uma etapa que já existe no fluxo.',
+    title: 'Repetir uma etapa: volte para continuar o fluxo',
+    content: 'Conecte esta etapa a uma etapa anterior para que a campanha possa repetir uma verificação ou ação. Você também pode definir um limite de repetições.',
     placement: 'right',
   },
   {
@@ -179,11 +179,11 @@ const BLOCK_META: Record<string, BlockMeta> = {
   connector: {
     icon: (
       <div style={{ background: '#E0E7FF', width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Link2 size={13} color="#6366f1" />
+        <RotateCcw size={13} color="#6366f1" />
       </div>
     ),
-    label: 'Conectar',
-    badge: 'Conexão',
+    label: 'Voltar para etapa',
+    badge: 'Retorno',
     color: '#6366f1'
   },
 }
@@ -460,6 +460,284 @@ const TRIGGER_CATEGORIES = [
 ];
 
 const PREDEFINED_EVENTS = TRIGGER_CATEGORIES.flatMap(cat => cat.items);
+
+const RULE_CATEGORIES = [
+  ...TRIGGER_CATEGORIES,
+  {
+    category: 'Elegibilidade / Perfil',
+    items: CONDICAO_OPCOES
+  }
+];
+
+function SearchableRuleSelect({
+  value,
+  onChange,
+  placeholder = 'Busque um evento ou crie um',
+  categories = RULE_CATEGORIES,
+  recentItems = [],
+  onAddRecent,
+  autoFocus = false
+}: {
+  value: string
+  onChange: (val: string) => void
+  placeholder?: string
+  categories?: { category: string; items: string[] }[]
+  recentItems?: string[]
+  onAddRecent?: (item: string) => void
+  autoFocus?: boolean
+}) {
+  const [isOpen, setIsOpen] = useState(autoFocus && !value)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [activeIndex, setActiveIndex] = useState(0)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (autoFocus && !value && inputRef.current) {
+      inputRef.current.focus()
+    }
+  }, [autoFocus, value])
+
+  const filteredCats = categories.map(cat => {
+    const matchedItems = cat.items.filter(item =>
+      item.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    return { ...cat, items: matchedItems }
+  }).filter(cat => cat.items.length > 0)
+
+  const flatItems: string[] = []
+  const matchedRecents = (recentItems || []).filter(item =>
+    item.toLowerCase().includes(searchQuery.toLowerCase()) &&
+    !flatItems.includes(item)
+  )
+  flatItems.push(...matchedRecents)
+  filteredCats.forEach(cat => {
+    cat.items.forEach(item => {
+      if (!flatItems.includes(item)) {
+        flatItems.push(item)
+      }
+    })
+  })
+
+  const exactMatchExists = flatItems.some(i => i.toLowerCase() === searchQuery.trim().toLowerCase())
+  const canCreateCustom = searchQuery.trim().length > 0 && !exactMatchExists
+
+  const handleSelect = (val: string) => {
+    onChange(val)
+    setIsOpen(false)
+    setSearchQuery('')
+    if (onAddRecent) {
+      onAddRecent(val)
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    const totalOptions = flatItems.length + (canCreateCustom ? 1 : 0)
+    if (totalOptions === 0) {
+      if (e.key === 'Escape') setIsOpen(false)
+      return
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setActiveIndex(prev => (prev + 1) % totalOptions)
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setActiveIndex(prev => (prev - 1 + totalOptions) % totalOptions)
+    } else if (e.key === 'Enter') {
+      e.preventDefault()
+      if (canCreateCustom && activeIndex === flatItems.length) {
+        handleSelect(searchQuery.trim())
+      } else if (flatItems[activeIndex]) {
+        handleSelect(flatItems[activeIndex])
+      }
+    } else if (e.key === 'Escape') {
+      setIsOpen(false)
+    }
+  }
+
+  return (
+    <div className="autocomplete-container" style={{ position: 'relative', flex: 1 }}>
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+        <input
+          ref={inputRef}
+          type="text"
+          className="detail-input"
+          placeholder={placeholder}
+          value={isOpen ? searchQuery : value}
+          onFocus={() => {
+            setIsOpen(true)
+            setSearchQuery('')
+            setActiveIndex(0)
+          }}
+          onChange={(e) => {
+            setSearchQuery(e.target.value)
+            setActiveIndex(0)
+            if (!isOpen) setIsOpen(true)
+          }}
+          onKeyDown={handleKeyDown}
+          style={{
+            width: '100%',
+            padding: '8px 30px 8px 10px',
+            borderRadius: 6,
+            border: '1px solid var(--builder-border)',
+            fontSize: '13px',
+            outline: 'none',
+            background: '#ffffff',
+            boxSizing: 'border-box'
+          }}
+        />
+        {(value || searchQuery) && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              onChange('')
+              setSearchQuery('')
+            }}
+            style={{
+              position: 'absolute',
+              right: 8,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'none',
+              border: 'none',
+              color: '#94a3b8',
+              cursor: 'pointer',
+              fontSize: '12px',
+              padding: 4
+            }}
+          >
+            ✕
+          </button>
+        )}
+      </div>
+
+      {isOpen && (
+        <>
+          <div
+            className="autocomplete-overlay"
+            onClick={() => setIsOpen(false)}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 999
+            }}
+          />
+          <div
+            className="autocomplete-dropdown searchable-condition-dropdown"
+            style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              right: 0,
+              marginTop: '4px',
+              background: '#ffffff',
+              border: '1px solid #cbd5e1',
+              borderRadius: '6px',
+              boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)',
+              maxHeight: '220px',
+              overflowY: 'auto',
+              zIndex: 1000,
+              padding: '4px'
+            }}
+          >
+            {recentItems.length > 0 && !searchQuery && (
+              <div className="dropdown-section">
+                <div className="dropdown-section-title" style={{ padding: '6px 8px', fontSize: '10px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  🕒 Recentes / Mais Utilizados
+                </div>
+                {recentItems.map((val) => {
+                  const flatIdx = flatItems.indexOf(val)
+                  const isActive = flatIdx === activeIndex
+                  return (
+                    <div
+                      key={val}
+                      className={`dropdown-item ${isActive ? 'active' : ''}`}
+                      onClick={() => handleSelect(val)}
+                      style={{
+                        padding: '8px 10px',
+                        fontSize: '12.5px',
+                        color: '#1e293b',
+                        cursor: 'pointer',
+                        borderRadius: '4px',
+                        background: isActive ? '#f1f5f9' : 'transparent',
+                        fontWeight: isActive ? 600 : 400
+                      }}
+                    >
+                      {val}
+                    </div>
+                  )
+                })}
+                <div style={{ height: '1px', background: '#e2e8f0', margin: '4px 0' }} />
+              </div>
+            )}
+
+            {filteredCats.map(cat => (
+              <div key={cat.category} className="dropdown-section" style={{ marginBottom: '8px' }}>
+                <div className="dropdown-section-title" style={{ padding: '6px 8px', fontSize: '10px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', background: '#f8fafc', borderRadius: '4px', margin: '2px 4px' }}>
+                  {cat.category}
+                </div>
+                {cat.items.map(item => {
+                  const flatIdx = flatItems.indexOf(item)
+                  const isActive = flatIdx === activeIndex
+                  return (
+                    <div
+                      key={item}
+                      className={`dropdown-item ${isActive ? 'active' : ''}`}
+                      onClick={() => handleSelect(item)}
+                      style={{
+                        padding: '8px 10px',
+                        fontSize: '12.5px',
+                        color: '#1e293b',
+                        cursor: 'pointer',
+                        borderRadius: '4px',
+                        background: isActive ? '#f1f5f9' : 'transparent',
+                        fontWeight: isActive ? 600 : 400
+                      }}
+                    >
+                      {item}
+                    </div>
+                  )
+                })}
+              </div>
+            ))}
+
+            {filteredCats.length === 0 && !canCreateCustom && (
+              <div style={{ padding: '16px', fontSize: '12.5px', color: '#64748b', textAlign: 'center' }}>
+                Nenhuma opção encontrada.
+              </div>
+            )}
+
+            {canCreateCustom && (
+              <div
+                className={`dropdown-item custom-create-item ${activeIndex === flatItems.length ? 'active' : ''}`}
+                onClick={() => handleSelect(searchQuery.trim())}
+                style={{
+                  padding: '10px 10px',
+                  fontSize: '13px',
+                  color: 'var(--builder-accent)',
+                  cursor: 'pointer',
+                  borderRadius: '4px',
+                  background: activeIndex === flatItems.length ? 'var(--builder-accent-dim)' : 'transparent',
+                  fontWeight: 600,
+                  borderTop: '1px solid #e2e8f0',
+                  marginTop: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                Criar regra: "{searchQuery.trim()}"
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
 
 
 interface Option {
@@ -3281,11 +3559,11 @@ export default function CampaignBuilderPage() {
                                 boxShadow: '0 2px 6px rgba(99, 102, 241, 0.08)',
                                 flexShrink: 0
                               }}>
-                                <Link2 size={18} color="#4f46e5" />
+                                <RotateCcw size={18} color="#4f46e5" />
                               </div>
                             ),
-                            label: 'Conectar a uma etapa existente',
-                            desc: 'Siga para uma etapa existente ou crie um retorno'
+                            label: 'Voltar para uma etapa',
+                            desc: 'Retorne a uma etapa anterior para repetir uma verificação ou ação no fluxo'
                           }
                         ].map(item => (
                           <button
@@ -3434,10 +3712,10 @@ export default function CampaignBuilderPage() {
                     <React.Fragment>
                       <div className="modal-header">
                         <div id="modal-conectar-etapa-title" className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <div style={{ background: '#E0E7FF', width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <Link2 size={15} color="#6366f1" />
+                          <div style={{ background: '#EEF2FF', width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <RotateCcw size={15} color="#4f46e5" />
                           </div>
-                          Conectar a uma etapa existente
+                          Voltar para uma etapa
                         </div>
                         <button className="modal-close" onClick={() => { setInsertTarget(null); setConnectorConfigOpen(false) }} aria-label="Fechar janela de conexão de etapa">✕</button>
                       </div>
@@ -3451,9 +3729,12 @@ export default function CampaignBuilderPage() {
                         ) : (
                           <React.Fragment>
                             <div>
-                              <label style={{ fontWeight: 600, fontSize: 13, color: '#1e293b', marginBottom: 6, display: 'block' }}>
-                                Etapa de destino
+                              <label style={{ fontWeight: 600, fontSize: 13, color: '#1e293b', marginBottom: 4, display: 'block' }}>
+                                Para qual etapa deseja retornar?
                               </label>
+                              <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>
+                                Escolha a etapa anterior do fluxo para onde a campanha deve voltar.
+                              </div>
                               <select
                                 value={connectorTargetId || ''}
                                 onChange={(e) => setConnectorTargetId(e.target.value || null)}
@@ -3463,7 +3744,7 @@ export default function CampaignBuilderPage() {
                                   background: '#fff', cursor: 'pointer', outline: 'none'
                                 }}
                               >
-                                <option value="">Selecione uma etapa</option>
+                                <option value="">Escolha a etapa de destino...</option>
                                 {availableSteps.map(s => (
                                   <option key={s.id} value={s.id}>
                                     {s.stepNum}. {s.label}
@@ -3479,8 +3760,8 @@ export default function CampaignBuilderPage() {
                                 display: 'flex', alignItems: 'flex-start', gap: 8,
                                 fontSize: 13, color: '#1e40af'
                               }}>
-                                <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>ℹ️</span>
-                                <span>Essa conexão cria um retorno na jornada. Defina quantas vezes esse retorno poderá acontecer.</span>
+                                <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>⟳</span>
+                                <span><strong>Retorno configurado:</strong> A campanha voltará automaticamente para a etapa selecionada. Defina abaixo quando e quantas vezes o retorno poderá acontecer.</span>
                               </div>
                             )}
 
@@ -3488,7 +3769,7 @@ export default function CampaignBuilderPage() {
                               <React.Fragment>
                                 <div>
                                   <label style={{ fontWeight: 600, fontSize: 13, color: '#1e293b', marginBottom: 8, display: 'block' }}>
-                                    {cDirection === 'backward' ? 'Quando retornar para esta etapa?' : 'Quando seguir para esta etapa?'}
+                                    {cDirection === 'backward' ? 'Quando a campanha deve voltar para esta etapa?' : 'Quando seguir para esta etapa?'}
                                   </label>
                                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                                     <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 14 }}>
@@ -3538,9 +3819,12 @@ export default function CampaignBuilderPage() {
 
                                 {cDirection === 'backward' && (
                                   <div>
-                                    <label style={{ fontWeight: 600, fontSize: 13, color: '#1e293b', marginBottom: 6, display: 'block' }}>
-                                      Quantas vezes vai se repetir?
+                                    <label style={{ fontWeight: 600, fontSize: 13, color: '#1e293b', marginBottom: 4, display: 'block' }}>
+                                      Limite de repetições
                                     </label>
+                                    <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>
+                                      Quantas vezes esta etapa poderá ser repetida? (máx. 10)
+                                    </div>
                                     <input
                                       type="number" min="1" max="10"
                                       placeholder="Ex: 3"
@@ -3993,20 +4277,21 @@ export default function CampaignBuilderPage() {
                           </div>
 
                           {conditions.map((cond: string, idx: number) => (
-                            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                              <select
-                                className="detail-select"
-                                style={{ flex: 1, margin: 0, padding: '8px 10px', borderRadius: 6, border: '1px solid var(--builder-border)' }}
+                            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, position: 'relative' }}>
+                              <SearchableRuleSelect
                                 value={cond}
-                                onChange={(e) => handleUpdateCondition(idx, e.target.value)}
-                              >
-                                <option value="">Selecionar opção</option>
-                                {CONDICAO_OPCOES.map((opt) => (
-                                  <option key={opt} value={opt}>
-                                    {opt}
-                                  </option>
-                                ))}
-                              </select>
+                                onChange={(val) => handleUpdateCondition(idx, val)}
+                                placeholder="Busque um evento ou crie um"
+                                categories={RULE_CATEGORIES}
+                                recentItems={recentTriggers}
+                                onAddRecent={(item) => {
+                                  setRecentTriggers(prev => {
+                                    const updated = [item, ...prev.filter(x => x !== item)];
+                                    return updated.slice(0, 5);
+                                  });
+                                }}
+                                autoFocus={idx === conditions.length - 1 && !cond}
+                              />
                               <button
                                 type="button"
                                 onClick={() => handleDeleteCondition(idx)}
@@ -4695,20 +4980,21 @@ export default function CampaignBuilderPage() {
                           )}
 
                           {conditions.map((cond, idx) => (
-                            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                              <select
-                                className="detail-select"
-                                style={{ flex: 1, margin: 0, padding: '8px 10px', borderRadius: 6, border: '1px solid var(--builder-border)' }}
+                            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, position: 'relative' }}>
+                              <SearchableRuleSelect
                                 value={cond}
-                                onChange={(e) => handleUpdateCondition(idx, e.target.value)}
-                              >
-                                <option value="">Selecionar opção</option>
-                                {CONDICAO_OPCOES.map((opt) => (
-                                  <option key={opt} value={opt}>
-                                    {opt}
-                                  </option>
-                                ))}
-                              </select>
+                                onChange={(val) => handleUpdateCondition(idx, val)}
+                                placeholder="Busque um evento ou crie um"
+                                categories={RULE_CATEGORIES}
+                                recentItems={recentTriggers}
+                                onAddRecent={(item) => {
+                                  setRecentTriggers(prev => {
+                                    const updated = [item, ...prev.filter(x => x !== item)];
+                                    return updated.slice(0, 5);
+                                  });
+                                }}
+                                autoFocus={idx === conditions.length - 1 && !cond}
+                              />
                               <button
                                 type="button"
                                 onClick={() => handleDeleteCondition(idx)}
@@ -4873,9 +5159,12 @@ export default function CampaignBuilderPage() {
 
                         {/* Etapa de Destino */}
                         <div className="detail-field" style={{ marginTop: 4 }}>
-                          <label className="detail-label" style={{ fontWeight: 700, color: '#1e293b', marginBottom: 6, display: 'block' }}>
-                            Etapa de destino
+                          <label className="detail-label" style={{ fontWeight: 700, color: '#1e293b', marginBottom: 4, display: 'block' }}>
+                            {isBackward ? 'Para qual etapa deseja retornar?' : 'Etapa de destino'}
                           </label>
+                          <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>
+                            {isBackward ? 'Escolha a etapa anterior para onde o fluxo irá voltar.' : 'Escolha a próxima etapa do fluxo.'}
+                          </div>
                           <select
                             className="detail-select"
                             style={{
@@ -4911,15 +5200,15 @@ export default function CampaignBuilderPage() {
                             display: 'flex', alignItems: 'flex-start', gap: 8,
                             fontSize: 13, color: '#1e40af'
                           }}>
-                            <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>ℹ️</span>
-                            <span>Esta conexão cria um retorno na jornada. Defina quando e quantas vezes o retorno poderá acontecer.</span>
+                            <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>⟳</span>
+                            <span><strong>Retorno configurado:</strong> A campanha voltará automaticamente para a etapa selecionada. Defina quando e quantas vezes o retorno poderá acontecer.</span>
                           </div>
                         )}
 
                         {/* Timing */}
                         <div className="detail-field">
                           <label style={{ fontWeight: 600, fontSize: 13, color: '#1e293b', marginBottom: 8, display: 'block' }}>
-                            {isBackward ? 'Quando retornar para esta etapa?' : 'Quando seguir para esta etapa?'}
+                            {isBackward ? 'Quando a campanha deve voltar para esta etapa?' : 'Quando seguir para esta etapa?'}
                           </label>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                             <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 14 }}>
@@ -4972,9 +5261,12 @@ export default function CampaignBuilderPage() {
                         {/* Repetições (apenas para retorno) */}
                         {isBackward && (
                           <div className="detail-field">
-                            <label style={{ fontWeight: 600, fontSize: 13, color: '#1e293b', marginBottom: 6, display: 'block' }}>
-                              Quantas vezes vai se repetir?
+                            <label style={{ fontWeight: 600, fontSize: 13, color: '#1e293b', marginBottom: 4, display: 'block' }}>
+                              Limite de repetições
                             </label>
+                            <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>
+                              Quantas vezes esta etapa poderá ser repetida? (máx. 10)
+                            </div>
                             <input
                               type="number" min="1" max="10"
                               placeholder="Ex: 3"

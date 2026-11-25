@@ -834,6 +834,17 @@
   position: relative;
 }
 
+.canvas-block.connector-backward .block-card.type-connector {
+  border: 2px dashed #4f46e5;
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12), 0 2px 8px rgba(99, 102, 241, 0.15);
+}
+
+.canvas-block.connector-backward .block-card.type-connector:hover {
+  border-color: #4338ca;
+  background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+}
+
 /* INLINE ADD BUTTON */
 .inline-add-wrapper {
   display: flex;
