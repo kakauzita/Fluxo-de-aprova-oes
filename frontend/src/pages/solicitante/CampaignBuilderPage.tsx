@@ -3388,8 +3388,9 @@ export default function CampaignBuilderPage() {
                   className="canvas-btn-text"
                   style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: 'var(--caixa-blue)', fontWeight: 600 }}
                   onClick={() => setHowItWorksModalOpen(true)}
+                  title="Abrir o tutorial passo a passo e central de ajuda"
                 >
-                  <HelpCircle size={14} /> Como funciona?
+                  <HelpCircle size={14} /> Tutorial
                 </button>
               </div>
             </div>
@@ -3622,8 +3623,9 @@ export default function CampaignBuilderPage() {
                             padding: '6px 8px',
                             borderRadius: 6
                           }}
+                          title="Iniciar tour guiado pelas opções de etapas"
                         >
-                          <HelpCircle size={15} /> Como funciona?
+                          <HelpCircle size={15} /> Ver tutorial guiado
                         </button>
                       </div>
                     </div>
@@ -5868,7 +5870,7 @@ export default function CampaignBuilderPage() {
                       2. Adicionar Novos Passos à Jornada
                     </div>
                     <div style={{ fontSize: 12, color: '#64748b' }}>
-                      Conheça as etapas de envio de Peça, Verificação (Condição) e Conexão de etapas.
+                      Conheça as etapas de envio de Peça, Verificação (Condição) e Voltar para uma etapa (Retorno).
                     </div>
                   </div>
                   <ChevronRight size={18} color="#94a3b8" />
